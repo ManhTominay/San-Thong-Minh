@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Stadium - Hệ thống tìm kiếm và đặt lịch sân thể thao</title>
+    <!-- Sử dụng Tailwind CSS qua CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+<!-- HEADER / NAVIGATION -->
+<header class="bg-emerald-600 text-white shadow-md">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="text-xl font-bold tracking-wider">Smart Stadium</div>
+
+        <!-- Khu vực hiển thị trạng thái đăng nhập động -->
+        <div id="auth-section" class="flex items-center space-x-3">
+            <!-- Mặc định ẩn, sẽ được hiển thị qua JS nếu đã đăng nhập -->
+            <div id="logged-in-menu" class="hidden items-center space-x-3">
+                <span id="user-greeting" class="text-sm bg-emerald-700 px-3 py-1 rounded-full">
+                    <i class="fa-regular fa-user mr-1"></i> Xin chào, <span id="user-email-display"></span>
+                </span>
+                <button onclick="handleLogout()" class="bg-emerald-800 hover:bg-emerald-900 text-sm px-3 py-1.5 rounded transition">
+                    Đăng xuất
+                </button>
+            </div>
+
+            <!-- Mặc định hiển thị khi chưa đăng nhập -->
+            <div id="logged-out-menu" class="flex items-center space-x-2">
+                <a href="/login.html" class="bg-emerald-700 hover:bg-emerald-800 text-sm px-3 py-1.5 rounded transition">Đăng nhập</a>
+                <a href="/DangKy.html" class="bg-white text-emerald-700 hover:bg-emerald-50 text-sm px-3 py-1.5 rounded font-medium transition">Đăng ký</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- HERO SECTION (Thanh tìm kiếm) -->
+<section class="bg-emerald-600 pb-12 pt-6 px-4 text-center text-white">
+    <h1 class="text-3xl font-bold mb-2">Smart Stadium</h1>
+    <p class="text-emerald-100 mb-6 text-sm">Hệ thống tìm kiếm và đặt lịch sân thể thao thông minh</p>
+
+    <div class="max-w-2xl mx-auto bg-white rounded-full p-2 shadow-lg flex items-center">
+        <span class="pl-4 text-gray-400"><i class="fa-solid fa-magnifying-glass"></i></span>
+        <input type="text" placeholder="Tìm kiếm sân, địa điểm, môn thể thao..." class="w-full px-4 py-2 text-gray-700 focus:outline-none text-sm">
+        <button class="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full text-sm font-medium hover:bg-emerald-100 transition whitespace-nowrap">
+            <i class="fa-solid fa-sliders mr-1"></i> Bộ lọc nâng cao
+        </button>
+    </div>
+
+    <!-- FILTER TABS -->
+    <div class="flex flex-wrap justify-center gap-2 mt-6">
+        <button class="bg-white text-emerald-700 px-4 py-1.5 rounded-full text-xs font-semibold shadow flex items-center"><i class="fa-solid fa-check mr-1.5"></i> Tất cả sân</button>
+        <button class="bg-emerald-700 bg-opacity-60 hover:bg-opacity-100 text-white px-4 py-1.5 rounded-full text-xs transition">Sân Cầu Lông</button>
+        <button class="bg-emerald-700 bg-opacity-60 hover:bg-opacity-100 text-white px-4 py-1.5 rounded-full text-xs transition">Sân Bóng Đá</button>
+        <button class="bg-emerald-700 bg-opacity-60 hover:bg-opacity-100 text-white px-4 py-1.5 rounded-full text-xs transition">Sân Tennis</button>
+        <button class="bg-emerald-700 bg-opacity-60 hover:bg-opacity-100 text-white px-4 py-1.5 rounded-full text-xs transition">Sân Pickleball</button>
+        <button class="bg-emerald-700 bg-opacity-60 hover:bg-opacity-100 text-white px-4 py-1.5 rounded-full text-xs transition">Sân Bóng Chuyền</button>
+    </div>
+</section>
+
+<!-- MAIN CONTENT (Danh sách sân) -->
+<main class="container mx-auto px-4 py-8">
+    <h2 class="text-lg font-bold text-gray-800 mb-6 flex items-center">
+        <span class="text-rose-500 mr-2">📍</span> Danh sách Cụm Sân Hiện Có
+    </h2>
+
+    <!-- GRID DANH SÁCH SÂN (Sẽ được đổ dữ liệu tự động bằng JavaScript) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="stadium-list">
+        <!-- Dữ liệu từ API sẽ hiển thị ở đây -->
+    </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-emerald-800 text-white text-xs py-10 mt-12">
+    <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div>
+            <h4 class="font-bold text-sm mb-2">Smart Stadium</h4>
+            <p class="text-emerald-200 leading-relaxed">Hệ thống kết nối và đặt sân thể thao thông minh hàng đầu.</p>
+        </div>
+        <div>
+            <h4 class="font-bold text-sm mb-2">Môn Thể Thao</h4>
+            <ul class="space-y-1 text-emerald-200">
+                <li>› Tất cả các sân</li>
+                <li>› Cầu lông</li>
+                <li>› Bóng đá</li>
+                <li>› Tennis</li>
+                <li>› Pickleball</li>
+                <li>› Bóng chuyền</li>
+            </ul>
+        </div>
+        <div>
+            <h4 class="font-bold text-sm mb-2">Thông Tin Liên Hệ</h4>
+            <p class="text-emerald-200 mb-1">📍 Trường Đại học Tài nguyên và Môi trường Hà Nội</p>
+            <p class="text-emerald-200 mb-1">📧 VDT@gmail.com</p>
+            <p class="text-emerald-200">📞 Hotline: 2311063284</p>
+        </div>
+    </div>
+    <div class="border-t border-emerald-700 mt-8 pt-4 text-center text-emerald-300">
+        © 2026 Smart Stadium Team. All rights reserved.
+    </div>
+</footer>
+
+<!-- SCRIPT XỬ LÝ ĐĂNG NHẬP VÀ GỌI API -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // 1. Kiểm tra trạng thái đăng nhập từ localStorage
+        const token = localStorage.getItem("token");
+        const userEmail = localStorage.getItem("userEmail"); // Hoặc lấy từ thông tin lưu trữ khi login thành công
+
+        const loggedInMenu = document.getElementById("logged-in-menu");
+        const loggedOutMenu = document.getElementById("logged-out-menu");
+        const userEmailDisplay = document.getElementById("user-email-display");
+
+        if (token && userEmail) {
+            // Đã đăng nhập: Hiện phần tên + nút đăng xuất, ẩn nút đăng nhập/đăng ký
+            userEmailDisplay.textContent = userEmail;
+            loggedInMenu.classList.remove("hidden");
+            loggedInMenu.classList.add("flex");
+            loggedOutMenu.classList.add("hidden");
+        } else {
+            // Chưa đăng nhập: Hiện nút đăng nhập/đăng ký, ẩn phần chào hỏi
+            loggedInMenu.classList.add("hidden");
+            loggedOutMenu.classList.remove("hidden");
+        }
+
+        // 2. Gọi API lấy danh sách sân
+        fetch("/api/fields")
+            .then(response => response.json())
+            .then(data => {
+                const stadiumListContainer = document.getElementById("stadium-list");
+                stadiumListContainer.innerHTML = ""; // Xóa dữ liệu cũ nếu có
+
+                if (!data || data.length === 0) {
+                    stadiumListContainer.innerHTML = `<p class="text-gray-500 col-span-3 text-center py-6">Chưa có sân nào trong cơ sở dữ liệu.</p>`;
+                    return;
+                }
+
+                // Duyệt qua toàn bộ danh sách sân lấy từ CSDL và tạo card HTML tương ứng
+                data.forEach(stadium => {
+                    const card = document.createElement("div");
+                    card.className = "bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between";
+
+                    card.innerHTML = `
+                        <div>
+                            <h3 class="font-bold text-emerald-800 text-base mb-1">${stadium.name || 'Chưa có tên'}</h3>
+                            <p class="text-xs text-gray-500 mb-2"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i> ${stadium.address || 'Đang cập nhật'}</p>
+                            <p class="text-xs text-gray-600 bg-gray-50 p-2 rounded mb-4">${stadium.description || 'Không có mô tả chi tiết'}</p>
+                        </div>
+                        <button class="w-full border border-emerald-600 text-emerald-700 hover:bg-emerald-600 hover:text-white text-xs py-2 rounded-lg font-medium transition">
+                            Xem chi tiết & Đặt sân
+                        </button>
+                    `;
+                    stadiumListContainer.appendChild(card);
+                });
+            })
+            .catch(error => {
+                console.error("Lỗi khi tải danh sách sân:", error);
+                const stadiumListContainer = document.getElementById("stadium-list");
+                stadiumListContainer.innerHTML = `<p class="text-red-500 col-span-3 text-center py-6">Không thể kết nối đến máy chủ để tải danh sách sân.</p>`;
+            });
+    });
+
+    // Hàm xử lý đăng xuất
+    function handleLogout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userEmail");
+        window.location.reload(); // Tải lại trang để cập nhật giao diện về trạng thái chưa đăng nhập
+    }
+</script>
+
+</body>
+</html>

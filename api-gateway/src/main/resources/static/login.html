@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - Smart Stadium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen">
+
+<div class="bg-white p-8 rounded-2xl shadow-md w-full max-w-md border border-gray-100">
+    <div class="text-center mb-8">
+        <h1 class="text-2xl font-bold text-emerald-600">Smart Stadium</h1>
+        <p class="text-xs text-gray-500 mt-1">Đăng nhập vào hệ thống đặt sân thể thao</p>
+    </div>
+
+    <form id="login-form" class="space-y-4">
+        <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Email hoặc Tên đăng nhập</label>
+            <input type="text" id="email" required class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500" placeholder="Nhập email của bạn...">
+        </div>
+        <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Mật khẩu</label>
+            <input type="password" id="password" required class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500" placeholder="••••••••">
+        </div>
+
+        <div id="error-message" class="text-red-500 text-xs text-center hidden"></div>
+
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm py-2.5 rounded-lg transition shadow-sm">
+            Đăng nhập
+        </button>
+    </form>
+
+    <p class="text-center text-xs text-gray-600 mt-6">
+        Chưa có tài khoản? <a href="/DangKy.html" class="text-emerald-600 font-semibold hover:underline">Đăng ký ngay</a>
+    </p>
+    <div class="text-center mt-3">
+        <a href="/" class="text-xs text-gray-400 hover:text-gray-600"><i class="fa-solid fa-arrow-left mr-1"></i> Quay lại trang chủ</a>
+    </div>
+</div>
+
+<script>
+    document.getElementById("login-form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        const errorDiv = document.getElementById("error-message");
+
+        errorDiv.classList.add("hidden");
+
+        try {
+            const response = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: email, password: password }) // Điều chỉnh thuộc tính 'email' hoặc 'username' tùy backend của bạn
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Lưu token và email vào localStorage
+                localStorage.setItem("token", data.token || "dummy-token");
+                localStorage.setItem("userEmail", email);
+
+                // Chuyển hướng về trang chủ
+                window.location.href = "/";
+            } else {
+                const errText = await response.text();
+                errorDiv.textContent = "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.";
+                errorDiv.classList.remove("hidden");
+            }
+        } catch (err) {
+            console.error("Lỗi:", err);
+            errorDiv.textContent = "Không thể kết nối đến máy chủ!";
+            errorDiv.classList.remove("hidden");
+        }
+    });
+</script>
+
+</body>
+</html>
