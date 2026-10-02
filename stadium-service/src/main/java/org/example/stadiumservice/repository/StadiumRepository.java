@@ -9,9 +9,15 @@ import java.util.List;
 @Repository
 public interface StadiumRepository extends JpaRepository<Stadium, Long> {
 
-    // Tìm kiếm chính xác theo cột type trong database
+    // Lọc theo loại sân
     List<Stadium> findByTypeIgnoreCase(String type);
 
-    // Giữ lại tìm kiếm theo tên nếu cần dùng cho ô thanh tìm kiếm (search input)
+    // Tìm theo tên
     List<Stadium> findByNameContainingIgnoreCase(String name);
+
+    // Tìm theo tên hoặc địa chỉ
+    List<Stadium> findByNameContainingIgnoreCaseOrAddressContainingIgnoreCase(
+            String name,
+            String address
+    );
 }

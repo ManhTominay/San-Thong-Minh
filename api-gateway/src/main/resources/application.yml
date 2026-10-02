@@ -5,6 +5,7 @@ server:
 spring:
   application:
     name: api-gateway
+
   cloud:
     gateway:
       globalcors:
@@ -18,21 +19,25 @@ spring:
               - DELETE
               - OPTIONS
             allowed-headers: "*"
+
       discovery:
         locator:
           enabled: true
           lower-case-service-id: true
+
       routes:
-        # Chỉ giữ lại route cho backend services
+
+        # User Service
         - id: user-service
           uri: lb://user-service
           predicates:
-            - Path=/api/auth/**, /api/users/**
+            - Path=/api/auth/**,/api/users/**
 
+        # Stadium Service
         - id: stadium-service
           uri: lb://stadium-service
           predicates:
-            - Path=/api/fields/**
+            - Path=/api/fields,/api/fields/**
 
 eureka:
   client:

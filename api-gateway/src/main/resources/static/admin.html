@@ -2,373 +2,2632 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
     <title>Trang Quản Trị - Smart Stadium Admin</title>
-    <!-- Tailwind CSS CDN -->
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
 <body class="bg-gray-100 font-sans">
 
 <div class="flex h-screen overflow-hidden">
 
+    <!-- ======================== -->
     <!-- SIDEBAR -->
-    <div class="w-64 bg-emerald-900 text-white flex flex-col justify-between hidden md:flex">
-        <div>
-            <div class="p-5 text-xl font-bold border-b border-emerald-800 flex items-center space-x-2">
-                <i class="fa-solid fa-shield-halved text-emerald-400"></i>
-                <span>Smart Stadium Admin</span>
-            </div>
-            <nav class="p-4 space-y-2">
-                <a href="#" onclick="switchTab('stadiums')" id="nav-stadiums" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg bg-emerald-800 text-white font-medium transition">
-                    <i class="fa-solid fa-futbol w-5"></i>
-                    <span>Quản lý Sân thể thao</span>
-                </a>
-                <a href="#" onclick="switchTab('users')" id="nav-users" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-emerald-200 hover:bg-emerald-800 hover:text-white transition">
-                    <i class="fa-solid fa-users w-5"></i>
-                    <span>Quản lý Tài khoản</span>
-                </a>
-            </nav>
-        </div>
-        <div class="p-4 border-t border-emerald-800">
-            <button onclick="handleLogout()" class="w-full flex items-center justify-center space-x-2 bg-rose-600 hover:bg-rose-700 text-white py-2 rounded-lg text-sm font-medium transition">
-                <i class="fa-solid fa-right-from-bracket"></i>
-                <span>Đăng xuất</span>
-            </button>
-        </div>
-    </div>
+    <!-- ======================== -->
 
-    <!-- MAIN CONTENT AREA -->
+    <aside class="w-64 bg-emerald-900 text-white flex-col justify-between hidden md:flex">
+
+        <div>
+
+            <div class="p-5 text-xl font-bold border-b border-emerald-800 flex items-center space-x-2">
+
+                <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+
+                <span>
+                    Smart Stadium Admin
+                </span>
+
+            </div>
+
+
+            <nav class="p-4 space-y-2">
+
+                <!-- QUẢN LÝ SÂN -->
+
+                <a href="javascript:void(0)"
+                   onclick="switchTab('stadiums')"
+                   id="nav-stadiums"
+
+                   class="flex items-center space-x-3
+                          px-4 py-2.5 rounded-lg
+                          bg-emerald-800
+                          text-white
+                          font-medium
+                          transition">
+
+                    <i class="fa-solid fa-futbol w-5"></i>
+
+                    <span>
+                        Quản lý Sân thể thao
+                    </span>
+
+                </a>
+
+
+                <!-- QUẢN LÝ USER -->
+
+                <a href="javascript:void(0)"
+                   onclick="switchTab('users')"
+                   id="nav-users"
+
+                   class="flex items-center space-x-3
+                          px-4 py-2.5 rounded-lg
+                          text-emerald-200
+                          hover:bg-emerald-800
+                          hover:text-white
+                          transition">
+
+                    <i class="fa-solid fa-users w-5"></i>
+
+                    <span>
+                        Quản lý Tài khoản
+                    </span>
+
+                </a>
+
+            </nav>
+
+        </div>
+
+
+        <!-- ĐĂNG XUẤT -->
+
+        <div class="p-4 border-t border-emerald-800">
+
+            <button onclick="handleLogout()"
+
+                    class="w-full
+                           flex
+                           items-center
+                           justify-center
+                           space-x-2
+                           bg-rose-600
+                           hover:bg-rose-700
+                           text-white
+                           py-2
+                           rounded-lg
+                           text-sm
+                           font-medium
+                           transition">
+
+                <i class="fa-solid fa-right-from-bracket"></i>
+
+                <span>
+                    Đăng xuất
+                </span>
+
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- ======================== -->
+    <!-- MAIN -->
+    <!-- ======================== -->
+
     <div class="flex-1 flex flex-col overflow-y-auto">
 
+
         <!-- HEADER -->
-        <header class="bg-white shadow-sm h-16 flex items-center justify-between px-6">
-            <h1 id="page-title" class="text-lg font-bold text-gray-800">Quản Lý Sân Thể Thao</h1>
+
+        <header class="bg-white shadow-sm min-h-16 flex items-center justify-between px-6 py-3">
+
+            <h1 id="page-title"
+                class="text-lg font-bold text-gray-800">
+
+                Quản Lý Sân Thể Thao
+
+            </h1>
+
+
             <div class="flex items-center space-x-3">
-                <span class="text-sm text-gray-600 font-medium" id="admin-email">Admin</span>
-                <div class="w-9 h-9 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold">A</div>
+
+                <span id="admin-email"
+                      class="text-sm text-gray-600 font-medium">
+
+                    Admin
+
+                </span>
+
+
+                <div class="w-9 h-9
+                            rounded-full
+                            bg-emerald-700
+                            text-white
+                            flex
+                            items-center
+                            justify-center
+                            font-bold">
+
+                    A
+
+                </div>
+
             </div>
+
         </header>
 
-        <!-- CONTENT BODY -->
+
+        <!-- ======================== -->
+        <!-- CONTENT -->
+        <!-- ======================== -->
+
         <main class="p-6">
 
-            <!-- TAB 1: QUẢN LÝ SÂN -->
-            <div id="tab-stadiums-content" class="space-y-6">
+
+            <!-- ======================================= -->
+            <!-- TAB QUẢN LÝ SÂN -->
+            <!-- ======================================= -->
+
+            <section id="tab-stadiums-content"
+                     class="space-y-5">
+
+
+                <!-- ======================== -->
+                <!-- THÊM SÂN -->
+                <!-- ======================== -->
+
+                <div class="bg-white
+                            rounded-xl
+                            shadow-sm
+                            border
+                            border-gray-200
+                            p-5">
+
+
+                    <div class="mb-4">
+
+                        <h2 class="text-base font-bold text-gray-800">
+
+                            Thêm Sân Thể Thao Mới
+
+                        </h2>
+
+                        <p class="text-xs text-gray-500 mt-1">
+
+                            Nhập thông tin sân rồi bấm Thêm sân.
+
+                        </p>
+
+                    </div>
+
+
+                    <form id="addStadiumForm"
+                          onsubmit="handleCreateStadium(event)"
+
+                          class="grid
+                                 grid-cols-1
+                                 md:grid-cols-2
+                                 xl:grid-cols-12
+                                 gap-3
+                                 items-end">
+
+
+                        <!-- TÊN SÂN -->
+
+                        <div class="xl:col-span-3">
+
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">
+
+                                Tên sân *
+
+                            </label>
+
+                            <input id="stadiumName"
+                                   type="text"
+                                   required
+
+                                   class="w-full
+                                          px-3 py-2.5
+                                          border
+                                          border-gray-300
+                                          rounded-lg
+                                          focus:outline-none
+                                          focus:ring-2
+                                          focus:ring-emerald-500"
+
+                                   placeholder="Ví dụ: Sân bóng đá Thủy Lợi">
+
+                        </div>
+
+
+                        <!-- ĐỊA CHỈ -->
+
+                        <div class="xl:col-span-3">
+
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">
+
+                                Địa chỉ *
+
+                            </label>
+
+                            <input id="stadiumAddress"
+                                   type="text"
+                                   required
+
+                                   class="w-full
+                                          px-3 py-2.5
+                                          border
+                                          border-gray-300
+                                          rounded-lg
+                                          focus:outline-none
+                                          focus:ring-2
+                                          focus:ring-emerald-500"
+
+                                   placeholder="Ví dụ: Tây Sơn, Đống Đa, Hà Nội">
+
+                        </div>
+
+
+                        <!-- LOẠI MÔN -->
+
+                        <div class="xl:col-span-2">
+
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">
+
+                                Loại môn
+
+                            </label>
+
+                            <select id="stadiumType"
+
+                                    class="w-full
+                                           px-3 py-2.5
+                                           border
+                                           border-gray-300
+                                           rounded-lg
+                                           focus:outline-none
+                                           focus:ring-2
+                                           focus:ring-emerald-500">
+
+                                <option value="Bóng đá">
+                                    Bóng đá
+                                </option>
+
+                                <option value="Cầu lông">
+                                    Cầu lông
+                                </option>
+
+                                <option value="Pickleball">
+                                    Pickleball
+                                </option>
+
+                                <option value="Tennis">
+                                    Tennis
+                                </option>
+
+                                <option value="Bóng chuyền">
+                                    Bóng chuyền
+                                </option>
+
+                                <option value="Bóng rổ">
+                                    Bóng rổ
+                                </option>
+
+                                <option value="Khác">
+                                    Khác
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- MÔ TẢ -->
+
+                        <div class="xl:col-span-3">
+
+                            <label class="block text-xs font-semibold text-gray-600 mb-1">
+
+                                Mô tả
+
+                            </label>
+
+                            <input id="stadiumDescription"
+                                   type="text"
+
+                                   class="w-full
+                                          px-3 py-2.5
+                                          border
+                                          border-gray-300
+                                          rounded-lg
+                                          focus:outline-none
+                                          focus:ring-2
+                                          focus:ring-emerald-500"
+
+                                   placeholder="Mô tả ngắn về sân">
+
+                        </div>
+
+
+                        <!-- BUTTON -->
+
+                        <div class="xl:col-span-1">
+
+                            <button type="submit"
+
+                                    class="w-full
+                                           bg-emerald-600
+                                           hover:bg-emerald-700
+                                           text-white
+                                           px-4
+                                           py-2.5
+                                           rounded-lg
+                                           text-xs
+                                           font-semibold
+                                           shadow
+                                           transition">
+
+                                <i class="fa-solid fa-plus mr-1"></i>
+
+                                Thêm sân
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+
+                <!-- ======================================= -->
+                <!-- DANH SÁCH SÂN -->
+                <!-- ======================================= -->
+
+                <div class="bg-white
+                            rounded-xl
+                            shadow-sm
+                            border
+                            border-gray-200
+                            p-5">
+
+
+                    <div class="flex
+                                flex-col
+                                lg:flex-row
+                                lg:items-center
+                                justify-between
+                                gap-3
+                                mb-4">
+
+
+                        <div>
+
+                            <h2 class="text-base font-bold text-gray-800">
+
+                                Danh Sách Các Sân Thể Thao
+
+                            </h2>
+
+
+                            <p id="stadiumCount"
+                               class="text-xs text-gray-500 mt-1">
+
+                                Đang tải dữ liệu...
+
+                            </p>
+
+                        </div>
+
+
+                        <!-- SEARCH -->
+
+                        <div class="relative w-full lg:w-80">
+
+
+                            <i class="fa-solid
+                                      fa-magnifying-glass
+                                      absolute
+                                      left-3
+                                      top-1/2
+                                      -translate-y-1/2
+                                      text-gray-400
+                                      text-xs">
+                            </i>
+
+
+                            <input id="stadiumSearch"
+                                   oninput="handleStadiumSearch()"
+                                   type="text"
+
+                                   class="w-full
+                                          pl-9
+                                          pr-3
+                                          py-2.5
+                                          border
+                                          border-gray-300
+                                          rounded-lg
+                                          text-xs
+                                          focus:outline-none
+                                          focus:ring-2
+                                          focus:ring-emerald-500"
+
+                                   placeholder="Tìm theo tên, loại môn, địa chỉ...">
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- TABLE -->
+
+                    <div class="overflow-x-auto
+                                border
+                                border-gray-100
+                                rounded-lg">
+
+
+                        <table class="w-full
+                                      text-left
+                                      border-collapse
+                                      min-w-[900px]">
+
+
+                            <thead>
+
+                            <tr class="bg-gray-50
+                                       border-b
+                                       border-gray-200
+                                       text-xs
+                                       text-gray-500
+                                       uppercase">
+
+                                <th class="p-3 w-16">
+                                    ID
+                                </th>
+
+                                <th class="p-3">
+                                    Tên sân
+                                </th>
+
+                                <th class="p-3 w-36">
+                                    Loại môn
+                                </th>
+
+                                <th class="p-3">
+                                    Địa chỉ
+                                </th>
+
+                                <th class="p-3">
+                                    Mô tả
+                                </th>
+
+                                <th class="p-3 w-36 text-center">
+                                    Thao tác
+                                </th>
+
+                            </tr>
+
+                            </thead>
+
+
+                            <tbody id="admin-stadium-table"
+                                   class="text-xs divide-y divide-gray-100">
+
+                            </tbody>
+
+
+                        </table>
+
+                    </div>
+
+
+                    <!-- PHÂN TRANG -->
+
+                    <div id="stadiumPagination"
+                         class="flex justify-center gap-2 mt-5">
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- ======================================= -->
+            <!-- TAB QUẢN LÝ USER -->
+            <!-- ======================================= -->
+
+            <section id="tab-users-content"
+                     class="space-y-6 hidden">
+
+
                 <div class="flex justify-between items-center">
-                    <h2 class="text-base font-bold text-gray-700">Danh sách sân trong hệ thống</h2>
-                    <button onclick="openAddStadiumModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow transition flex items-center space-x-2">
-                        <i class="fa-solid fa-plus"></i>
-                        <span>Thêm sân mới</span>
+
+
+                    <h2 class="text-base font-bold text-gray-700">
+
+                        Danh sách tài khoản người dùng
+
+                    </h2>
+
+
+                    <button onclick="openAddUserModal()"
+
+                            class="bg-emerald-600
+                                   hover:bg-emerald-700
+                                   text-white
+                                   px-4 py-2
+                                   rounded-lg
+                                   text-xs
+                                   font-semibold">
+
+                        <i class="fa-solid fa-user-plus mr-1"></i>
+
+                        Thêm tài khoản mới
+
                     </button>
+
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+
+                <div class="bg-white
+                            rounded-xl
+                            shadow-sm
+                            border
+                            border-gray-200
+                            overflow-hidden">
+
+
                     <table class="w-full text-left border-collapse">
-                        <thead>
-                        <tr class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase">
-                            <th class="p-4">ID</th>
-                            <th class="p-4">Tên sân</th>
-                            <th class="p-4">Loại môn</th>
-                            <th class="p-4">Địa chỉ</th>
-                            <th class="p-4 text-center">Thao tác</th>
-                        </tr>
-                        </thead>
-                        <tbody id="admin-stadium-table" class="text-xs divide-y divide-gray-100">
-                        <!-- Dữ liệu sân sẽ được load bằng JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
 
-            <!-- TAB 2: QUẢN LÝ TÀI KHOẢN -->
-            <div id="tab-users-content" class="space-y-6 hidden">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-base font-bold text-gray-700">Danh sách tài khoản người dùng</h2>
-                    <button onclick="openAddUserModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow transition flex items-center space-x-2">
-                        <i class="fa-solid fa-user-plus"></i>
-                        <span>Thêm tài khoản mới</span>
-                    </button>
+                        <thead>
+
+                        <tr class="bg-gray-50
+                                   border-b
+                                   border-gray-200
+                                   text-xs
+                                   text-gray-500
+                                   uppercase">
+
+                            <th class="p-4">
+                                ID
+                            </th>
+
+                            <th class="p-4">
+                                Email / Tài khoản
+                            </th>
+
+                            <th class="p-4">
+                                Vai trò
+                            </th>
+
+                            <th class="p-4 text-center">
+                                Thao tác
+                            </th>
+
+                        </tr>
+
+                        </thead>
+
+
+                        <tbody id="admin-user-table"
+                               class="text-xs divide-y divide-gray-100">
+
+                        </tbody>
+
+                    </table>
+
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                        <tr class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase">
-                            <th class="p-4">ID</th>
-                            <th class="p-4">Email / Tài khoản</th>
-                            <th class="p-4">Vai trò</th>
-                            <th class="p-4 text-center">Thao tác</th>
-                        </tr>
-                        </thead>
-                        <tbody id="admin-user-table" class="text-xs divide-y divide-gray-100">
-                        <!-- Dữ liệu tài khoản sẽ được load tự động bằng JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            </section>
+
 
         </main>
+
     </div>
+
 </div>
+
+
+<!-- ======================================= -->
+<!-- MODAL SỬA SÂN -->
+<!-- ======================================= -->
+
+<div id="editStadiumModal"
+     class="fixed inset-0
+            bg-black/50
+            hidden
+            items-center
+            justify-center
+            z-50
+            p-4">
+
+
+    <div class="bg-white
+                rounded-xl
+                p-6
+                w-full
+                max-w-2xl
+                shadow-xl">
+
+
+        <div class="flex
+                    justify-between
+                    items-center
+                    mb-4
+                    border-b
+                    pb-3">
+
+
+            <h3 class="text-base font-bold text-gray-800">
+
+                Cập Nhật Sân Thể Thao
+
+            </h3>
+
+
+            <button onclick="closeEditStadiumModal()"
+                    class="text-gray-400 hover:text-gray-600">
+
+                <i class="fa-solid fa-xmark text-lg"></i>
+
+            </button>
+
+        </div>
+
+
+        <form id="editStadiumForm"
+              onsubmit="handleUpdateStadium(event)"
+
+              class="grid
+                     grid-cols-1
+                     md:grid-cols-2
+                     gap-4
+                     text-xs">
+
+
+            <input type="hidden"
+                   id="editStadiumId">
+
+
+            <!-- TÊN -->
+
+            <div>
+
+                <label class="block font-semibold text-gray-700 mb-1">
+
+                    Tên sân *
+
+                </label>
+
+                <input id="editStadiumName"
+                       type="text"
+                       required
+
+                       class="w-full
+                              px-3 py-2
+                              border
+                              rounded-lg
+                              focus:outline-none
+                              focus:ring-2
+                              focus:ring-emerald-500">
+
+            </div>
+
+
+            <!-- TYPE -->
+
+            <div>
+
+                <label class="block font-semibold text-gray-700 mb-1">
+
+                    Loại môn
+
+                </label>
+
+                <input id="editStadiumType"
+                       type="text"
+
+                       class="w-full
+                              px-3 py-2
+                              border
+                              rounded-lg
+                              focus:outline-none
+                              focus:ring-2
+                              focus:ring-emerald-500">
+
+            </div>
+
+
+            <!-- ADDRESS -->
+
+            <div class="md:col-span-2">
+
+                <label class="block font-semibold text-gray-700 mb-1">
+
+                    Địa chỉ *
+
+                </label>
+
+                <input id="editStadiumAddress"
+                       type="text"
+                       required
+
+                       class="w-full
+                              px-3 py-2
+                              border
+                              rounded-lg
+                              focus:outline-none
+                              focus:ring-2
+                              focus:ring-emerald-500">
+
+            </div>
+
+
+            <!-- DESCRIPTION -->
+
+            <div class="md:col-span-2">
+
+                <label class="block font-semibold text-gray-700 mb-1">
+
+                    Mô tả
+
+                </label>
+
+                <textarea id="editStadiumDescription"
+                          rows="3"
+
+                          class="w-full
+                                 px-3 py-2
+                                 border
+                                 rounded-lg
+                                 focus:outline-none
+                                 focus:ring-2
+                                 focus:ring-emerald-500">
+
+                </textarea>
+
+            </div>
+
+
+            <div class="md:col-span-2
+                        flex
+                        justify-end
+                        space-x-2
+                        pt-3
+                        border-t">
+
+
+                <button type="button"
+                        onclick="closeEditStadiumModal()"
+
+                        class="px-4 py-2
+                               bg-gray-200
+                               hover:bg-gray-300
+                               text-gray-700
+                               rounded-lg">
+
+                    Hủy
+
+                </button>
+
+
+                <button type="submit"
+
+                        class="px-4 py-2
+                               bg-emerald-600
+                               hover:bg-emerald-700
+                               text-white
+                               rounded-lg">
+
+                    Lưu thay đổi
+
+                </button>
+
+            </div>
+
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- ======================================= -->
+<!-- MODAL THÊM TÀI KHOẢN -->
+<!-- ======================================= -->
+
+<div id="addUserModal"
+     class="fixed inset-0
+            bg-black/50
+            hidden
+            items-center
+            justify-center
+            z-50
+            p-4">
+
+
+    <div class="bg-white
+                rounded-xl
+                p-6
+                w-full
+                max-w-md
+                shadow-lg">
+
+
+        <div class="flex
+                    justify-between
+                    items-center
+                    mb-4
+                    border-b
+                    pb-3">
+
+
+            <h3 class="text-base font-bold text-gray-800">
+
+                Thêm Tài Khoản Mới
+
+            </h3>
+
+
+            <button onclick="closeAddUserModal()"
+                    class="text-gray-400 hover:text-gray-600">
+
+                <i class="fa-solid fa-xmark text-lg"></i>
+
+            </button>
+
+        </div>
+
+
+        <form id="addUserForm"
+              onsubmit="handleCreateUser(event)"
+              class="space-y-4 text-xs">
+
+
+            <div>
+
+                <label class="block font-semibold text-gray-700 mb-1">
+
+                    Email / Tên tài khoản
+
+                </label>
+
+                <input id="newEmail"
+                       type="text"
+                       required
+
+                       class="w-full px-3 py-2 border rounded-lg"
+
+                       placeholder="user@gmail.com">
+
+            </div>
+
+
+            <div>
+
+                <label class="block font-semibold text-gray-700 mb-1">
+
+                    Mật khẩu
+
+                </label>
+
+                <input id="newPassword"
+                       type="password"
+                       required
+
+                       class="w-full px-3 py-2 border rounded-lg">
+
+            </div>
+
+
+            <div>
+
+                <label class="block font-semibold text-gray-700 mb-1">
+
+                    Vai trò
+
+                </label>
+
+
+                <select id="newRole"
+                        class="w-full px-3 py-2 border rounded-lg">
+
+                    <option value="USER">
+                        USER
+                    </option>
+
+                    <option value="ADMIN">
+                        ADMIN
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="flex
+                        justify-end
+                        space-x-2
+                        pt-3
+                        border-t">
+
+
+                <button type="button"
+                        onclick="closeAddUserModal()"
+
+                        class="px-4 py-2
+                               bg-gray-200
+                               rounded-lg">
+
+                    Hủy
+
+                </button>
+
+
+                <button type="submit"
+
+                        class="px-4 py-2
+                               bg-emerald-600
+                               hover:bg-emerald-700
+                               text-white
+                               rounded-lg">
+
+                    Tạo tài khoản
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // Hiển thị email admin từ localStorage nếu có
-        const userEmail = localStorage.getItem("userEmail") || "admin@stadium.com";
-        document.getElementById("admin-email").textContent = userEmail;
 
-        // Tải dữ liệu sân mặc định
-        loadAdminStadiums();
-    });
+    // =========================================================
+    // API
+    // =========================================================
 
-    // Chuyển đổi giữa các tab quản lý
-    function switchTab(tabName) {
-        const tabStadiums = document.getElementById("tab-stadiums-content");
-        const tabUsers = document.getElementById("tab-users-content");
-        const navStadiums = document.getElementById("nav-stadiums");
-        const navUsers = document.getElementById("nav-users");
-        const pageTitle = document.getElementById("page-title");
+    const STADIUM_API = "/api/fields";
 
-        if (tabName === 'stadiums') {
-            tabStadiums.classList.remove("hidden");
-            tabUsers.classList.add("hidden");
-            navStadiums.className = "flex items-center space-x-3 px-4 py-2.5 rounded-lg bg-emerald-800 text-white font-medium transition";
-            navUsers.className = "flex items-center space-x-3 px-4 py-2.5 rounded-lg text-emerald-200 hover:bg-emerald-800 hover:text-white transition";
-            pageTitle.textContent = "Quản Lý Sân Thể Thao";
+    const USER_API = "/api/admin/users";
+
+
+    // =========================================================
+    // PHÂN TRANG
+    // =========================================================
+
+    const STADIUM_PAGE_SIZE = 5;
+
+    let allStadiums = [];
+
+    let filteredStadiums = [];
+
+    let stadiumPage = 1;
+
+
+    // =========================================================
+    // LOAD TRANG
+    // =========================================================
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            const userEmail =
+                localStorage.getItem("userEmail")
+                || "admin@stadium.com";
+
+
+            document
+                .getElementById("admin-email")
+                .textContent =
+                userEmail;
+
+
             loadAdminStadiums();
-        } else {
-            tabUsers.classList.remove("hidden");
-            tabStadiums.classList.add("hidden");
-            navUsers.className = "flex items-center space-x-3 px-4 py-2.5 rounded-lg bg-emerald-800 text-white font-medium transition";
-            navStadiums.className = "flex items-center space-x-3 px-4 py-2.5 rounded-lg text-emerald-200 hover:bg-emerald-800 hover:text-white transition";
-            pageTitle.textContent = "Quản Lý Tài Khoản";
+
+        }
+    );
+
+
+    // =========================================================
+    // CHUYỂN TAB
+    // =========================================================
+
+    function switchTab(tabName) {
+
+        const stadiumContent =
+            document.getElementById(
+                "tab-stadiums-content"
+            );
+
+
+        const userContent =
+            document.getElementById(
+                "tab-users-content"
+            );
+
+
+        const stadiumNav =
+            document.getElementById(
+                "nav-stadiums"
+            );
+
+
+        const userNav =
+            document.getElementById(
+                "nav-users"
+            );
+
+
+        const title =
+            document.getElementById(
+                "page-title"
+            );
+
+
+        if (tabName === "stadiums") {
+
+            stadiumContent
+                .classList
+                .remove("hidden");
+
+
+            userContent
+                .classList
+                .add("hidden");
+
+
+            stadiumNav.className =
+                "flex items-center space-x-3 px-4 py-2.5 rounded-lg bg-emerald-800 text-white font-medium transition";
+
+
+            userNav.className =
+                "flex items-center space-x-3 px-4 py-2.5 rounded-lg text-emerald-200 hover:bg-emerald-800 hover:text-white transition";
+
+
+            title.textContent =
+                "Quản Lý Sân Thể Thao";
+
+
+            loadAdminStadiums();
+
+        }
+
+        else {
+
+            userContent
+                .classList
+                .remove("hidden");
+
+
+            stadiumContent
+                .classList
+                .add("hidden");
+
+
+            userNav.className =
+                "flex items-center space-x-3 px-4 py-2.5 rounded-lg bg-emerald-800 text-white font-medium transition";
+
+
+            stadiumNav.className =
+                "flex items-center space-x-3 px-4 py-2.5 rounded-lg text-emerald-200 hover:bg-emerald-800 hover:text-white transition";
+
+
+            title.textContent =
+                "Quản Lý Tài Khoản";
+
+
             loadAdminUsers();
+
         }
     }
 
-    // Tải danh sách sân cho trang Admin
-    function loadAdminStadiums() {
-        fetch('http://localhost:8083/api/fields')
-            .then(res => res.json())
-            .then(data => {
-                const tbody = document.getElementById("admin-stadium-table");
-                tbody.innerHTML = "";
-                if (!data || data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">Chưa có sân nào trong hệ thống.</td></tr>`;
-                    return;
+
+    // =========================================================
+    // LOAD SÂN
+    // =========================================================
+
+    async function loadAdminStadiums() {
+
+        const tbody =
+            document.getElementById(
+                "admin-stadium-table"
+            );
+
+
+        tbody.innerHTML =
+            `
+            <tr>
+                <td colspan="6"
+                    class="p-6 text-center text-gray-500">
+
+                    Đang tải dữ liệu...
+
+                </td>
+            </tr>
+            `;
+
+
+        try {
+
+            const response =
+                await fetch(STADIUM_API);
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "HTTP " + response.status
+                );
+            }
+
+
+            allStadiums =
+                await response.json();
+
+
+            if (!Array.isArray(allStadiums)) {
+
+                allStadiums = [];
+
+            }
+
+
+            allStadiums.sort(
+                (a, b) =>
+                    Number(a.id || 0)
+                    -
+                    Number(b.id || 0)
+            );
+
+
+            stadiumPage = 1;
+
+
+            applyStadiumFilter();
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Lỗi tải sân:",
+                error
+            );
+
+
+            document
+                .getElementById(
+                    "stadiumCount"
+                )
+                .textContent =
+                "Không thể tải dữ liệu";
+
+
+            tbody.innerHTML =
+                `
+                <tr>
+                    <td colspan="6"
+                        class="p-6 text-center text-red-500">
+
+                        Không thể tải danh sách sân.
+                        Hãy kiểm tra Stadium Service
+                        và API Gateway.
+
+                    </td>
+                </tr>
+                `;
+
+        }
+    }
+
+
+    // =========================================================
+    // SEARCH
+    // =========================================================
+
+    function handleStadiumSearch() {
+
+        stadiumPage = 1;
+
+        applyStadiumFilter();
+
+    }
+
+
+    function applyStadiumFilter() {
+
+        const keyword =
+            document
+                .getElementById(
+                    "stadiumSearch"
+                )
+                .value
+                .trim()
+                .toLowerCase();
+
+
+        filteredStadiums =
+            allStadiums.filter(
+                stadium => {
+
+                    const text = [
+
+                        stadium.name,
+
+                        stadium.type,
+
+                        stadium.address,
+
+                        stadium.description
+
+                    ]
+                        .filter(Boolean)
+                        .join(" ")
+                        .toLowerCase();
+
+
+                    return text.includes(keyword);
+
                 }
-                data.forEach(stadium => {
-                    tbody.innerHTML += `
-                            <tr class="hover:bg-gray-50">
-                                <td class="p-4 font-semibold text-gray-700">${stadium.id}</td>
-                                <td class="p-4 font-medium text-emerald-800">${stadium.name}</td>
-                                <td class="p-4"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-semibold">${stadium.type || 'N/A'}</span></td>
-                                <td class="p-4 text-gray-600">${stadium.address || 'Đang cập nhật'}</td>
-                                <td class="p-4 text-center space-x-2">
-                                    <button onclick="deleteStadium(${stadium.id})" class="text-rose-600 hover:text-rose-800 font-medium px-2 py-1 rounded bg-rose-50 transition">Xóa</button>
-                                </td>
-                            </tr>
-                        `;
-                });
-            })
-            .catch(err => console.error("Lỗi tải sân:", err));
+            );
+
+
+        const totalPages =
+            Math.max(
+                1,
+                Math.ceil(
+                    filteredStadiums.length
+                    /
+                    STADIUM_PAGE_SIZE
+                )
+            );
+
+
+        if (stadiumPage > totalPages) {
+
+            stadiumPage = totalPages;
+
+        }
+
+
+        document
+            .getElementById(
+                "stadiumCount"
+            )
+            .textContent =
+            `Tổng cộng ${filteredStadiums.length} sân`;
+
+
+        renderStadiumTable();
+
+        renderStadiumPagination();
+
     }
 
-    // Tải danh sách tài khoản thực tế từ API Backend
-    function loadAdminUsers() {
-        fetch('http://localhost:8083/api/admin/users')
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error("Phản hồi từ máy chủ không hợp lệ: " + res.status);
-                }
-                return res.json();
-            })
-            .then(data => {
-                const tbody = document.getElementById("admin-user-table");
-                tbody.innerHTML = "";
 
-                if (!data || data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">Chưa có tài khoản nào trong hệ thống.</td></tr>`;
-                    return;
-                }
+    // =========================================================
+    // RENDER TABLE
+    // =========================================================
 
-                data.forEach(user => {
-                    const roleBadge = user.role === 'ADMIN' || user.role === 'ROLE_ADMIN'
-                        ? `<span class="px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-semibold">ADMIN</span>`
-                        : `<span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-semibold">USER</span>`;
+    function renderStadiumTable() {
 
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50">
-                            <td class="p-4 font-semibold text-gray-700">${user.id}</td>
-                            <td class="p-4 font-medium text-gray-800">${user.email || user.username}</td>
-                            <td class="p-4">${roleBadge}</td>
-                            <td class="p-4 text-center space-x-2">
-                                <button onclick="toggleUserRole(${user.id}, '${user.role}')" class="text-indigo-600 hover:text-indigo-800 font-medium px-2.5 py-1 rounded bg-indigo-50 transition text-xs">
-                                    Đổi Quyền
-                                </button>
-                                <button onclick="deleteUser(${user.id})" class="text-rose-600 hover:text-rose-800 font-medium px-2.5 py-1 rounded bg-rose-50 transition text-xs">
-                                    Xóa
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            })
-            .catch(err => {
-                console.error("Lỗi tải danh sách người dùng:", err);
-                const tbody = document.getElementById("admin-user-table");
-                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500">Không thể tải dữ liệu tài khoản từ máy chủ. Vui lòng kiểm tra lại quyền đăng nhập hoặc kết nối.</td></tr>`;
-            });
+        const tbody =
+            document.getElementById(
+                "admin-stadium-table"
+            );
+
+
+        if (filteredStadiums.length === 0) {
+
+            tbody.innerHTML =
+                `
+                <tr>
+                    <td colspan="6"
+                        class="p-6 text-center text-gray-500">
+
+                        Không tìm thấy sân phù hợp.
+
+                    </td>
+                </tr>
+                `;
+
+
+            return;
+
+        }
+
+
+        const start =
+            (stadiumPage - 1)
+            *
+            STADIUM_PAGE_SIZE;
+
+
+        const pageData =
+            filteredStadiums.slice(
+                start,
+                start + STADIUM_PAGE_SIZE
+            );
+
+
+        tbody.innerHTML =
+            pageData.map(
+                stadium => `
+
+                <tr class="hover:bg-gray-50">
+
+                    <td class="p-3 font-semibold text-gray-700">
+
+                        ${escapeHtml(stadium.id)}
+
+                    </td>
+
+
+                    <td class="p-3 font-medium text-emerald-800">
+
+                        ${escapeHtml(stadium.name || "")}
+
+                    </td>
+
+
+                    <td class="p-3">
+
+                        <span class="px-2
+                                     py-1
+                                     bg-emerald-100
+                                     text-emerald-800
+                                     rounded
+                                     font-semibold">
+
+                            ${escapeHtml(
+                    stadium.type
+                    || "Chưa phân loại"
+                )}
+
+                        </span>
+
+                    </td>
+
+
+                    <td class="p-3 text-gray-600">
+
+                        ${escapeHtml(
+                    stadium.address
+                    || "Đang cập nhật"
+                )}
+
+                    </td>
+
+
+                    <td class="p-3 text-gray-600">
+
+                        ${escapeHtml(
+                    stadium.description
+                    || ""
+                )}
+
+                    </td>
+
+
+                    <td class="p-3 text-center whitespace-nowrap">
+
+                        <button
+                            onclick="openEditStadiumModal(${Number(stadium.id)})"
+
+                            class="bg-amber-500
+                                   hover:bg-amber-600
+                                   text-white
+                                   px-3
+                                   py-1.5
+                                   rounded
+                                   text-xs
+                                   font-semibold
+                                   mr-1">
+
+                            Sửa
+
+                        </button>
+
+
+                        <button
+                            onclick="deleteStadium(${Number(stadium.id)})"
+
+                            class="bg-rose-600
+                                   hover:bg-rose-700
+                                   text-white
+                                   px-3
+                                   py-1.5
+                                   rounded
+                                   text-xs
+                                   font-semibold">
+
+                            Xóa
+
+                        </button>
+
+                    </td>
+
+                </tr>
+
+                `
+            )
+                .join("");
+
     }
 
-    // Hàm thay đổi quyền (Role) của user
-    function toggleUserRole(userId, currentRole) {
-        const newRole = (currentRole === 'ADMIN' || currentRole === 'ROLE_ADMIN') ? 'USER' : 'ADMIN';
-        if (confirm(`Bạn có chắc muốn đổi quyền của tài khoản này thành ${newRole} không?`)) {
-            fetch(`http://localhost:8083/api/admin/users/${userId}/role`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ role: newRole })
-            })
-                .then(res => {
-                    if (res.ok) {
-                        alert("Cập nhật quyền thành công!");
-                        loadAdminUsers();
-                    } else {
-                        alert("Cập nhật quyền thất bại!");
-                    }
-                })
-                .catch(err => console.error("Lỗi:", err));
+
+    // =========================================================
+    // PAGINATION
+    // =========================================================
+
+    function renderStadiumPagination() {
+
+        const container =
+            document.getElementById(
+                "stadiumPagination"
+            );
+
+
+        const totalPages =
+            Math.ceil(
+                filteredStadiums.length
+                /
+                STADIUM_PAGE_SIZE
+            );
+
+
+        container.innerHTML = "";
+
+
+        if (totalPages <= 1) {
+
+            return;
+
+        }
+
+
+        for (
+            let i = 1;
+            i <= totalPages;
+            i++
+        ) {
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+
+            button.textContent = i;
+
+
+            button.className =
+                i === stadiumPage
+
+                    ? "w-8 h-8 rounded bg-blue-600 text-white text-xs font-semibold"
+
+                    : "w-8 h-8 rounded bg-white border border-gray-300 text-gray-700 text-xs hover:bg-gray-50";
+
+
+            button.onclick =
+                () =>
+                    changeStadiumPage(i);
+
+
+            container.appendChild(
+                button
+            );
+
         }
     }
 
-    // Hàm xóa người dùng
-    function deleteUser(userId) {
-        if (confirm("Bạn có chắc chắn muốn xóa tài khoản này khỏi hệ thống không?")) {
-            fetch(`http://localhost:8083/api/admin/users/${userId}`, {
-                method: 'DELETE'
-            })
-                .then(res => {
-                    if (res.ok) {
-                        alert("Xóa tài khoản thành công!");
-                        loadAdminUsers();
-                    } else {
-                        alert("Xóa thất bại!");
-                    }
-                })
-                .catch(err => console.error("Lỗi khi xóa:", err));
-        }
+
+    function changeStadiumPage(page) {
+
+        stadiumPage = page;
+
+        renderStadiumTable();
+
+        renderStadiumPagination();
+
     }
 
-    // Xóa sân
-    function deleteStadium(id) {
-        if (confirm("Bạn có chắc chắn muốn xóa sân này không?")) {
-            fetch(`http://localhost:8083/api/fields/${id}`, {
-                method: 'DELETE'
-            })
-                .then(res => {
-                    if (res.ok) {
-                        alert("Xóa thành công!");
-                        loadAdminStadiums();
-                    } else {
-                        alert("Xóa thất bại!");
-                    }
-                })
-                .catch(err => console.error("Lỗi khi xóa:", err));
-        }
-    }
 
-    // Đăng xuất
-    function handleLogout() {
-        localStorage.removeItem("token");
-        localStorage.removeItem("userEmail");
-        window.location.href = "/login.html";
-    }
+    // =========================================================
+    // THÊM SÂN
+    // =========================================================
 
-    function openAddStadiumModal() {
-        alert("Tính năng mở form thêm sân mới (Bạn có thể tạo một modal hoặc trang thêm sân tương ứng).");
-    }
-    // Mở modal thêm user
-    function openAddUserModal() {
-        document.getElementById("addUserModal").classList.remove("hidden");
-    }
+    async function handleCreateStadium(event) {
 
-    // Đóng modal thêm user
-    function closeAddUserModal() {
-        document.getElementById("addUserModal").classList.add("hidden");
-        document.getElementById("addUserForm").reset();
-    }
-
-    // Gửi request tạo tài khoản mới lên Backend
-    function handleCreateUser(event) {
         event.preventDefault();
 
-        const email = document.getElementById("newEmail").value;
-        const password = document.getElementById("newPassword").value;
-        const role = document.getElementById("newRole").value;
 
-        const userData = {
-            email: email,
-            username: email, // Tuỳ thuộc backend của bạn dùng trường nào
-            password: password,
-            role: role
+        const stadium = {
+
+            name:
+                document
+                    .getElementById(
+                        "stadiumName"
+                    )
+                    .value
+                    .trim(),
+
+            address:
+                document
+                    .getElementById(
+                        "stadiumAddress"
+                    )
+                    .value
+                    .trim(),
+
+            type:
+                document
+                    .getElementById(
+                        "stadiumType"
+                    )
+                    .value
+                    .trim(),
+
+            description:
+                document
+                    .getElementById(
+                        "stadiumDescription"
+                    )
+                    .value
+                    .trim()
+
         };
 
-        fetch('http://localhost:8083/api/admin/users', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(userData)
-        })
-            .then(res => {
-                if (res.ok) {
-                    alert("Thêm tài khoản thành công!");
-                    closeAddUserModal();
-                    loadAdminUsers(); // Tải lại danh sách
-                } else {
-                    alert("Thêm tài khoản thất bại! Vui lòng kiểm tra lại thông tin.");
-                }
-            })
-            .catch(err => {
-                console.error("Lỗi khi tạo user:", err);
-                alert("Không thể kết nối đến máy chủ.");
-            });
+
+        if (
+            !stadium.name
+            ||
+            !stadium.address
+        ) {
+
+            alert(
+                "Tên sân và địa chỉ không được để trống."
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    STADIUM_API,
+                    {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(
+                                stadium
+                            )
+
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    await readError(
+                        response
+                    )
+                );
+
+            }
+
+
+            document
+                .getElementById(
+                    "addStadiumForm"
+                )
+                .reset();
+
+
+            alert(
+                "Thêm sân thành công!"
+            );
+
+
+            await loadAdminStadiums();
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+
+            alert(
+                "Thêm sân thất bại: "
+                +
+                error.message
+            );
+
+        }
     }
+
+
+    // =========================================================
+    // MỞ MODAL SỬA
+    // =========================================================
+
+    function openEditStadiumModal(id) {
+
+        const stadium =
+            allStadiums.find(
+                item =>
+                    Number(item.id)
+                    ===
+                    Number(id)
+            );
+
+
+        if (!stadium) {
+
+            alert(
+                "Không tìm thấy sân cần sửa."
+            );
+
+            return;
+
+        }
+
+
+        document
+            .getElementById(
+                "editStadiumId"
+            )
+            .value =
+            stadium.id;
+
+
+        document
+            .getElementById(
+                "editStadiumName"
+            )
+            .value =
+            stadium.name || "";
+
+
+        document
+            .getElementById(
+                "editStadiumType"
+            )
+            .value =
+            stadium.type || "";
+
+
+        document
+            .getElementById(
+                "editStadiumAddress"
+            )
+            .value =
+            stadium.address || "";
+
+
+        document
+            .getElementById(
+                "editStadiumDescription"
+            )
+            .value =
+            stadium.description || "";
+
+
+        const modal =
+            document.getElementById(
+                "editStadiumModal"
+            );
+
+
+        modal
+            .classList
+            .remove("hidden");
+
+
+        modal
+            .classList
+            .add("flex");
+
+    }
+
+
+    // =========================================================
+    // ĐÓNG MODAL
+    // =========================================================
+
+    function closeEditStadiumModal() {
+
+        const modal =
+            document.getElementById(
+                "editStadiumModal"
+            );
+
+
+        modal
+            .classList
+            .add("hidden");
+
+
+        modal
+            .classList
+            .remove("flex");
+
+
+        document
+            .getElementById(
+                "editStadiumForm"
+            )
+            .reset();
+
+    }
+
+
+    // =========================================================
+    // UPDATE SÂN
+    // =========================================================
+
+    async function handleUpdateStadium(event) {
+
+        event.preventDefault();
+
+
+        const id =
+            Number(
+                document
+                    .getElementById(
+                        "editStadiumId"
+                    )
+                    .value
+            );
+
+
+        const oldStadium =
+            allStadiums.find(
+                item =>
+                    Number(item.id)
+                    ===
+                    id
+            )
+            ||
+            {};
+
+
+        const updatedStadium = {
+
+            ...oldStadium,
+
+
+            name:
+                document
+                    .getElementById(
+                        "editStadiumName"
+                    )
+                    .value
+                    .trim(),
+
+
+            type:
+                document
+                    .getElementById(
+                        "editStadiumType"
+                    )
+                    .value
+                    .trim(),
+
+
+            address:
+                document
+                    .getElementById(
+                        "editStadiumAddress"
+                    )
+                    .value
+                    .trim(),
+
+
+            description:
+                document
+                    .getElementById(
+                        "editStadiumDescription"
+                    )
+                    .value
+                    .trim()
+
+        };
+
+
+        if (
+            !updatedStadium.name
+            ||
+            !updatedStadium.address
+        ) {
+
+            alert(
+                "Tên sân và địa chỉ không được để trống."
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${STADIUM_API}/${id}`,
+                    {
+
+                        method: "PUT",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(
+                                updatedStadium
+                            )
+
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    await readError(
+                        response
+                    )
+                );
+
+            }
+
+
+            closeEditStadiumModal();
+
+
+            alert(
+                "Cập nhật sân thành công!"
+            );
+
+
+            await loadAdminStadiums();
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+
+            alert(
+                "Cập nhật sân thất bại: "
+                +
+                error.message
+            );
+
+        }
+    }
+
+
+    // =========================================================
+    // XÓA SÂN
+    // =========================================================
+
+    async function deleteStadium(id) {
+
+        if (
+            !confirm(
+                "Bạn có chắc chắn muốn xóa sân này không?"
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${STADIUM_API}/${id}`,
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    await readError(
+                        response
+                    )
+                );
+
+            }
+
+
+            alert(
+                "Xóa sân thành công!"
+            );
+
+
+            await loadAdminStadiums();
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+
+            alert(
+                "Xóa sân thất bại: "
+                +
+                error.message
+            );
+
+        }
+    }
+
+
+    // =========================================================
+    // USER
+    // =========================================================
+
+    async function loadAdminUsers() {
+
+        const tbody =
+            document.getElementById(
+                "admin-user-table"
+            );
+
+
+        tbody.innerHTML =
+            `
+            <tr>
+
+                <td colspan="4"
+                    class="p-4 text-center text-gray-500">
+
+                    Đang tải dữ liệu...
+
+                </td>
+
+            </tr>
+            `;
+
+
+        try {
+
+            const response =
+                await fetch(USER_API);
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "HTTP "
+                    +
+                    response.status
+                );
+
+            }
+
+
+            const data =
+                await response.json();
+
+
+            tbody.innerHTML = "";
+
+
+            if (
+                !data
+                ||
+                data.length === 0
+            ) {
+
+                tbody.innerHTML =
+                    `
+                    <tr>
+
+                        <td colspan="4"
+                            class="p-4 text-center text-gray-500">
+
+                            Chưa có tài khoản nào.
+
+                        </td>
+
+                    </tr>
+                    `;
+
+
+                return;
+
+            }
+
+
+            data.forEach(
+                user => {
+
+                    const roleBadge =
+
+                        user.role === "ADMIN"
+                        ||
+                        user.role === "ROLE_ADMIN"
+
+                            ?
+
+                            `
+                            <span class="px-2 py-0.5
+                                         bg-purple-100
+                                         text-purple-800
+                                         rounded
+                                         font-semibold">
+
+                                ADMIN
+
+                            </span>
+                            `
+
+                            :
+
+                            `
+                            <span class="px-2 py-0.5
+                                         bg-blue-100
+                                         text-blue-800
+                                         rounded
+                                         font-semibold">
+
+                                USER
+
+                            </span>
+                            `;
+
+
+                    tbody.innerHTML +=
+                        `
+                        <tr class="hover:bg-gray-50">
+
+                            <td class="p-4">
+                                ${escapeHtml(user.id)}
+                            </td>
+
+                            <td class="p-4">
+                                ${escapeHtml(
+                            user.email
+                            ||
+                            user.username
+                            ||
+                            ""
+                        )}
+                            </td>
+
+                            <td class="p-4">
+
+                                ${roleBadge}
+
+                            </td>
+
+                            <td class="p-4 text-center">
+
+                                <button
+                                    onclick="
+                                        toggleUserRole(
+                                            ${Number(user.id)},
+                                            '${escapeJsString(user.role || "USER")}'
+                                        )
+                                    "
+
+                                    class="text-indigo-600
+                                           bg-indigo-50
+                                           px-2.5 py-1
+                                           rounded
+                                           mr-1">
+
+                                    Đổi quyền
+
+                                </button>
+
+
+                                <button
+                                    onclick="
+                                        deleteUser(
+                                            ${Number(user.id)}
+                                        )
+                                    "
+
+                                    class="text-rose-600
+                                           bg-rose-50
+                                           px-2.5 py-1
+                                           rounded">
+
+                                    Xóa
+
+                                </button>
+
+                            </td>
+
+                        </tr>
+                        `;
+
+                }
+            );
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+
+            tbody.innerHTML =
+                `
+                <tr>
+
+                    <td colspan="4"
+                        class="p-4 text-center text-red-500">
+
+                        Không thể tải dữ liệu tài khoản.
+
+                    </td>
+
+                </tr>
+                `;
+
+        }
+    }
+
+
+    // =========================================================
+    // ĐỔI QUYỀN
+    // =========================================================
+
+    async function toggleUserRole(
+        userId,
+        currentRole
+    ) {
+
+        const newRole =
+
+            currentRole === "ADMIN"
+            ||
+            currentRole === "ROLE_ADMIN"
+
+                ? "USER"
+
+                : "ADMIN";
+
+
+        if (
+            !confirm(
+                `Đổi quyền thành ${newRole}?`
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${USER_API}/${userId}/role`,
+                    {
+
+                        method: "PUT",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify({
+                                role: newRole
+                            })
+
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    await readError(response)
+                );
+
+            }
+
+
+            alert(
+                "Cập nhật quyền thành công!"
+            );
+
+
+            loadAdminUsers();
+
+        }
+
+        catch (error) {
+
+            alert(
+                "Cập nhật quyền thất bại: "
+                +
+                error.message
+            );
+
+        }
+    }
+
+
+    // =========================================================
+    // XÓA USER
+    // =========================================================
+
+    async function deleteUser(userId) {
+
+        if (
+            !confirm(
+                "Bạn có chắc chắn muốn xóa tài khoản này?"
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${USER_API}/${userId}`,
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    await readError(response)
+                );
+
+            }
+
+
+            alert(
+                "Xóa tài khoản thành công!"
+            );
+
+
+            loadAdminUsers();
+
+        }
+
+        catch (error) {
+
+            alert(
+                "Xóa tài khoản thất bại: "
+                +
+                error.message
+            );
+
+        }
+    }
+
+
+    // =========================================================
+    // MODAL USER
+    // =========================================================
+
+    function openAddUserModal() {
+
+        const modal =
+            document.getElementById(
+                "addUserModal"
+            );
+
+
+        modal.classList.remove(
+            "hidden"
+        );
+
+
+        modal.classList.add(
+            "flex"
+        );
+
+    }
+
+
+    function closeAddUserModal() {
+
+        const modal =
+            document.getElementById(
+                "addUserModal"
+            );
+
+
+        modal.classList.add(
+            "hidden"
+        );
+
+
+        modal.classList.remove(
+            "flex"
+        );
+
+
+        document
+            .getElementById(
+                "addUserForm"
+            )
+            .reset();
+
+    }
+
+
+    // =========================================================
+    // CREATE USER
+    // =========================================================
+
+    async function handleCreateUser(event) {
+
+        event.preventDefault();
+
+
+        const email =
+            document
+                .getElementById(
+                    "newEmail"
+                )
+                .value
+                .trim();
+
+
+        const password =
+            document
+                .getElementById(
+                    "newPassword"
+                )
+                .value;
+
+
+        const role =
+            document
+                .getElementById(
+                    "newRole"
+                )
+                .value;
+
+
+        try {
+
+            const response =
+                await fetch(
+                    USER_API,
+                    {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                email: email,
+
+                                username: email,
+
+                                password: password,
+
+                                role: role
+
+                            })
+
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    await readError(response)
+                );
+
+            }
+
+
+            alert(
+                "Thêm tài khoản thành công!"
+            );
+
+
+            closeAddUserModal();
+
+
+            loadAdminUsers();
+
+        }
+
+        catch (error) {
+
+            alert(
+                "Thêm tài khoản thất bại: "
+                +
+                error.message
+            );
+
+        }
+    }
+
+
+    // =========================================================
+    // LOGOUT
+    // =========================================================
+
+    function handleLogout() {
+
+        localStorage.removeItem(
+            "token"
+        );
+
+        localStorage.removeItem(
+            "userEmail"
+        );
+
+        localStorage.removeItem(
+            "role"
+        );
+
+
+        window.location.href =
+            "/login.html";
+
+    }
+
+
+    // =========================================================
+    // ĐỌC LỖI API
+    // =========================================================
+
+    async function readError(response) {
+
+        const text =
+            await response.text();
+
+
+        if (!text) {
+
+            return `HTTP ${response.status}`;
+
+        }
+
+
+        try {
+
+            const json =
+                JSON.parse(text);
+
+
+            return (
+                json.message
+                ||
+                json.error
+                ||
+                text
+            );
+
+        }
+
+        catch (_) {
+
+            return text;
+
+        }
+    }
+
+
+    // =========================================================
+    // CHỐNG CHÈN HTML
+    // =========================================================
+
+    function escapeHtml(value) {
+
+        return String(
+            value ?? ""
+        )
+
+            .replaceAll(
+                "&",
+                "&amp;"
+            )
+
+            .replaceAll(
+                "<",
+                "&lt;"
+            )
+
+            .replaceAll(
+                ">",
+                "&gt;"
+            )
+
+            .replaceAll(
+                '"',
+                "&quot;"
+            )
+
+            .replaceAll(
+                "'",
+                "&#039;"
+            );
+
+    }
+
+
+    function escapeJsString(value) {
+
+        return String(
+            value ?? ""
+        )
+
+            .replaceAll(
+                "\\",
+                "\\\\"
+            )
+
+            .replaceAll(
+                "'",
+                "\\'"
+            );
+
+    }
+
 </script>
-<!-- MODAL THÊM TÀI KHOẢN -->
-<div id="addUserModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-    <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-lg">
-        <div class="flex justify-between items-center mb-4 border-b pb-3">
-            <h3 class="text-base font-bold text-gray-800">Thêm Tài Khoản Mới</h3>
-            <button onclick="closeAddUserModal()" class="text-gray-400 hover:text-gray-600">
-                <i class="fa-solid fa-xmark text-lg"></i>
-            </button>
-        </div>
-        <form id="addUserForm" onsubmit="handleCreateUser(event)" class="space-y-4 text-xs">
-            <div>
-                <label class="block font-semibold text-gray-700 mb-1">Email / Tên tài khoản</label>
-                <input type="text" id="newEmail" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="vd: user@gmail.com">
-            </div>
-            <div>
-                <label class="block font-semibold text-gray-700 mb-1">Mật khẩu</label>
-                <input type="password" id="newPassword" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="••••••••">
-            </div>
-            <div>
-                <label class="block font-semibold text-gray-700 mb-1">Vai trò (Role)</label>
-                <select id="newRole" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                    <option value="USER">USER (Người dùng)</option>
-                    <option value="ADMIN">ADMIN (Quản trị viên)</option>
-                </select>
-            </div>
-            <div class="flex justify-end space-x-2 pt-3 border-t">
-                <button type="button" onclick="closeAddUserModal()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition">Hủy</button>
-                <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition">Tạo tài khoản</button>
-            </div>
-        </form>
-    </div>
-</div>
+
 </body>
 </html>
