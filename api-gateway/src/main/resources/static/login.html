@@ -53,19 +53,27 @@
             const response = await fetch("/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: email, password: password }) // Điều chỉnh thuộc tính 'email' hoặc 'username' tùy backend của bạn
+                body: JSON.stringify({ email: email, password: password })
             });
 
             if (response.ok) {
                 const data = await response.json();
-                // Lưu token và email vào localStorage
-                localStorage.setItem("token", data.token || "dummy-token");
-                localStorage.setItem("userEmail", email);
 
-                // Chuyển hướng về trang chủ
-                window.location.href = "/";
+                // Lưu token, email và role vào localStorage
+                localStorage.setItem("token", data.token || "dummy-token");
+                localStorage.setItem("userEmail", data.email || email);
+
+                // Lấy thông tin role trả về từ backend (hỗ trợ cả trường hợp field tên là role hoặc userRole)
+                const userRole = data.role || data.userRole || "";
+                localStorage.setItem("userRole", userRole);
+
+                // Phân quyền điều hướng dựa trên role
+                if (userRole === "ADMIN" || userRole === "ROLE_ADMIN") {
+                    window.location.href = "admin.html";
+                } else {
+                    window.location.href = "/";
+                }
             } else {
-                const errText = await response.text();
                 errorDiv.textContent = "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.";
                 errorDiv.classList.remove("hidden");
             }

@@ -17,7 +17,6 @@
 
         <!-- Khu vực hiển thị trạng thái đăng nhập động -->
         <div id="auth-section" class="flex items-center space-x-3">
-            <!-- Mặc định ẩn, sẽ được hiển thị qua JS nếu đã đăng nhập -->
             <div id="logged-in-menu" class="hidden items-center space-x-3">
                 <span id="user-greeting" class="text-sm bg-emerald-700 px-3 py-1 rounded-full">
                     <i class="fa-regular fa-user mr-1"></i> Xin chào, <span id="user-email-display"></span>
@@ -27,7 +26,6 @@
                 </button>
             </div>
 
-            <!-- Mặc định hiển thị khi chưa đăng nhập -->
             <div id="logged-out-menu" class="flex items-center space-x-2">
                 <a href="/login.html" class="bg-emerald-700 hover:bg-emerald-800 text-sm px-3 py-1.5 rounded transition">Đăng nhập</a>
                 <a href="/DangKy.html" class="bg-white text-emerald-700 hover:bg-emerald-50 text-sm px-3 py-1.5 rounded font-medium transition">Đăng ký</a>
@@ -43,20 +41,22 @@
 
     <div class="max-w-2xl mx-auto bg-white rounded-full p-2 shadow-lg flex items-center">
         <span class="pl-4 text-gray-400"><i class="fa-solid fa-magnifying-glass"></i></span>
-        <input type="text" placeholder="Tìm kiếm sân, địa điểm, môn thể thao..." class="w-full px-4 py-2 text-gray-700 focus:outline-none text-sm">
+        <input type="text" id="search-input" placeholder="Tìm kiếm sân, địa điểm, môn thể thao..." class="w-full px-4 py-2 text-gray-700 focus:outline-none text-sm">
         <button class="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full text-sm font-medium hover:bg-emerald-100 transition whitespace-nowrap">
             <i class="fa-solid fa-sliders mr-1"></i> Bộ lọc nâng cao
         </button>
     </div>
 
-    <!-- FILTER TABS -->
+    <!-- FILTER TABS (Đã thêm data-category và class filter-btn để xử lý bấm chọn) -->
     <div class="flex flex-wrap justify-center gap-2 mt-6">
-        <button class="bg-white text-emerald-700 px-4 py-1.5 rounded-full text-xs font-semibold shadow flex items-center"><i class="fa-solid fa-check mr-1.5"></i> Tất cả sân</button>
-        <button class="bg-emerald-700 bg-opacity-60 hover:bg-opacity-100 text-white px-4 py-1.5 rounded-full text-xs transition">Sân Cầu Lông</button>
-        <button class="bg-emerald-700 bg-opacity-60 hover:bg-opacity-100 text-white px-4 py-1.5 rounded-full text-xs transition">Sân Bóng Đá</button>
-        <button class="bg-emerald-700 bg-opacity-60 hover:bg-opacity-100 text-white px-4 py-1.5 rounded-full text-xs transition">Sân Tennis</button>
-        <button class="bg-emerald-700 bg-opacity-60 hover:bg-opacity-100 text-white px-4 py-1.5 rounded-full text-xs transition">Sân Pickleball</button>
-        <button class="bg-emerald-700 bg-opacity-60 hover:bg-opacity-100 text-white px-4 py-1.5 rounded-full text-xs transition">Sân Bóng Chuyền</button>
+        <button class="filter-btn bg-white text-emerald-700 px-4 py-1.5 rounded-full text-xs font-semibold shadow flex items-center transition" data-category="">
+            <i class="fa-solid fa-check mr-1.5"></i> Tất cả sân
+        </button>
+        <button class="filter-btn bg-emerald-700 bg-opacity-60 hover:bg-opacity-100 text-white px-4 py-1.5 rounded-full text-xs transition" data-category="BADMINTON">Sân Cầu Lông</button>
+        <button class="filter-btn bg-emerald-700 bg-opacity-60 hover:bg-opacity-100 text-white px-4 py-1.5 rounded-full text-xs transition" data-category="FOOTBALL">Sân Bóng Đá</button>
+        <button class="filter-btn bg-emerald-700 bg-opacity-60 hover:bg-opacity-100 text-white px-4 py-1.5 rounded-full text-xs transition" data-category="TENNIS">Sân Tennis</button>
+        <button class="filter-btn bg-emerald-700 bg-opacity-60 hover:bg-opacity-100 text-white px-4 py-1.5 rounded-full text-xs transition" data-category="PICKLEBALL">Sân Pickleball</button>
+        <button class="filter-btn bg-emerald-700 bg-opacity-60 hover:bg-opacity-100 text-white px-4 py-1.5 rounded-full text-xs transition" data-category="VOLLEYBALL">Sân Bóng Chuyền</button>
     </div>
 </section>
 
@@ -66,7 +66,6 @@
         <span class="text-rose-500 mr-2">📍</span> Danh sách Cụm Sân Hiện Có
     </h2>
 
-    <!-- GRID DANH SÁCH SÂN (Sẽ được đổ dữ liệu tự động bằng JavaScript) -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="stadium-list">
         <!-- Dữ liệu từ API sẽ hiển thị ở đây -->
     </div>
@@ -82,12 +81,12 @@
         <div>
             <h4 class="font-bold text-sm mb-2">Môn Thể Thao</h4>
             <ul class="space-y-1 text-emerald-200">
-                <li>› Tất cả các sân</li>
-                <li>› Cầu lông</li>
-                <li>› Bóng đá</li>
-                <li>› Tennis</li>
-                <li>› Pickleball</li>
-                <li>› Bóng chuyền</li>
+                <li><a href="#search-section" onclick="filterStadiums('all')" class="hover:text-white transition-colors">› Tất cả các sân</a></li>
+                <li><a href="#search-section" onclick="filterStadiums('badminton')" class="hover:text-white transition-colors">› Cầu lông</a></li>
+                <li><a href="#search-section" onclick="filterStadiums('football')" class="hover:text-white transition-colors">› Bóng đá</a></li>
+                <li><a href="#search-section" onclick="filterStadiums('tennis')" class="hover:text-white transition-colors">› Tennis</a></li>
+                <li><a href="#search-section" onclick="filterStadiums('pickleball')" class="hover:text-white transition-colors">› Pickleball</a></li>
+                <li><a href="#search-section" onclick="filterStadiums('volleyball')" class="hover:text-white transition-colors">› Bóng chuyển</a></li>
             </ul>
         </div>
         <div>
@@ -100,50 +99,79 @@
     <div class="border-t border-emerald-700 mt-8 pt-4 text-center text-emerald-300">
         © 2026 Smart Stadium Team. All rights reserved.
     </div>
-</footer>
-
-<!-- SCRIPT XỬ LÝ ĐĂNG NHẬP VÀ GỌI API -->
+</footer><!-- SCRIPT XỬ LÝ -->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        // 0. Kiểm tra phân quyền: Nếu là ADMIN cố truy cập trang chủ thì chuyển thẳng sang trang quản trị
+        const userRole = localStorage.getItem("userRole");
+        if (userRole === "ADMIN" || userRole === "ROLE_ADMIN") {
+            window.location.href = "admin.html";
+            return; // Dừng thực thi các dòng code bên dưới
+        }
+
         // 1. Kiểm tra trạng thái đăng nhập từ localStorage
         const token = localStorage.getItem("token");
-        const userEmail = localStorage.getItem("userEmail"); // Hoặc lấy từ thông tin lưu trữ khi login thành công
+        const userEmail = localStorage.getItem("userEmail");
 
         const loggedInMenu = document.getElementById("logged-in-menu");
         const loggedOutMenu = document.getElementById("logged-out-menu");
         const userEmailDisplay = document.getElementById("user-email-display");
 
         if (token && userEmail) {
-            // Đã đăng nhập: Hiện phần tên + nút đăng xuất, ẩn nút đăng nhập/đăng ký
             userEmailDisplay.textContent = userEmail;
             loggedInMenu.classList.remove("hidden");
             loggedInMenu.classList.add("flex");
             loggedOutMenu.classList.add("hidden");
         } else {
-            // Chưa đăng nhập: Hiện nút đăng nhập/đăng ký, ẩn phần chào hỏi
             loggedInMenu.classList.add("hidden");
             loggedOutMenu.classList.remove("hidden");
         }
 
-        // 2. Gọi API lấy danh sách sân
-        fetch("/api/fields")
+        // Tải toàn bộ danh sách sân ban đầu
+        fetchStadiums("");
+
+        // 2. Xử lý sự kiện bấm chọn các nút lọc loại sân trên Header
+        const filterButtons = document.querySelectorAll(".filter-btn");
+        filterButtons.forEach(button => {
+            button.addEventListener("click", function () {
+                // Thay đổi giao diện active của nút bấm
+                filterButtons.forEach(btn => {
+                    btn.className = "filter-btn bg-emerald-700 bg-opacity-60 hover:bg-opacity-100 text-white px-4 py-1.5 rounded-full text-xs transition";
+                });
+                this.className = "filter-btn bg-white text-emerald-700 px-4 py-1.5 rounded-full text-xs font-semibold shadow flex items-center transition";
+
+                // Lấy giá trị category và gọi API lọc
+                const category = this.getAttribute("data-category");
+                fetchStadiums(category);
+            });
+        });
+    });
+
+    // Hàm gọi API lấy danh sách sân (hỗ trợ lọc theo loại)
+    function fetchStadiums(category) {
+        let url = "/api/fields";
+        if (category && category.trim() !== "" && category.toLowerCase() !== "all") {
+            url = `/api/fields?type=${encodeURIComponent(category)}`;
+        }
+
+        fetch(url)
             .then(response => response.json())
             .then(data => {
                 const stadiumListContainer = document.getElementById("stadium-list");
-                stadiumListContainer.innerHTML = ""; // Xóa dữ liệu cũ nếu có
+                stadiumListContainer.innerHTML = "";
 
                 if (!data || data.length === 0) {
-                    stadiumListContainer.innerHTML = `<p class="text-gray-500 col-span-3 text-center py-6">Chưa có sân nào trong cơ sở dữ liệu.</p>`;
+                    stadiumListContainer.innerHTML = `<p class="text-gray-500 col-span-3 text-center py-6">Không tìm thấy sân nào phù hợp.</p>`;
                     return;
                 }
 
-                // Duyệt qua toàn bộ danh sách sân lấy từ CSDL và tạo card HTML tương ứng
                 data.forEach(stadium => {
                     const card = document.createElement("div");
                     card.className = "bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between";
 
                     card.innerHTML = `
                         <div>
+                            <span class="inline-block px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-800 rounded mb-2">${stadium.type || stadium.category || 'Thể thao'}</span>
                             <h3 class="font-bold text-emerald-800 text-base mb-1">${stadium.name || 'Chưa có tên'}</h3>
                             <p class="text-xs text-gray-500 mb-2"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i> ${stadium.address || 'Đang cập nhật'}</p>
                             <p class="text-xs text-gray-600 bg-gray-50 p-2 rounded mb-4">${stadium.description || 'Không có mô tả chi tiết'}</p>
@@ -160,15 +188,30 @@
                 const stadiumListContainer = document.getElementById("stadium-list");
                 stadiumListContainer.innerHTML = `<p class="text-red-500 col-span-3 text-center py-6">Không thể kết nối đến máy chủ để tải danh sách sân.</p>`;
             });
-    });
+    }
+
+    // Hàm phục vụ cho các nút ở Footer gọi trực tiếp
+    function filterStadiums(category) {
+        fetchStadiums(category);
+
+        // Cập nhật lại giao diện active của nút trên header cho đồng bộ
+        const filterButtons = document.querySelectorAll(".filter-btn");
+        filterButtons.forEach(btn => {
+            const btnCategory = btn.getAttribute("data-category") || "all";
+            if (btnCategory === category || (category === "" && btnCategory === "all")) {
+                btn.className = "filter-btn bg-white text-emerald-700 px-4 py-1.5 rounded-full text-xs font-semibold shadow flex items-center transition";
+            } else {
+                btn.className = "filter-btn bg-emerald-700 bg-opacity-60 hover:bg-opacity-100 text-white px-4 py-1.5 rounded-full text-xs transition";
+            }
+        });
+    }
 
     // Hàm xử lý đăng xuất
     function handleLogout() {
         localStorage.removeItem("token");
         localStorage.removeItem("userEmail");
-        window.location.reload(); // Tải lại trang để cập nhật giao diện về trạng thái chưa đăng nhập
+        window.location.reload();
     }
 </script>
-
 </body>
 </html>
