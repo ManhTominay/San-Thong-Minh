@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Tìm Kiếm Nâng Cao - Smart Stadium</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <style>
+        body {
+            background: #f4f6f8;
+        }
+
+        .sport-btn.active {
+            background: #059669;
+            color: white;
+            border-color: #059669;
+        }
+
+        .stadium-card {
+            transition: all 0.2s ease;
+        }
+
+        .stadium-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+        }
+    </style>
+</head>
+
+
+<body class="min-h-screen text-gray-800">
+
+
+<!-- ===================================================== -->
+<!-- HEADER -->
+<!-- ===================================================== -->
+
+<header class="bg-gradient-to-r from-emerald-700 to-emerald-600 text-white">
+
+    <div class="max-w-7xl mx-auto px-5 py-5">
+
+        <div class="flex items-center justify-between">
+
+            <button
+                    onclick="goHome()"
+                    class="border border-white/60
+                           hover:bg-white/10
+                           px-4 py-2
+                           rounded-full
+                           text-sm
+                           transition">
+
+                <i class="fa-solid fa-arrow-left mr-2"></i>
+
+                Quay lại trang chủ
+
+            </button>
+
+
+            <div class="text-center flex-1">
+
+                <h1 class="text-3xl font-bold">
+
+                    🔍 Tìm Kiếm Sân Nâng Cao
+
+                </h1>
+
+                <p class="text-emerald-100 mt-1 text-sm">
+
+                    Tìm sân phù hợp nhanh chóng và chính xác
+
+                </p>
+
+            </div>
+
+
+            <div class="w-36"></div>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<!-- ===================================================== -->
+<!-- MAIN -->
+<!-- ===================================================== -->
+
+<main class="max-w-7xl mx-auto px-5 py-6">
+
+
+    <!-- ================================================= -->
+    <!-- FILTER BOX -->
+    <!-- ================================================= -->
+
+    <section class="bg-white
+                    rounded-2xl
+                    shadow-sm
+                    border border-gray-200
+                    p-6">
+
+
+        <div class="flex items-center gap-2 mb-6">
+
+            <i class="fa-solid fa-sliders text-emerald-700"></i>
+
+            <h2 class="text-xl font-bold">
+
+                Tùy chọn bộ lọc nâng cao
+
+            </h2>
+
+        </div>
+
+
+        <!-- ============================================= -->
+        <!-- MÔN THỂ THAO -->
+        <!-- ============================================= -->
+
+        <div class="mb-6">
+
+            <label class="block font-semibold mb-3">
+
+                Môn thể thao
+
+            </label>
+
+
+            <div class="flex flex-wrap gap-3"
+                 id="sportButtons">
+
+
+                <button
+                        type="button"
+                        data-sport="all"
+                        onclick="selectSport(this)"
+                        class="sport-btn active
+                               px-5 py-2
+                               border
+                               rounded-full
+                               text-sm">
+
+                    Tất cả
+
+                </button>
+
+
+                <button
+                        type="button"
+                        data-sport="pickleball"
+                        onclick="selectSport(this)"
+                        class="sport-btn
+                               px-5 py-2
+                               border
+                               rounded-full
+                               text-sm
+                               hover:bg-emerald-50">
+
+                    🏓 Pickleball
+
+                </button>
+
+
+                <button
+                        type="button"
+                        data-sport="badminton"
+                        onclick="selectSport(this)"
+                        class="sport-btn
+                               px-5 py-2
+                               border
+                               rounded-full
+                               text-sm
+                               hover:bg-emerald-50">
+
+                    🏸 Cầu lông
+
+                </button>
+
+
+                <button
+                        type="button"
+                        data-sport="football"
+                        onclick="selectSport(this)"
+                        class="sport-btn
+                               px-5 py-2
+                               border
+                               rounded-full
+                               text-sm
+                               hover:bg-emerald-50">
+
+                    ⚽ Bóng đá
+
+                </button>
+
+
+                <button
+                        type="button"
+                        data-sport="tennis"
+                        onclick="selectSport(this)"
+                        class="sport-btn
+                               px-5 py-2
+                               border
+                               rounded-full
+                               text-sm
+                               hover:bg-emerald-50">
+
+                    🎾 Tennis
+
+                </button>
+
+
+                <button
+                        type="button"
+                        data-sport="volleyball"
+                        onclick="selectSport(this)"
+                        class="sport-btn
+                               px-5 py-2
+                               border
+                               rounded-full
+                               text-sm
+                               hover:bg-emerald-50">
+
+                    🏐 Bóng chuyền
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- ============================================= -->
+        <!-- LOẠI LỊCH -->
+        <!-- ============================================= -->
+
+        <div class="mb-6">
+
+            <label class="block font-semibold mb-3">
+
+                Loại lịch
+
+            </label>
+
+
+            <button
+                    type="button"
+                    id="availableButton"
+                    onclick="toggleAvailable()"
+                    class="border
+                           border-emerald-500
+                           bg-emerald-50
+                           text-emerald-700
+                           px-8 py-2.5
+                           rounded-lg
+                           font-medium">
+
+                <i class="fa-regular fa-circle-check mr-2"></i>
+
+                Sân trống
+
+            </button>
+
+        </div>
+
+
+        <!-- ============================================= -->
+        <!-- NGÀY / GIỜ -->
+        <!-- ============================================= -->
+
+        <div class="grid
+                    grid-cols-1
+                    md:grid-cols-3
+                    gap-5
+                    mb-6">
+
+
+            <!-- DATE -->
+
+            <div>
+
+                <label class="block font-semibold mb-2">
+
+                    Chọn ngày
+
+                </label>
+
+                <input
+                        type="date"
+                        id="searchDate"
+
+                        class="w-full
+                               border
+                               rounded-lg
+                               px-4 py-3
+                               focus:outline-none
+                               focus:ring-2
+                               focus:ring-emerald-500">
+
+            </div>
+
+
+            <!-- START TIME -->
+
+            <div>
+
+                <label class="block font-semibold mb-2">
+
+                    Từ giờ
+
+                </label>
+
+                <input
+                        type="time"
+                        id="startTime"
+
+                        class="w-full
+                               border
+                               rounded-lg
+                               px-4 py-3
+                               focus:outline-none
+                               focus:ring-2
+                               focus:ring-emerald-500">
+
+            </div>
+
+
+            <!-- END TIME -->
+
+            <div>
+
+                <label class="block font-semibold mb-2">
+
+                    Đến giờ
+
+                </label>
+
+                <input
+                        type="time"
+                        id="endTime"
+
+                        class="w-full
+                               border
+                               rounded-lg
+                               px-4 py-3
+                               focus:outline-none
+                               focus:ring-2
+                               focus:ring-emerald-500">
+
+            </div>
+
+        </div>
+
+
+        <!-- ============================================= -->
+        <!-- KHU VỰC -->
+        <!-- ============================================= -->
+
+        <div class="mb-6">
+
+            <label class="block font-semibold mb-2">
+
+                Khu vực / Địa điểm
+
+            </label>
+
+
+            <div class="grid
+                        grid-cols-1
+                        md:grid-cols-3
+                        gap-4">
+
+
+                <select
+                        id="cityFilter"
+
+                        class="border
+                               rounded-lg
+                               px-4 py-3
+                               focus:outline-none
+                               focus:ring-2
+                               focus:ring-emerald-500">
+
+                    <option value="">
+                        Tất cả khu vực
+                    </option>
+
+                    <option value="hà nội">
+                        Hà Nội
+                    </option>
+
+                    <option value="đống đa">
+                        Đống Đa
+                    </option>
+
+                    <option value="thanh xuân">
+                        Thanh Xuân
+                    </option>
+
+                    <option value="cầu giấy">
+                        Cầu Giấy
+                    </option>
+
+                    <option value="nam từ liêm">
+                        Nam Từ Liêm
+                    </option>
+
+                    <option value="ba đình">
+                        Ba Đình
+                    </option>
+
+                </select>
+
+
+                <input
+                        type="text"
+                        id="keywordInput"
+
+                        class="md:col-span-2
+                               border
+                               rounded-lg
+                               px-4 py-3
+                               focus:outline-none
+                               focus:ring-2
+                               focus:ring-emerald-500"
+
+                        placeholder="Nhập tên đường, phường/xã, tên sân...">
+
+            </div>
+
+        </div>
+
+
+        <!-- ============================================= -->
+        <!-- KEYWORD POPULAR -->
+        <!-- ============================================= -->
+
+        <div class="mb-7">
+
+            <label class="block font-semibold mb-3">
+
+                Từ khóa phổ biến
+
+            </label>
+
+
+            <div class="flex flex-wrap gap-2">
+
+
+                <button onclick="setKeyword('Pickleball')"
+                        class="px-4 py-2
+                               bg-gray-100
+                               hover:bg-emerald-100
+                               rounded-full
+                               text-sm">
+
+                    Pickleball gần tôi
+
+                </button>
+
+
+                <button onclick="setKeyword('Cầu lông')"
+                        class="px-4 py-2
+                               bg-gray-100
+                               hover:bg-emerald-100
+                               rounded-full
+                               text-sm">
+
+                    Cầu lông gần tôi
+
+                </button>
+
+
+                <button onclick="setKeyword('Thủy Lợi')"
+                        class="px-4 py-2
+                               bg-gray-100
+                               hover:bg-emerald-100
+                               rounded-full
+                               text-sm">
+
+                    Sân Thủy Lợi
+
+                </button>
+
+
+                <button onclick="setKeyword('Mỹ Đình')"
+                        class="px-4 py-2
+                               bg-gray-100
+                               hover:bg-emerald-100
+                               rounded-full
+                               text-sm">
+
+                    Sân Mỹ Đình
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- ============================================= -->
+        <!-- APPLY -->
+        <!-- ============================================= -->
+
+        <button
+                onclick="applyFilters()"
+
+                class="w-full
+                       bg-emerald-700
+                       hover:bg-emerald-800
+                       text-white
+                       py-4
+                       rounded-xl
+                       text-lg
+                       font-bold
+                       transition">
+
+            <i class="fa-solid fa-magnifying-glass mr-2"></i>
+
+            Áp dụng bộ lọc & Tìm sân
+
+        </button>
+
+
+        <button
+                onclick="resetFilters()"
+
+                class="w-full
+                       mt-3
+                       text-gray-500
+                       hover:text-emerald-700
+                       text-sm">
+
+            <i class="fa-solid fa-rotate-left mr-1"></i>
+
+            Đặt lại bộ lọc
+
+        </button>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- RESULT -->
+    <!-- ================================================= -->
+
+    <section class="mt-8">
+
+
+        <div class="flex
+                    items-center
+                    justify-between
+                    mb-5">
+
+
+            <h2 class="text-xl font-bold">
+
+                📍
+                <span id="resultTitle">
+                    Đang tải danh sách sân...
+                </span>
+
+            </h2>
+
+
+            <div id="loading"
+                 class="hidden
+                        text-emerald-700
+                        text-sm">
+
+                <i class="fa-solid fa-spinner fa-spin mr-1"></i>
+
+                Đang tìm kiếm...
+
+            </div>
+
+        </div>
+
+
+        <div
+                id="stadiumResults"
+
+                class="grid
+                       grid-cols-1
+                       md:grid-cols-2
+                       xl:grid-cols-3
+                       gap-5">
+
+        </div>
+
+
+        <!-- NO RESULT -->
+
+        <div
+                id="noResult"
+                class="hidden
+                       bg-white
+                       rounded-xl
+                       border
+                       p-12
+                       text-center">
+
+
+            <i class="fa-solid
+                      fa-magnifying-glass
+                      text-4xl
+                      text-gray-300
+                      mb-4">
+            </i>
+
+
+            <h3 class="text-lg font-semibold">
+
+                Không tìm thấy sân phù hợp
+
+            </h3>
+
+
+            <p class="text-gray-500 mt-2">
+
+                Hãy thử thay đổi môn thể thao,
+                khu vực hoặc từ khóa tìm kiếm.
+
+            </p>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- ===================================================== -->
+<!-- MODAL CHI TIẾT -->
+<!-- ===================================================== -->
+
+<div
+        id="detailModal"
+
+        class="fixed
+               inset-0
+               bg-black/50
+               hidden
+               items-center
+               justify-center
+               z-50
+               p-4">
+
+
+    <div class="bg-white
+                rounded-2xl
+                w-full
+                max-w-xl
+                shadow-xl
+                overflow-hidden">
+
+
+        <div class="bg-emerald-700
+                    text-white
+                    p-5
+                    flex
+                    justify-between
+                    items-center">
+
+
+            <h3 class="font-bold text-xl">
+
+                Chi tiết sân
+
+            </h3>
+
+
+            <button onclick="closeDetailModal()">
+
+                <i class="fa-solid fa-xmark text-xl"></i>
+
+            </button>
+
+        </div>
+
+
+        <div id="detailContent"
+             class="p-6">
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    // =====================================================
+    // API
+    // =====================================================
+
+    const STADIUM_API = "/api/fields";
+
+
+    // =====================================================
+    // DATA
+    // =====================================================
+
+    let allStadiums = [];
+
+    let selectedSport = "all";
+
+    let onlyAvailable = true;
+
+
+    // =====================================================
+    // LOAD PAGE
+    // =====================================================
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        async function () {
+
+            setDefaultDate();
+
+            readSearchFromUrl();
+
+            await loadStadiums();
+
+        }
+    );
+
+
+    // =====================================================
+    // DEFAULT DATE
+    // =====================================================
+
+    function setDefaultDate() {
+
+        const today = new Date();
+
+        const year =
+            today.getFullYear();
+
+        const month =
+            String(
+                today.getMonth() + 1
+            ).padStart(2, "0");
+
+        const day =
+            String(
+                today.getDate()
+            ).padStart(2, "0");
+
+
+        document
+            .getElementById("searchDate")
+            .value =
+            `${year}-${month}-${day}`;
+
+    }
+
+
+    // =====================================================
+    // LOAD STADIUM
+    // =====================================================
+
+    async function loadStadiums() {
+
+        showLoading(true);
+
+
+        try {
+
+            const response =
+                await fetch(STADIUM_API);
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "HTTP "
+                    +
+                    response.status
+                );
+            }
+
+
+            allStadiums =
+                await response.json();
+
+
+            if (!Array.isArray(allStadiums)) {
+
+                allStadiums = [];
+
+            }
+
+
+            applyFilters();
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Không thể tải sân:",
+                error
+            );
+
+
+            document
+                .getElementById(
+                    "resultTitle"
+                )
+                .textContent =
+                "Không thể tải danh sách sân";
+
+
+            document
+                .getElementById(
+                    "stadiumResults"
+                )
+                .innerHTML =
+                `
+                <div class="col-span-full
+                            bg-red-50
+                            border
+                            border-red-200
+                            text-red-700
+                            p-5
+                            rounded-xl">
+
+                    Không thể kết nối Stadium Service.
+
+                    Hãy kiểm tra:
+                    Discovery Service,
+                    Stadium Service
+                    và API Gateway.
+
+                </div>
+                `;
+
+        }
+
+        finally {
+
+            showLoading(false);
+
+        }
+
+    }
+
+
+    // =====================================================
+    // SPORT
+    // =====================================================
+
+    function selectSport(button) {
+
+        document
+            .querySelectorAll(
+                ".sport-btn"
+            )
+            .forEach(
+                btn =>
+                    btn.classList.remove(
+                        "active"
+                    )
+            );
+
+
+        button
+            .classList
+            .add("active");
+
+
+        selectedSport =
+            button.dataset.sport;
+
+    }
+
+
+    // =====================================================
+    // SÂN TRỐNG
+    // =====================================================
+
+    function toggleAvailable() {
+
+        onlyAvailable =
+            !onlyAvailable;
+
+
+        const button =
+            document.getElementById(
+                "availableButton"
+            );
+
+
+        if (onlyAvailable) {
+
+            button.className =
+                "border border-emerald-500 bg-emerald-50 text-emerald-700 px-8 py-2.5 rounded-lg font-medium";
+
+        }
+
+        else {
+
+            button.className =
+                "border border-gray-300 bg-white text-gray-500 px-8 py-2.5 rounded-lg font-medium";
+
+        }
+
+    }
+
+
+    // =====================================================
+    // KEYWORD BUTTON
+    // =====================================================
+
+    function setKeyword(keyword) {
+
+        document
+            .getElementById(
+                "keywordInput"
+            )
+            .value =
+            keyword;
+
+
+        applyFilters();
+
+    }
+
+
+    // =====================================================
+    // FILTER
+    // =====================================================
+
+    function applyFilters() {
+
+        validateTime();
+
+
+        const keyword =
+            normalizeText(
+                document
+                    .getElementById(
+                        "keywordInput"
+                    )
+                    .value
+            );
+
+
+        const location =
+            normalizeText(
+                document
+                    .getElementById(
+                        "cityFilter"
+                    )
+                    .value
+            );
+
+
+        const filtered =
+            allStadiums.filter(
+                stadium => {
+
+
+                    // =============================
+                    // SPORT
+                    // =============================
+
+                    const sportMatch =
+                        selectedSport === "all"
+                        ||
+                        stadiumMatchesSport(
+                            stadium,
+                            selectedSport
+                        );
+
+
+                    // =============================
+                    // LOCATION
+                    // =============================
+
+                    const address =
+                        normalizeText(
+                            stadium.address
+                            ||
+                            stadium.location
+                            ||
+                            ""
+                        );
+
+
+                    const locationMatch =
+                        !location
+                        ||
+                        address.includes(
+                            location
+                        );
+
+
+                    // =============================
+                    // KEYWORD
+                    // =============================
+
+                    const searchable =
+                        normalizeText(
+                            [
+                                stadium.name,
+                                stadium.type,
+                                stadium.address,
+                                stadium.location,
+                                stadium.description
+                            ]
+                                .filter(Boolean)
+                                .join(" ")
+                        );
+
+
+                    const keywordMatch =
+                        !keyword
+                        ||
+                        searchable.includes(
+                            keyword
+                        );
+
+
+                    return (
+                        sportMatch
+                        &&
+                        locationMatch
+                        &&
+                        keywordMatch
+                    );
+
+                }
+            );
+
+
+        renderResults(
+            filtered
+        );
+
+    }
+
+
+    // =====================================================
+    // SPORT NORMALIZATION
+    // =====================================================
+
+    function stadiumMatchesSport(
+        stadium,
+        sport
+    ) {
+
+        const value =
+            normalizeText(
+                stadium.type || ""
+            );
+
+
+        const mapping = {
+
+            football: [
+                "football",
+                "bong da"
+            ],
+
+            badminton: [
+                "badminton",
+                "cau long"
+            ],
+
+            pickleball: [
+                "pickleball"
+            ],
+
+            tennis: [
+                "tennis"
+            ],
+
+            volleyball: [
+                "volleyball",
+                "bong chuyen"
+            ]
+
+        };
+
+
+        const words =
+            mapping[sport]
+            ||
+            [sport];
+
+
+        return words.some(
+            item =>
+                value.includes(item)
+        );
+
+    }
+
+
+    // =====================================================
+    // RENDER
+    // =====================================================
+
+    function renderResults(stadiums) {
+
+        const container =
+            document.getElementById(
+                "stadiumResults"
+            );
+
+
+        const noResult =
+            document.getElementById(
+                "noResult"
+            );
+
+
+        document
+            .getElementById(
+                "resultTitle"
+            )
+            .textContent =
+            `Tìm thấy ${stadiums.length} cụm sân phù hợp`;
+
+
+        if (stadiums.length === 0) {
+
+            container.innerHTML = "";
+
+            noResult
+                .classList
+                .remove("hidden");
+
+            return;
+
+        }
+
+
+        noResult
+            .classList
+            .add("hidden");
+
+
+        container.innerHTML =
+            stadiums.map(
+                stadium =>
+                    createStadiumCard(
+                        stadium
+                    )
+            )
+                .join("");
+
+    }
+
+
+    // =====================================================
+    // CARD
+    // =====================================================
+
+    function createStadiumCard(stadium) {
+
+        const type =
+            sportDisplayName(
+                stadium.type
+            );
+
+
+        return `
+            <article
+                class="stadium-card
+                       bg-white
+                       rounded-xl
+                       border
+                       border-gray-200
+                       p-5">
+
+
+                <div class="mb-3">
+
+                    <span
+                        class="inline-block
+                               bg-emerald-100
+                               text-emerald-700
+                               px-3 py-1
+                               rounded-full
+                               text-xs
+                               font-semibold">
+
+                        ${escapeHtml(type)}
+
+                    </span>
+
+                </div>
+
+
+                <h3
+                    class="text-lg
+                           font-bold
+                           text-emerald-800
+                           mb-3">
+
+                    ${escapeHtml(
+            stadium.name
+            ||
+            "Sân thể thao"
+        )}
+
+                </h3>
+
+
+                <div
+                    class="text-sm
+                           text-gray-600
+                           mb-3">
+
+                    <i
+                        class="fa-solid
+                               fa-location-dot
+                               text-rose-500
+                               mr-2">
+                    </i>
+
+                    ${escapeHtml(
+            stadium.address
+            ||
+            stadium.location
+            ||
+            "Chưa cập nhật địa chỉ"
+        )}
+
+                </div>
+
+
+                <p
+                    class="text-sm
+                           text-gray-600
+                           min-h-[62px]
+                           mb-5">
+
+                    ${escapeHtml(
+            stadium.description
+            ||
+            "Chưa có mô tả cho sân này."
+        )}
+
+                </p>
+
+
+                <button
+                    onclick="showDetail(${Number(stadium.id)})"
+
+                    class="w-full
+                           border
+                           border-emerald-600
+                           text-emerald-700
+                           hover:bg-emerald-600
+                           hover:text-white
+                           rounded-lg
+                           py-2.5
+                           font-semibold
+                           text-sm
+                           transition">
+
+                    Xem chi tiết
+
+                </button>
+
+            </article>
+        `;
+
+    }
+
+
+    // =====================================================
+    // DISPLAY TYPE
+    // =====================================================
+
+    function sportDisplayName(type) {
+
+        const value =
+            normalizeText(
+                type || ""
+            );
+
+
+        if (
+            value.includes("football")
+            ||
+            value.includes("bong da")
+        ) {
+
+            return "Bóng đá";
+
+        }
+
+
+        if (
+            value.includes("badminton")
+            ||
+            value.includes("cau long")
+        ) {
+
+            return "Cầu lông";
+
+        }
+
+
+        if (
+            value.includes("volleyball")
+            ||
+            value.includes("bong chuyen")
+        ) {
+
+            return "Bóng chuyền";
+
+        }
+
+
+        if (
+            value.includes("pickleball")
+        ) {
+
+            return "Pickleball";
+
+        }
+
+
+        if (
+            value.includes("tennis")
+        ) {
+
+            return "Tennis";
+
+        }
+
+
+        return type || "Khác";
+
+    }
+
+
+    // =====================================================
+    // DETAIL MODAL
+    // =====================================================
+
+    function showDetail(id) {
+
+        const stadium =
+            allStadiums.find(
+                item =>
+                    Number(item.id)
+                    ===
+                    Number(id)
+            );
+
+
+        if (!stadium) {
+
+            return;
+
+        }
+
+
+        document
+            .getElementById(
+                "detailContent"
+            )
+            .innerHTML =
+            `
+
+            <div class="space-y-4">
+
+
+                <div>
+
+                    <span
+                        class="bg-emerald-100
+                               text-emerald-700
+                               px-3 py-1
+                               rounded-full
+                               text-xs
+                               font-semibold">
+
+                        ${escapeHtml(
+                sportDisplayName(
+                    stadium.type
+                )
+            )}
+
+                    </span>
+
+                </div>
+
+
+                <h2
+                    class="text-2xl
+                           font-bold
+                           text-emerald-800">
+
+                    ${escapeHtml(
+                stadium.name
+            )}
+
+                </h2>
+
+
+                <p
+                    class="text-gray-600">
+
+                    <i
+                        class="fa-solid
+                               fa-location-dot
+                               text-rose-500
+                               mr-2">
+                    </i>
+
+                    ${escapeHtml(
+                stadium.address
+                ||
+                stadium.location
+                ||
+                "Chưa cập nhật"
+            )}
+
+                </p>
+
+
+                <div
+                    class="bg-gray-50
+                           rounded-lg
+                           p-4">
+
+                    <strong>
+                        Mô tả:
+                    </strong>
+
+                    <p
+                        class="mt-2
+                               text-gray-600">
+
+                        ${escapeHtml(
+                stadium.description
+                ||
+                "Chưa có mô tả."
+            )}
+
+                    </p>
+
+                </div>
+
+
+                <div
+                    class="border-t
+                           pt-4
+                           text-sm
+                           text-gray-500">
+
+                    ID sân:
+                    ${escapeHtml(stadium.id)}
+
+                </div>
+
+            </div>
+
+            `;
+
+
+        const modal =
+            document.getElementById(
+                "detailModal"
+            );
+
+
+        modal
+            .classList
+            .remove("hidden");
+
+
+        modal
+            .classList
+            .add("flex");
+
+    }
+
+
+    function closeDetailModal() {
+
+        const modal =
+            document.getElementById(
+                "detailModal"
+            );
+
+
+        modal
+            .classList
+            .add("hidden");
+
+
+        modal
+            .classList
+            .remove("flex");
+
+    }
+
+
+    // =====================================================
+    // TIME VALIDATION
+    // =====================================================
+
+    function validateTime() {
+
+        const start =
+            document
+                .getElementById(
+                    "startTime"
+                )
+                .value;
+
+
+        const end =
+            document
+                .getElementById(
+                    "endTime"
+                )
+                .value;
+
+
+        if (
+            start
+            &&
+            end
+            &&
+            start >= end
+        ) {
+
+            alert(
+                "Giờ kết thúc phải lớn hơn giờ bắt đầu."
+            );
+
+
+            throw new Error(
+                "Invalid time"
+            );
+
+        }
+
+    }
+
+
+    // =====================================================
+    // RESET
+    // =====================================================
+
+    function resetFilters() {
+
+        selectedSport =
+            "all";
+
+
+        onlyAvailable =
+            true;
+
+
+        document
+            .querySelectorAll(
+                ".sport-btn"
+            )
+            .forEach(
+                button =>
+                    button
+                        .classList
+                        .remove("active")
+            );
+
+
+        const allButton =
+            document.querySelector(
+                '[data-sport="all"]'
+            );
+
+
+        allButton
+            .classList
+            .add("active");
+
+
+        document
+            .getElementById(
+                "cityFilter"
+            )
+            .value =
+            "";
+
+
+        document
+            .getElementById(
+                "keywordInput"
+            )
+            .value =
+            "";
+
+
+        document
+            .getElementById(
+                "startTime"
+            )
+            .value =
+            "";
+
+
+        document
+            .getElementById(
+                "endTime"
+            )
+            .value =
+            "";
+
+
+        setDefaultDate();
+
+
+        applyFilters();
+
+    }
+
+
+    // =====================================================
+    // URL PARAM
+    // =====================================================
+
+    function readSearchFromUrl() {
+
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
+
+        const keyword =
+            params.get("q");
+
+
+        if (keyword) {
+
+            document
+                .getElementById(
+                    "keywordInput"
+                )
+                .value =
+                keyword;
+
+        }
+
+    }
+
+
+    // =====================================================
+    // HOME
+    // =====================================================
+
+    function goHome() {
+
+        window.location.href =
+            "/index.html";
+
+    }
+
+
+    // =====================================================
+    // LOADING
+    // =====================================================
+
+    function showLoading(show) {
+
+        document
+            .getElementById(
+                "loading"
+            )
+            .classList
+            .toggle(
+                "hidden",
+                !show
+            );
+
+    }
+
+
+    // =====================================================
+    // NORMALIZE TEXT
+    // =====================================================
+
+    function normalizeText(value) {
+
+        return String(
+            value || ""
+        )
+            .normalize("NFD")
+            .replace(
+                /[\u0300-\u036f]/g,
+                ""
+            )
+            .toLowerCase()
+            .trim();
+
+    }
+
+
+    // =====================================================
+    // SAFE HTML
+    // =====================================================
+
+    function escapeHtml(value) {
+
+        return String(
+            value ?? ""
+        )
+            .replaceAll(
+                "&",
+                "&amp;"
+            )
+            .replaceAll(
+                "<",
+                "&lt;"
+            )
+            .replaceAll(
+                ">",
+                "&gt;"
+            )
+            .replaceAll(
+                '"',
+                "&quot;"
+            )
+            .replaceAll(
+                "'",
+                "&#039;"
+            );
+
+    }
+
+</script>
+
+</body>
+</html>
