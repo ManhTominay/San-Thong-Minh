@@ -1,0 +1,2259 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Hồ Sơ Khách Hàng - Smart Stadium</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            background: #f4f6f8;
+        }
+
+        .card {
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+
+
+<body class="min-h-screen text-gray-800">
+
+
+<!-- ===================================================== -->
+<!-- HEADER -->
+<!-- ===================================================== -->
+
+<header class="bg-emerald-600 text-white shadow-md">
+
+    <div class="max-w-6xl mx-auto
+                px-5
+                py-4
+                flex
+                items-center
+                justify-between">
+
+
+        <!-- LOGO -->
+
+        <div class="flex items-center gap-2">
+
+            <i class="fa-solid fa-shield-halved text-xl"></i>
+
+            <span class="text-xl font-bold">
+
+                Smart Stadium
+
+            </span>
+
+        </div>
+
+
+        <!-- ACTION -->
+
+        <div class="flex items-center gap-3">
+
+
+            <button
+                    onclick="goHome()"
+
+                    class="bg-emerald-700
+                           hover:bg-emerald-800
+                           px-4
+                           py-2
+                           rounded-lg
+                           text-sm
+                           transition">
+
+                <i class="fa-solid fa-house mr-1"></i>
+
+                Trang chủ
+
+            </button>
+
+
+            <button
+                    onclick="handleLogout()"
+
+                    class="bg-rose-600
+                           hover:bg-rose-700
+                           px-4
+                           py-2
+                           rounded-lg
+                           text-sm
+                           transition">
+
+                <i class="fa-solid fa-right-from-bracket mr-1"></i>
+
+                Đăng xuất
+
+            </button>
+
+
+        </div>
+
+
+    </div>
+
+</header>
+
+
+<!-- ===================================================== -->
+<!-- MAIN -->
+<!-- ===================================================== -->
+
+<main class="max-w-6xl mx-auto px-5 py-8">
+
+
+    <!-- PAGE TITLE -->
+
+    <div class="mb-6">
+
+        <h1 class="text-2xl font-bold text-gray-800">
+
+            Hồ sơ khách hàng
+
+        </h1>
+
+        <p class="text-sm text-gray-500 mt-1">
+
+            Quản lý thông tin cá nhân và bảo mật tài khoản của bạn.
+
+        </p>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- PROFILE TOP -->
+    <!-- ================================================= -->
+
+    <section
+            class="card
+                   bg-white
+                   rounded-2xl
+                   border
+                   border-gray-200
+                   p-6
+                   mb-6">
+
+
+        <div class="flex
+                    flex-col
+                    md:flex-row
+                    md:items-center
+                    gap-5">
+
+
+            <!-- AVATAR -->
+
+            <div
+                    id="profileAvatar"
+
+                    class="w-20
+                           h-20
+                           rounded-full
+                           bg-emerald-600
+                           text-white
+                           flex
+                           items-center
+                           justify-center
+                           text-2xl
+                           font-bold
+                           shadow">
+
+                U
+
+            </div>
+
+
+            <!-- PROFILE TEXT -->
+
+            <div class="flex-1">
+
+
+                <div class="flex
+                            flex-col
+                            md:flex-row
+                            md:items-center
+                            gap-2">
+
+
+                    <h2
+                            id="profileDisplayName"
+
+                            class="text-xl
+                                   font-bold
+                                   text-gray-800">
+
+                        Đang tải...
+
+                    </h2>
+
+
+                    <span
+                            id="profileRole"
+
+                            class="inline-flex
+                                   w-fit
+                                   items-center
+                                   px-3
+                                   py-1
+                                   rounded-full
+                                   bg-emerald-100
+                                   text-emerald-700
+                                   text-xs
+                                   font-semibold">
+
+                        USER
+
+                    </span>
+
+
+                </div>
+
+
+                <p
+                        id="profileDisplayEmail"
+
+                        class="text-sm
+                               text-gray-500
+                               mt-1">
+
+                    Đang tải thông tin...
+
+                </p>
+
+
+                <p
+                        id="profilePhoneSummary"
+
+                        class="text-sm
+                               text-gray-500
+                               mt-1">
+
+                    <i class="fa-solid fa-phone mr-1"></i>
+
+                    Chưa cập nhật số điện thoại
+
+                </p>
+
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- GRID -->
+    <!-- ================================================= -->
+
+    <div class="grid
+                grid-cols-1
+                lg:grid-cols-2
+                gap-6">
+
+
+        <!-- ================================================= -->
+        <!-- THÔNG TIN CÁ NHÂN -->
+        <!-- ================================================= -->
+
+        <section
+                class="card
+                       bg-white
+                       rounded-2xl
+                       border
+                       border-gray-200
+                       p-6">
+
+
+            <div class="flex items-center gap-2 mb-6">
+
+
+                <div class="w-9
+                            h-9
+                            rounded-lg
+                            bg-emerald-100
+                            text-emerald-700
+                            flex
+                            items-center
+                            justify-center">
+
+                    <i class="fa-solid fa-user"></i>
+
+                </div>
+
+
+                <div>
+
+                    <h2 class="font-bold text-lg">
+
+                        Thông tin cá nhân
+
+                    </h2>
+
+                    <p class="text-xs text-gray-500">
+
+                        Cập nhật họ tên và số điện thoại.
+
+                    </p>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- MESSAGE -->
+
+            <div
+                    id="profileMessage"
+
+                    class="hidden
+                           mb-4
+                           px-4
+                           py-3
+                           rounded-lg
+                           text-sm">
+
+            </div>
+
+
+            <form
+                    id="profileForm"
+
+                    onsubmit="updateProfile(event)"
+
+                    class="space-y-4">
+
+
+                <!-- NAME -->
+
+                <div>
+
+                    <label
+                            class="block
+                                   text-sm
+                                   font-semibold
+                                   text-gray-700
+                                   mb-1">
+
+                        Họ và tên
+
+                    </label>
+
+
+                    <div class="relative">
+
+
+                        <i class="fa-regular
+                                  fa-user
+                                  absolute
+                                  left-3
+                                  top-1/2
+                                  -translate-y-1/2
+                                  text-gray-400">
+
+                        </i>
+
+
+                        <input
+                                type="text"
+
+                                id="profileName"
+
+                                class="w-full
+                                       pl-10
+                                       pr-4
+                                       py-3
+                                       border
+                                       border-gray-300
+                                       rounded-lg
+                                       focus:outline-none
+                                       focus:ring-2
+                                       focus:ring-emerald-500"
+
+                                placeholder="Nhập họ và tên">
+
+                    </div>
+
+                </div>
+
+
+                <!-- EMAIL -->
+
+                <div>
+
+                    <label
+                            class="block
+                                   text-sm
+                                   font-semibold
+                                   text-gray-700
+                                   mb-1">
+
+                        Email
+
+                    </label>
+
+
+                    <div class="relative">
+
+
+                        <i class="fa-regular
+                                  fa-envelope
+                                  absolute
+                                  left-3
+                                  top-1/2
+                                  -translate-y-1/2
+                                  text-gray-400">
+
+                        </i>
+
+
+                        <input
+                                type="email"
+
+                                id="profileEmail"
+
+                                disabled
+
+                                class="w-full
+                                       pl-10
+                                       pr-10
+                                       py-3
+                                       border
+                                       border-gray-200
+                                       rounded-lg
+                                       bg-gray-100
+                                       text-gray-500">
+
+
+                        <i class="fa-solid
+                                  fa-lock
+                                  absolute
+                                  right-3
+                                  top-1/2
+                                  -translate-y-1/2
+                                  text-gray-400">
+
+                        </i>
+
+
+                    </div>
+
+
+                    <p class="text-xs text-gray-400 mt-1">
+
+                        Email đăng nhập không thể thay đổi tại đây.
+
+                    </p>
+
+                </div>
+
+
+                <!-- USERNAME -->
+
+                <div>
+
+                    <label
+                            class="block
+                                   text-sm
+                                   font-semibold
+                                   text-gray-700
+                                   mb-1">
+
+                        Tên đăng nhập
+
+                    </label>
+
+
+                    <div class="relative">
+
+
+                        <i class="fa-solid
+                                  fa-at
+                                  absolute
+                                  left-3
+                                  top-1/2
+                                  -translate-y-1/2
+                                  text-gray-400">
+
+                        </i>
+
+
+                        <input
+                                type="text"
+
+                                id="profileUsername"
+
+                                disabled
+
+                                class="w-full
+                                       pl-10
+                                       pr-10
+                                       py-3
+                                       border
+                                       border-gray-200
+                                       rounded-lg
+                                       bg-gray-100
+                                       text-gray-500">
+
+
+                        <i class="fa-solid
+                                  fa-lock
+                                  absolute
+                                  right-3
+                                  top-1/2
+                                  -translate-y-1/2
+                                  text-gray-400">
+
+                        </i>
+
+
+                    </div>
+
+                </div>
+
+
+                <!-- PHONE -->
+
+                <div>
+
+                    <label
+                            class="block
+                                   text-sm
+                                   font-semibold
+                                   text-gray-700
+                                   mb-1">
+
+                        Số điện thoại
+
+                    </label>
+
+
+                    <div class="relative">
+
+
+                        <i class="fa-solid
+                                  fa-phone
+                                  absolute
+                                  left-3
+                                  top-1/2
+                                  -translate-y-1/2
+                                  text-gray-400">
+
+                        </i>
+
+
+                        <input
+                                type="tel"
+
+                                id="profilePhone"
+
+                                class="w-full
+                                       pl-10
+                                       pr-4
+                                       py-3
+                                       border
+                                       border-gray-300
+                                       rounded-lg
+                                       focus:outline-none
+                                       focus:ring-2
+                                       focus:ring-emerald-500"
+
+                                placeholder="Ví dụ: 0912345678">
+
+                    </div>
+
+                </div>
+
+
+                <!-- ROLE -->
+
+                <div>
+
+                    <label
+                            class="block
+                                   text-sm
+                                   font-semibold
+                                   text-gray-700
+                                   mb-1">
+
+                        Vai trò
+
+                    </label>
+
+
+                    <input
+                            type="text"
+
+                            id="profileRoleInput"
+
+                            disabled
+
+                            class="w-full
+                                   px-4
+                                   py-3
+                                   border
+                                   border-gray-200
+                                   rounded-lg
+                                   bg-gray-100
+                                   text-gray-500">
+
+                </div>
+
+
+                <!-- BUTTON -->
+
+                <div class="pt-3">
+
+
+                    <button
+                            type="submit"
+
+                            id="saveProfileButton"
+
+                            class="w-full
+                                   bg-emerald-600
+                                   hover:bg-emerald-700
+                                   text-white
+                                   py-3
+                                   rounded-lg
+                                   font-semibold
+                                   transition">
+
+
+                        <i class="fa-solid fa-floppy-disk mr-2"></i>
+
+                        Lưu thay đổi
+
+                    </button>
+
+
+                </div>
+
+
+            </form>
+
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- ĐỔI MẬT KHẨU -->
+        <!-- ================================================= -->
+
+        <section
+                class="card
+                       bg-white
+                       rounded-2xl
+                       border
+                       border-gray-200
+                       p-6">
+
+
+            <div class="flex items-center gap-2 mb-6">
+
+
+                <div class="w-9
+                            h-9
+                            rounded-lg
+                            bg-amber-100
+                            text-amber-600
+                            flex
+                            items-center
+                            justify-center">
+
+                    <i class="fa-solid fa-key"></i>
+
+                </div>
+
+
+                <div>
+
+                    <h2 class="font-bold text-lg">
+
+                        Đổi mật khẩu
+
+                    </h2>
+
+                    <p class="text-xs text-gray-500">
+
+                        Bảo vệ tài khoản bằng mật khẩu an toàn.
+
+                    </p>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- MESSAGE -->
+
+            <div
+                    id="passwordMessage"
+
+                    class="hidden
+                           mb-4
+                           px-4
+                           py-3
+                           rounded-lg
+                           text-sm">
+
+            </div>
+
+
+            <form
+                    id="passwordForm"
+
+                    onsubmit="changePassword(event)"
+
+                    class="space-y-4">
+
+
+                <!-- OLD PASSWORD -->
+
+                <div>
+
+                    <label
+                            class="block
+                                   text-sm
+                                   font-semibold
+                                   text-gray-700
+                                   mb-1">
+
+                        Mật khẩu hiện tại
+
+                    </label>
+
+
+                    <div class="relative">
+
+
+                        <input
+                                type="password"
+
+                                id="oldPassword"
+
+                                required
+
+                                class="w-full
+                                       px-4
+                                       pr-11
+                                       py-3
+                                       border
+                                       border-gray-300
+                                       rounded-lg
+                                       focus:outline-none
+                                       focus:ring-2
+                                       focus:ring-emerald-500"
+
+                                placeholder="Nhập mật khẩu hiện tại">
+
+
+                        <button
+                                type="button"
+
+                                onclick="togglePassword('oldPassword', this)"
+
+                                class="absolute
+                                       right-3
+                                       top-1/2
+                                       -translate-y-1/2
+                                       text-gray-400
+                                       hover:text-gray-600">
+
+
+                            <i class="fa-regular fa-eye"></i>
+
+
+                        </button>
+
+
+                    </div>
+
+                </div>
+
+
+                <!-- NEW PASSWORD -->
+
+                <div>
+
+                    <label
+                            class="block
+                                   text-sm
+                                   font-semibold
+                                   text-gray-700
+                                   mb-1">
+
+                        Mật khẩu mới
+
+                    </label>
+
+
+                    <div class="relative">
+
+
+                        <input
+                                type="password"
+
+                                id="newPassword"
+
+                                required
+
+                                minlength="6"
+
+                                class="w-full
+                                       px-4
+                                       pr-11
+                                       py-3
+                                       border
+                                       border-gray-300
+                                       rounded-lg
+                                       focus:outline-none
+                                       focus:ring-2
+                                       focus:ring-emerald-500"
+
+                                placeholder="Ít nhất 6 ký tự">
+
+
+                        <button
+                                type="button"
+
+                                onclick="togglePassword('newPassword', this)"
+
+                                class="absolute
+                                       right-3
+                                       top-1/2
+                                       -translate-y-1/2
+                                       text-gray-400
+                                       hover:text-gray-600">
+
+
+                            <i class="fa-regular fa-eye"></i>
+
+
+                        </button>
+
+
+                    </div>
+
+                </div>
+
+
+                <!-- CONFIRM PASSWORD -->
+
+                <div>
+
+                    <label
+                            class="block
+                                   text-sm
+                                   font-semibold
+                                   text-gray-700
+                                   mb-1">
+
+                        Xác nhận mật khẩu mới
+
+                    </label>
+
+
+                    <div class="relative">
+
+
+                        <input
+                                type="password"
+
+                                id="confirmPassword"
+
+                                required
+
+                                minlength="6"
+
+                                class="w-full
+                                       px-4
+                                       pr-11
+                                       py-3
+                                       border
+                                       border-gray-300
+                                       rounded-lg
+                                       focus:outline-none
+                                       focus:ring-2
+                                       focus:ring-emerald-500"
+
+                                placeholder="Nhập lại mật khẩu mới">
+
+
+                        <button
+                                type="button"
+
+                                onclick="togglePassword('confirmPassword', this)"
+
+                                class="absolute
+                                       right-3
+                                       top-1/2
+                                       -translate-y-1/2
+                                       text-gray-400
+                                       hover:text-gray-600">
+
+
+                            <i class="fa-regular fa-eye"></i>
+
+
+                        </button>
+
+
+                    </div>
+
+                </div>
+
+
+                <!-- PASSWORD INFO -->
+
+                <div class="bg-gray-50
+                            rounded-lg
+                            p-4
+                            text-xs
+                            text-gray-500
+                            space-y-1">
+
+
+                    <p>
+
+                        <i class="fa-solid
+                                  fa-circle-check
+                                  text-emerald-500
+                                  mr-1">
+
+                        </i>
+
+                        Mật khẩu mới phải có ít nhất 6 ký tự.
+
+                    </p>
+
+
+                    <p>
+
+                        <i class="fa-solid
+                                  fa-circle-check
+                                  text-emerald-500
+                                  mr-1">
+
+                        </i>
+
+                        Xác nhận mật khẩu phải trùng với mật khẩu mới.
+
+                    </p>
+
+
+                </div>
+
+
+                <!-- BUTTON -->
+
+                <div class="pt-3">
+
+
+                    <button
+                            type="submit"
+
+                            id="changePasswordButton"
+
+                            class="w-full
+                                   bg-emerald-600
+                                   hover:bg-emerald-700
+                                   text-white
+                                   py-3
+                                   rounded-lg
+                                   font-semibold
+                                   transition">
+
+
+                        <i class="fa-solid fa-key mr-2"></i>
+
+                        Đổi mật khẩu
+
+                    </button>
+
+
+                </div>
+
+
+            </form>
+
+
+        </section>
+
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- ACCOUNT INFO -->
+    <!-- ================================================= -->
+
+    <section
+            class="card
+                   bg-white
+                   rounded-2xl
+                   border
+                   border-gray-200
+                   p-6
+                   mt-6">
+
+
+        <div class="flex items-center gap-2 mb-5">
+
+
+            <i class="fa-solid
+                      fa-circle-info
+                      text-emerald-600">
+
+            </i>
+
+
+            <h2 class="font-bold">
+
+                Thông tin tài khoản
+
+            </h2>
+
+
+        </div>
+
+
+        <div class="grid
+                    grid-cols-1
+                    md:grid-cols-3
+                    gap-4">
+
+
+            <div class="bg-gray-50
+                        rounded-xl
+                        p-4">
+
+
+                <p class="text-xs text-gray-500">
+
+                    Mã người dùng
+
+                </p>
+
+
+                <p
+                        id="accountId"
+
+                        class="font-bold
+                               text-gray-800
+                               mt-1">
+
+                    --
+
+                </p>
+
+
+            </div>
+
+
+            <div class="bg-gray-50
+                        rounded-xl
+                        p-4">
+
+
+                <p class="text-xs text-gray-500">
+
+                    Loại tài khoản
+
+                </p>
+
+
+                <p
+                        id="accountRole"
+
+                        class="font-bold
+                               text-gray-800
+                               mt-1">
+
+                    --
+
+                </p>
+
+
+            </div>
+
+
+            <div class="bg-gray-50
+                        rounded-xl
+                        p-4">
+
+
+                <p class="text-xs text-gray-500">
+
+                    Trạng thái
+
+                </p>
+
+
+                <p class="font-bold
+                          text-emerald-600
+                          mt-1">
+
+
+                    <i class="fa-solid
+                              fa-circle-check
+                              mr-1">
+
+                    </i>
+
+                    Đang hoạt động
+
+                </p>
+
+
+            </div>
+
+
+        </div>
+
+
+    </section>
+
+
+</main>
+
+
+<!-- ===================================================== -->
+<!-- JAVASCRIPT -->
+<!-- ===================================================== -->
+
+<script>
+
+
+    // =====================================================
+    // API
+    // =====================================================
+
+    const PROFILE_API =
+        "/api/users/profile";
+
+
+    const CHANGE_PASSWORD_API =
+        "/api/users/change-password";
+
+
+    let currentUser = null;
+
+
+    // =====================================================
+    // LOAD PAGE
+    // =====================================================
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+
+            const token =
+                localStorage.getItem(
+                    "token"
+                );
+
+
+            const email =
+                localStorage.getItem(
+                    "userEmail"
+                );
+
+
+            // Chưa đăng nhập
+            if (
+                !token
+                ||
+                !email
+            ) {
+
+
+                window.location.href =
+                    "/login.html";
+
+
+                return;
+
+            }
+
+
+            loadProfile();
+
+
+        }
+    );
+
+
+    // =====================================================
+    // LOAD PROFILE
+    // =====================================================
+
+    async function loadProfile() {
+
+
+        const email =
+            localStorage.getItem(
+                "userEmail"
+            );
+
+
+        try {
+
+
+            const response =
+                await fetch(
+                    `${PROFILE_API}?email=${encodeURIComponent(email)}`
+                );
+
+
+            if (!response.ok) {
+
+
+                const message =
+                    await readError(
+                        response
+                    );
+
+
+                throw new Error(
+                    message
+                );
+
+
+            }
+
+
+            currentUser =
+                await response.json();
+
+
+            renderProfile(
+                currentUser
+            );
+
+
+        } catch (error) {
+
+
+            console.error(
+                "Lỗi tải hồ sơ:",
+                error
+            );
+
+
+            showProfileMessage(
+                "Không thể tải thông tin hồ sơ: "
+                +
+                error.message,
+                "error"
+            );
+
+
+        }
+
+
+    }
+
+
+    // =====================================================
+    // RENDER PROFILE
+    // =====================================================
+
+    function renderProfile(user) {
+
+
+        const name =
+            user.name
+            &&
+            user.name.trim() !== ""
+                ?
+                user.name
+                :
+                "Khách hàng";
+
+
+        const email =
+            user.email
+            ||
+            "";
+
+
+        const username =
+            user.username
+            ||
+            email;
+
+
+        const phone =
+            user.phone
+            ||
+            "";
+
+
+        const role =
+            formatRole(
+                user.role
+            );
+
+
+        // TOP
+        document
+            .getElementById(
+                "profileDisplayName"
+            )
+            .textContent =
+            name;
+
+
+        document
+            .getElementById(
+                "profileDisplayEmail"
+            )
+            .textContent =
+            email;
+
+
+        document
+            .getElementById(
+                "profileRole"
+            )
+            .textContent =
+            role;
+
+
+        document
+            .getElementById(
+                "profilePhoneSummary"
+            )
+            .innerHTML =
+            `
+            <i class="fa-solid fa-phone mr-1"></i>
+            ${
+                phone
+                    ?
+                    escapeHtml(phone)
+                    :
+                    "Chưa cập nhật số điện thoại"
+            }
+            `;
+
+
+        // AVATAR
+        document
+            .getElementById(
+                "profileAvatar"
+            )
+            .textContent =
+            getInitials(
+                name
+            );
+
+
+        // FORM
+        document
+            .getElementById(
+                "profileName"
+            )
+            .value =
+            user.name
+            ||
+            "";
+
+
+        document
+            .getElementById(
+                "profileEmail"
+            )
+            .value =
+            email;
+
+
+        document
+            .getElementById(
+                "profileUsername"
+            )
+            .value =
+            username;
+
+
+        document
+            .getElementById(
+                "profilePhone"
+            )
+            .value =
+            phone;
+
+
+        document
+            .getElementById(
+                "profileRoleInput"
+            )
+            .value =
+            role;
+
+
+        // ACCOUNT
+        document
+            .getElementById(
+                "accountId"
+            )
+            .textContent =
+            user.id
+            ??
+            "--";
+
+
+        document
+            .getElementById(
+                "accountRole"
+            )
+            .textContent =
+            role;
+
+
+    }
+
+
+    // =====================================================
+    // UPDATE PROFILE
+    // =====================================================
+
+    async function updateProfile(event) {
+
+
+        event.preventDefault();
+
+
+        const email =
+            localStorage.getItem(
+                "userEmail"
+            );
+
+
+        const name =
+            document
+                .getElementById(
+                    "profileName"
+                )
+                .value
+                .trim();
+
+
+        const phone =
+            document
+                .getElementById(
+                    "profilePhone"
+                )
+                .value
+                .trim();
+
+
+        // Kiểm tra số điện thoại nếu có nhập
+        if (
+            phone
+            &&
+            !/^[0-9+\s.-]{8,15}$/.test(
+                phone
+            )
+        ) {
+
+
+            showProfileMessage(
+                "Số điện thoại không hợp lệ.",
+                "error"
+            );
+
+
+            return;
+
+
+        }
+
+
+        const button =
+            document.getElementById(
+                "saveProfileButton"
+            );
+
+
+        setButtonLoading(
+            button,
+            true,
+            "Đang lưu..."
+        );
+
+
+        try {
+
+
+            const response =
+                await fetch(
+                    PROFILE_API,
+                    {
+
+                        method: "PUT",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json"
+
+                        },
+
+                        body:
+                            JSON.stringify(
+                                {
+
+                                    email: email,
+
+                                    name: name,
+
+                                    phone: phone
+
+                                }
+                            )
+
+                    }
+                );
+
+
+            if (!response.ok) {
+
+
+                throw new Error(
+                    await readError(
+                        response
+                    )
+                );
+
+
+            }
+
+
+            showProfileMessage(
+                "Cập nhật hồ sơ thành công!",
+                "success"
+            );
+
+
+            await loadProfile();
+
+
+        } catch (error) {
+
+
+            console.error(
+                "Lỗi cập nhật hồ sơ:",
+                error
+            );
+
+
+            showProfileMessage(
+                "Cập nhật hồ sơ thất bại: "
+                +
+                error.message,
+                "error"
+            );
+
+
+        } finally {
+
+
+            setButtonLoading(
+                button,
+                false,
+                "Lưu thay đổi"
+            );
+
+
+        }
+
+
+    }
+
+
+    // =====================================================
+    // CHANGE PASSWORD
+    // =====================================================
+
+    async function changePassword(event) {
+
+
+        event.preventDefault();
+
+
+        const email =
+            localStorage.getItem(
+                "userEmail"
+            );
+
+
+        const oldPassword =
+            document
+                .getElementById(
+                    "oldPassword"
+                )
+                .value;
+
+
+        const newPassword =
+            document
+                .getElementById(
+                    "newPassword"
+                )
+                .value;
+
+
+        const confirmPassword =
+            document
+                .getElementById(
+                    "confirmPassword"
+                )
+                .value;
+
+
+        // =============================
+        // VALIDATE
+        // =============================
+
+        if (
+            newPassword.length < 6
+        ) {
+
+
+            showPasswordMessage(
+                "Mật khẩu mới phải có ít nhất 6 ký tự.",
+                "error"
+            );
+
+
+            return;
+
+
+        }
+
+
+        if (
+            newPassword
+            !==
+            confirmPassword
+        ) {
+
+
+            showPasswordMessage(
+                "Xác nhận mật khẩu không khớp.",
+                "error"
+            );
+
+
+            return;
+
+
+        }
+
+
+        if (
+            oldPassword
+            ===
+            newPassword
+        ) {
+
+
+            showPasswordMessage(
+                "Mật khẩu mới phải khác mật khẩu hiện tại.",
+                "error"
+            );
+
+
+            return;
+
+
+        }
+
+
+        const button =
+            document.getElementById(
+                "changePasswordButton"
+            );
+
+
+        setButtonLoading(
+            button,
+            true,
+            "Đang đổi..."
+        );
+
+
+        try {
+
+
+            const response =
+                await fetch(
+                    CHANGE_PASSWORD_API,
+                    {
+
+                        method: "PUT",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json"
+
+                        },
+
+                        body:
+                            JSON.stringify(
+                                {
+
+                                    email: email,
+
+                                    oldPassword:
+                                    oldPassword,
+
+                                    newPassword:
+                                    newPassword
+
+                                }
+                            )
+
+                    }
+                );
+
+
+            if (!response.ok) {
+
+
+                throw new Error(
+                    await readError(
+                        response
+                    )
+                );
+
+
+            }
+
+
+            showPasswordMessage(
+                "Đổi mật khẩu thành công!",
+                "success"
+            );
+
+
+            document
+                .getElementById(
+                    "passwordForm"
+                )
+                .reset();
+
+
+        } catch (error) {
+
+
+            console.error(
+                "Lỗi đổi mật khẩu:",
+                error
+            );
+
+
+            showPasswordMessage(
+                "Đổi mật khẩu thất bại: "
+                +
+                error.message,
+                "error"
+            );
+
+
+        } finally {
+
+
+            setButtonLoading(
+                button,
+                false,
+                "Đổi mật khẩu"
+            );
+
+
+        }
+
+
+    }
+
+
+    // =====================================================
+    // MESSAGE PROFILE
+    // =====================================================
+
+    function showProfileMessage(
+        message,
+        type
+    ) {
+
+
+        const element =
+            document.getElementById(
+                "profileMessage"
+            );
+
+
+        element.textContent =
+            message;
+
+
+        element.className =
+            type === "success"
+
+                ?
+                "mb-4 px-4 py-3 rounded-lg text-sm bg-emerald-50 text-emerald-700 border border-emerald-200"
+
+                :
+                "mb-4 px-4 py-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200";
+
+
+        element
+            .classList
+            .remove(
+                "hidden"
+            );
+
+
+        setTimeout(
+            () => {
+
+                element
+                    .classList
+                    .add(
+                        "hidden"
+                    );
+
+            },
+            4000
+        );
+
+
+    }
+
+
+    // =====================================================
+    // MESSAGE PASSWORD
+    // =====================================================
+
+    function showPasswordMessage(
+        message,
+        type
+    ) {
+
+
+        const element =
+            document.getElementById(
+                "passwordMessage"
+            );
+
+
+        element.textContent =
+            message;
+
+
+        element.className =
+            type === "success"
+
+                ?
+                "mb-4 px-4 py-3 rounded-lg text-sm bg-emerald-50 text-emerald-700 border border-emerald-200"
+
+                :
+                "mb-4 px-4 py-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200";
+
+
+        element
+            .classList
+            .remove(
+                "hidden"
+            );
+
+
+    }
+
+
+    // =====================================================
+    // SHOW/HIDE PASSWORD
+    // =====================================================
+
+    function togglePassword(
+        inputId,
+        button
+    ) {
+
+
+        const input =
+            document.getElementById(
+                inputId
+            );
+
+
+        const icon =
+            button.querySelector(
+                "i"
+            );
+
+
+        if (
+            input.type
+            ===
+            "password"
+        ) {
+
+
+            input.type =
+                "text";
+
+
+            icon.className =
+                "fa-regular fa-eye-slash";
+
+
+        } else {
+
+
+            input.type =
+                "password";
+
+
+            icon.className =
+                "fa-regular fa-eye";
+
+
+        }
+
+
+    }
+
+
+    // =====================================================
+    // BUTTON LOADING
+    // =====================================================
+
+    function setButtonLoading(
+        button,
+        loading,
+        text
+    ) {
+
+
+        button.disabled =
+            loading;
+
+
+        button.innerHTML =
+            loading
+
+                ?
+                `
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i>
+                ${text}
+                `
+
+                :
+                `
+                <i class="fa-solid ${
+                    button.id === "saveProfileButton"
+                        ?
+                        "fa-floppy-disk"
+                        :
+                        "fa-key"
+                } mr-2"></i>
+
+                ${text}
+                `;
+
+
+        if (loading) {
+
+
+            button.classList.add(
+                "opacity-70",
+                "cursor-not-allowed"
+            );
+
+
+        } else {
+
+
+            button.classList.remove(
+                "opacity-70",
+                "cursor-not-allowed"
+            );
+
+
+        }
+
+
+    }
+
+
+    // =====================================================
+    // FORMAT ROLE
+    // =====================================================
+
+    function formatRole(role) {
+
+
+        if (
+            !role
+        ) {
+
+
+            return "USER";
+
+
+        }
+
+
+        const value =
+            String(role)
+                .toUpperCase();
+
+
+        if (
+            value === "ROLE_ADMIN"
+            ||
+            value === "ADMIN"
+        ) {
+
+
+            return "ADMIN";
+
+
+        }
+
+
+        return "USER";
+
+
+    }
+
+
+    // =====================================================
+    // INITIALS
+    // =====================================================
+
+    function getInitials(name) {
+
+
+        const value =
+            String(
+                name
+                ||
+                "U"
+            )
+                .trim();
+
+
+        if (!value) {
+
+
+            return "U";
+
+
+        }
+
+
+        const parts =
+            value.split(
+                /\s+/
+            );
+
+
+        if (
+            parts.length === 1
+        ) {
+
+
+            return parts[0]
+                .charAt(0)
+                .toUpperCase();
+
+
+        }
+
+
+        return (
+            parts[0]
+                .charAt(0)
+            +
+            parts[
+            parts.length - 1
+                ]
+                .charAt(0)
+        )
+            .toUpperCase();
+
+
+    }
+
+
+    // =====================================================
+    // READ API ERROR
+    // =====================================================
+
+    async function readError(response) {
+
+
+        const text =
+            await response.text();
+
+
+        if (!text) {
+
+
+            return (
+                "HTTP "
+                +
+                response.status
+            );
+
+
+        }
+
+
+        try {
+
+
+            const json =
+                JSON.parse(
+                    text
+                );
+
+
+            return (
+                json.error
+                ||
+                json.message
+                ||
+                text
+            );
+
+
+        } catch (_) {
+
+
+            return text;
+
+
+        }
+
+
+    }
+
+
+    // =====================================================
+    // HOME
+    // =====================================================
+
+    function goHome() {
+
+
+        window.location.href =
+            "/index.html";
+
+
+    }
+
+
+    // =====================================================
+    // LOGOUT
+    // =====================================================
+
+    function handleLogout() {
+
+
+        localStorage.removeItem(
+            "token"
+        );
+
+
+        localStorage.removeItem(
+            "userEmail"
+        );
+
+
+        localStorage.removeItem(
+            "userRole"
+        );
+
+
+        localStorage.removeItem(
+            "role"
+        );
+
+
+        window.location.href =
+            "/login.html";
+
+
+    }
+
+
+    // =====================================================
+    // SAFE HTML
+    // =====================================================
+
+    function escapeHtml(value) {
+
+
+        return String(
+            value ?? ""
+        )
+
+            .replaceAll(
+                "&",
+                "&amp;"
+            )
+
+            .replaceAll(
+                "<",
+                "&lt;"
+            )
+
+            .replaceAll(
+                ">",
+                "&gt;"
+            )
+
+            .replaceAll(
+                '"',
+                "&quot;"
+            )
+
+            .replaceAll(
+                "'",
+                "&#039;"
+            );
+
+
+    }
+
+
+</script>
+
+
+</body>
+
+</html>

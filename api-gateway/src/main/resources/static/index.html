@@ -25,7 +25,7 @@
 
 
 <!-- ===================================================== -->
-<!-- HEADER / NAVIGATION -->
+<!-- HEADER -->
 <!-- ===================================================== -->
 
 <header class="bg-emerald-600 text-white shadow-md">
@@ -50,32 +50,61 @@
              class="flex items-center space-x-3">
 
 
+            <!-- ================================================= -->
             <!-- ĐÃ ĐĂNG NHẬP -->
+            <!-- ================================================= -->
 
             <div id="logged-in-menu"
                  class="hidden items-center space-x-3">
 
 
-                <span id="user-greeting"
-                      class="text-sm
-                             bg-emerald-700
-                             px-3
-                             py-1
-                             rounded-full">
+                <!-- ============================================= -->
+                <!-- NÚT HỒ SƠ KHÁCH HÀNG -->
+                <!-- ============================================= -->
+
+                <a href="/profile.html"
+
+                   id="user-greeting"
+
+                   title="Xem hồ sơ cá nhân"
+
+                   class="text-sm
+                          bg-emerald-700
+                          hover:bg-emerald-800
+                          px-3
+                          py-1.5
+                          rounded-full
+                          flex
+                          items-center
+                          transition
+                          cursor-pointer">
 
 
-                    <i class="fa-regular fa-user mr-1"></i>
+                    <i class="fa-regular fa-user mr-1.5"></i>
 
-                    Xin chào,
 
-                    <span id="user-email-display">
+                    <span>
+
+                        Xin chào,
 
                     </span>
 
-                </span>
 
+                    <span id="user-email-display"
+                          class="ml-1">
+
+                    </span>
+
+
+                </a>
+
+
+                <!-- ============================================= -->
+                <!-- ĐĂNG XUẤT -->
+                <!-- ============================================= -->
 
                 <button onclick="handleLogout()"
+
                         class="bg-emerald-800
                                hover:bg-emerald-900
                                text-sm
@@ -83,6 +112,9 @@
                                py-1.5
                                rounded
                                transition">
+
+
+                    <i class="fa-solid fa-right-from-bracket mr-1"></i>
 
                     Đăng xuất
 
@@ -92,13 +124,16 @@
             </div>
 
 
+            <!-- ================================================= -->
             <!-- CHƯA ĐĂNG NHẬP -->
+            <!-- ================================================= -->
 
             <div id="logged-out-menu"
                  class="flex items-center space-x-2">
 
 
                 <a href="/login.html"
+
                    class="bg-emerald-700
                           hover:bg-emerald-800
                           text-sm
@@ -113,6 +148,7 @@
 
 
                 <a href="/DangKy.html"
+
                    class="bg-white
                           text-emerald-700
                           hover:bg-emerald-50
@@ -144,6 +180,7 @@
 <!-- ===================================================== -->
 
 <section id="search-section"
+
          class="bg-emerald-600
                 pb-12
                 pt-6
@@ -180,26 +217,30 @@
                 items-center">
 
 
-        <!-- ICON SEARCH -->
+        <!-- SEARCH ICON -->
 
         <button type="button"
+
                 onclick="openAdvancedSearch()"
+
                 class="pl-4
                        text-gray-400
                        hover:text-emerald-600
                        transition"
+
                 title="Tìm kiếm">
 
-            <i class="fa-solid fa-magnifying-glass">
 
-            </i>
+            <i class="fa-solid fa-magnifying-glass"></i>
+
 
         </button>
 
 
-        <!-- INPUT SEARCH -->
+        <!-- SEARCH INPUT -->
 
         <input type="text"
+
                id="search-input"
 
                placeholder="Tìm kiếm sân, địa điểm, môn thể thao..."
@@ -215,6 +256,7 @@
         <!-- BỘ LỌC NÂNG CAO -->
 
         <button type="button"
+
                 onclick="openAdvancedSearch()"
 
                 class="bg-emerald-50
@@ -229,9 +271,7 @@
                        whitespace-nowrap">
 
 
-            <i class="fa-solid fa-sliders mr-1">
-
-            </i>
+            <i class="fa-solid fa-sliders mr-1"></i>
 
             Bộ lọc nâng cao
 
@@ -242,7 +282,7 @@
 
 
     <!-- ================================================= -->
-    <!-- FILTER NHANH THEO MÔN -->
+    <!-- FILTER NHANH -->
     <!-- ================================================= -->
 
     <div class="flex flex-wrap
@@ -269,9 +309,7 @@
                 data-category="">
 
 
-            <i class="fa-solid fa-check mr-1.5">
-
-            </i>
+            <i class="fa-solid fa-check mr-1.5"></i>
 
             Tất cả sân
 
@@ -405,6 +443,7 @@
 
         </span>
 
+
         Danh sách Cụm Sân Hiện Có
 
     </h2>
@@ -419,7 +458,7 @@
                 gap-6">
 
 
-        <!-- API LOAD SÂN TẠI ĐÂY -->
+        <!-- DỮ LIỆU API -->
 
 
     </div>
@@ -488,7 +527,9 @@
                 <li>
 
                     <a href="#search-section"
+
                        onclick="filterStadiums('all')"
+
                        class="hover:text-white transition-colors">
 
                         › Tất cả các sân
@@ -501,7 +542,9 @@
                 <li>
 
                     <a href="#search-section"
+
                        onclick="filterStadiums('badminton')"
+
                        class="hover:text-white transition-colors">
 
                         › Cầu lông
@@ -514,7 +557,9 @@
                 <li>
 
                     <a href="#search-section"
+
                        onclick="filterStadiums('football')"
+
                        class="hover:text-white transition-colors">
 
                         › Bóng đá
@@ -527,7 +572,9 @@
                 <li>
 
                     <a href="#search-section"
+
                        onclick="filterStadiums('tennis')"
+
                        class="hover:text-white transition-colors">
 
                         › Tennis
@@ -540,7 +587,9 @@
                 <li>
 
                     <a href="#search-section"
+
                        onclick="filterStadiums('pickleball')"
+
                        class="hover:text-white transition-colors">
 
                         › Pickleball
@@ -553,7 +602,9 @@
                 <li>
 
                     <a href="#search-section"
+
                        onclick="filterStadiums('volleyball')"
+
                        class="hover:text-white transition-colors">
 
                         › Bóng chuyền
@@ -642,7 +693,7 @@
 
 
             // =================================================
-            // 1. KIỂM TRA QUYỀN ADMIN
+            // KIỂM TRA ROLE
             // =================================================
 
             const userRole =
@@ -668,11 +719,12 @@
 
                 return;
 
+
             }
 
 
             // =================================================
-            // 2. TRẠNG THÁI LOGIN
+            // KIỂM TRA LOGIN
             // =================================================
 
             const token =
@@ -704,6 +756,10 @@
                     "user-email-display"
                 );
 
+
+            // =================================================
+            // ĐÃ LOGIN
+            // =================================================
 
             if (
                 token
@@ -737,7 +793,13 @@
                     );
 
 
-            } else {
+            }
+
+                // =================================================
+                // CHƯA LOGIN
+            // =================================================
+
+            else {
 
 
                 loggedInMenu
@@ -758,14 +820,14 @@
 
 
             // =================================================
-            // 3. LOAD TOÀN BỘ SÂN
+            // LOAD DANH SÁCH SÂN
             // =================================================
 
             fetchStadiums("");
 
 
             // =================================================
-            // 4. FILTER NHANH
+            // FILTER NHANH
             // =================================================
 
             const filterButtons =
@@ -783,7 +845,8 @@
                         function () {
 
 
-                            // Bỏ active tất cả
+                            // RESET BUTTON
+
                             filterButtons.forEach(
                                 btn => {
 
@@ -796,7 +859,8 @@
                             );
 
 
-                            // Active nút vừa chọn
+                            // ACTIVE BUTTON
+
                             this.className =
                                 "filter-btn bg-white text-emerald-700 px-4 py-1.5 rounded-full text-xs font-semibold shadow flex items-center transition";
 
@@ -821,7 +885,7 @@
 
 
             // =================================================
-            // 5. NHẤN ENTER TRONG SEARCH
+            // ENTER SEARCH
             // =================================================
 
             const searchInput =
@@ -860,7 +924,7 @@
 
 
     // =====================================================
-    // MỞ TRANG TÌM KIẾM NÂNG CAO
+    // MỞ TÌM KIẾM NÂNG CAO
     // =====================================================
 
     function openAdvancedSearch() {
@@ -880,9 +944,6 @@
                 "";
 
 
-        // Nếu đang nhập từ khóa
-        // thì truyền từ khóa sang advanced-search.html
-
         if (keyword) {
 
 
@@ -894,7 +955,9 @@
                 );
 
 
-        } else {
+        }
+
+        else {
 
 
             window.location.href =
@@ -917,8 +980,6 @@
         let url =
             "/api/fields";
 
-
-        // Có chọn loại sân
 
         if (
             category
@@ -981,7 +1042,9 @@
                         "";
 
 
-                    // Không có sân
+                    // =================================================
+                    // KHÔNG CÓ DATA
+                    // =================================================
 
                     if (
                         !data
@@ -992,6 +1055,7 @@
 
                         stadiumListContainer.innerHTML =
                             `
+
                             <p
                                 class="
                                     text-gray-500
@@ -1003,6 +1067,7 @@
                                 Không tìm thấy sân nào phù hợp.
 
                             </p>
+
                             `;
 
 
@@ -1012,7 +1077,9 @@
                     }
 
 
-                    // Render sân
+                    // =================================================
+                    // RENDER DATA
+                    // =================================================
 
                     data.forEach(
                         stadium => {
@@ -1288,7 +1355,9 @@
                         "filter-btn bg-white text-emerald-700 px-4 py-1.5 rounded-full text-xs font-semibold shadow flex items-center transition";
 
 
-                } else {
+                }
+
+                else {
 
 
                     btn.className =
@@ -1326,7 +1395,7 @@
 
 
     // =====================================================
-    // ĐĂNG XUẤT
+    // LOGOUT
     // =====================================================
 
     function handleLogout() {
@@ -1352,14 +1421,15 @@
         );
 
 
-        window.location.reload();
+        window.location.href =
+            "/login.html";
 
 
     }
 
 
     // =====================================================
-    // CHỐNG CHÈN HTML
+    // ESCAPE HTML
     // =====================================================
 
     function escapeHtml(value) {
