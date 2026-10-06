@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết đặt lịch</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-[#005229] text-white min-h-screen flex flex-col justify-between font-sans selection:bg-emerald-200">
+
+<div>
+    <!-- ===================================================== -->
+    <!-- 1. HEADER CHÍNH -->
+    <!-- ===================================================== -->
+    <header class="bg-[#005229] px-4 py-4 flex items-center justify-between sticky top-0 z-10">
+        <button onclick="window.location.href='index.html'" class="text-white hover:text-gray-200 transition text-lg cursor-pointer" title="Trang chủ">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <h1 class="text-lg font-bold tracking-wide">Chi tiết đặt lịch</h1>
+        <div class="w-5"></div>
+    </header>
+
+    <!-- ===================================================== -->
+    <!-- 2. THANH TAB CHUYỂN ĐỔI -->
+    <!-- ===================================================== -->
+    <nav class="flex border-b border-emerald-800 text-sm font-semibold">
+        <button class="w-full py-3 text-center text-yellow-300 border-b-2 border-yellow-300 transition cursor-pointer">
+            Thông tin
+        </button>
+    </nav>
+
+    <!-- ===================================================== -->
+    <!-- 3. NỘI DUNG CHI TIẾT ĐẶT LỊCH -->
+    <!-- ===================================================== -->
+    <main class="p-4 space-y-4 max-w-lg mx-auto">
+        <!-- THÔNG TIN CHÍNH -->
+        <div class="bg-[#006633] rounded-xl p-4 shadow-lg space-y-3 text-sm">
+            <div class="flex items-center space-x-2 text-yellow-300 font-bold text-base border-b border-emerald-800/60 pb-2">
+                <i class="fa-solid fa-clipboard-list"></i>
+                <span>Thông tin đơn đặt</span>
+            </div>
+
+            <div class="space-y-2 pt-1">
+                <div class="flex">
+                    <span class="w-36 text-gray-200">Mã lịch đặt:</span>
+                    <span id="booking-id" class="font-bold text-yellow-300">#7853</span>
+                </div>
+
+                <div class="flex items-center">
+                    <span class="w-36 text-gray-200">Trạng thái:</span>
+                    <span id="booking-status" class="font-bold text-yellow-300 bg-yellow-900/40 px-2 py-0.5 rounded text-xs border border-yellow-500/50">
+                        Chờ Admin xác nhận
+                    </span>
+                </div>
+
+                <div class="flex">
+                    <span class="w-36 text-gray-200">Tên CLB:</span>
+                    <span id="club-name" class="font-semibold text-white">Phúc Long Badminton - 460 Trần Quý Cáp</span>
+                </div>
+
+                <div class="flex">
+                    <span class="w-36 text-gray-200 shrink-0">Địa chỉ:</span>
+                    <span id="club-address" class="text-white">P. Trần Quý Cáp, Văn Miếu - Quốc Tử Giám, Hà Nội</span>
+                </div>
+
+                <div class="flex items-center">
+                    <span class="w-36 text-gray-200">Số điện thoại:</span>
+                    <div class="flex items-center space-x-2">
+                        <span id="club-phone" class="font-semibold text-white">0981852431</span>
+                        <a id="phone-link" href="tel:0981852431" class="text-white hover:text-yellow-300">
+                            <i class="fa-solid fa-phone text-xs"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="flex flex-col pt-1">
+                    <span class="text-gray-200">Ngày: <strong id="booking-date" class="text-white font-semibold">05/10/2026</strong></span>
+                    <div id="courts-detail-list" class="pl-3 mt-1 space-y-0.5 text-gray-100">
+                        <p>- Cầu lông 4: 12h30 - 14h00</p>
+                    </div>
+                </div>
+
+                <div class="flex pt-1">
+                    <span class="w-36 text-gray-200">Tổng giờ:</span>
+                    <span id="total-hours" class="font-semibold text-white">1h30</span>
+                </div>
+
+                <div class="flex">
+                    <span class="w-36 text-gray-200">Tổng giảm giá:</span>
+                    <span id="discount-price" class="text-white">0 đ</span>
+                </div>
+
+                <div class="flex">
+                    <span class="w-36 text-gray-200">Tổng tiền:</span>
+                    <span id="total-price" class="font-bold text-white">105.000 đ</span>
+                </div>
+
+                <div class="flex">
+                    <span class="w-36 text-gray-200">Đặt cọc:</span>
+                    <span id="deposit-price" class="font-bold text-white">105.000 đ</span>
+                </div>
+
+                <div class="flex items-center pt-1">
+                    <span class="w-36 text-gray-200">Trạng thái thanh toán:</span>
+                    <span id="payment-status" class="font-bold text-emerald-300">Đã thanh toán (Chờ duyệt)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- GHI CHÚ VÀ THÔNG TIN THANH TOÁN -->
+        <div class="bg-[#006633] rounded-xl p-4 shadow-lg space-y-2.5 text-sm">
+            <div class="flex">
+                <span class="w-40 text-gray-200">Khách hàng ghi chú:</span>
+                <span id="user-note" class="italic text-yellow-200">Không có</span>
+            </div>
+            <div class="flex">
+                <span class="w-40 text-gray-200">Chủ sân ghi chú:</span>
+                <span id="owner-note" class="italic text-yellow-200">Không có</span>
+            </div>
+            <div class="flex items-center justify-between pt-1 border-t border-emerald-800/60">
+                <span class="text-gray-200">Thông tin thanh toán:</span>
+                <button onclick="openPaymentInfoModal()" class="text-yellow-300 underline font-semibold hover:text-yellow-200 cursor-pointer">
+                    Xem chi tiết
+                </button>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ===================================================== -->
+<!-- 4. CÁC NÚT THAO TÁC Ở ĐÁY MÀN HÌNH -->
+<!-- ===================================================== -->
+<div class="p-4 max-w-lg mx-auto w-full space-y-2.5">
+    <!-- Nút 1: Xem Lịch Sử Đặt Sân -->
+    <button onclick="goToHistory()" class="w-full bg-amber-400 hover:bg-amber-500 text-emerald-950 font-bold py-3.5 rounded-lg uppercase tracking-wider shadow-lg transition transform active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2">
+        <i class="fa-solid fa-receipt"></i>
+        <span>XEM LỊCH SỬ ĐẶT SÂN</span>
+    </button>
+
+    <!-- Nút 2: Hủy Đặt Lịch -->
+    <button onclick="cancelBooking()" class="w-full bg-[#f24e1e] hover:bg-[#d93d10] text-white font-bold py-3 rounded-lg uppercase tracking-wider shadow-lg transition transform active:scale-[0.99] cursor-pointer text-sm">
+        HỦY ĐẶT LỊCH
+    </button>
+</div>
+
+<!-- ===================================================== -->
+<!-- 5. MODAL XEM CHI TIẾT THÔNG TIN THANH TOÁN -->
+<!-- ===================================================== -->
+<div id="payment-info-modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white text-gray-800 rounded-xl p-5 max-w-sm w-full space-y-4 shadow-2xl relative">
+        <div class="flex justify-between items-center border-b pb-2">
+            <h3 class="font-bold text-emerald-900 text-base">Thông tin chuyển khoản</h3>
+            <button onclick="closePaymentInfoModal()" class="text-gray-400 hover:text-gray-600 text-lg cursor-pointer">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="text-xs space-y-1.5 text-gray-600">
+            <p>Ngân hàng: <strong class="text-gray-800">MB Bank</strong></p>
+            <p>Số tài khoản: <strong id="modal-bank-number" class="text-gray-800">188826092005</strong></p>
+            <p>Chủ tài khoản: <strong id="modal-bank-owner" class="text-gray-800">VU DUY TIEN</strong></p>
+            <p>Nội dung CK: <strong id="modal-transfer-content" class="text-emerald-700 font-bold">DATSAN 7853</strong></p>
+        </div>
+
+        <div class="border-t pt-2">
+            <p class="text-xs font-semibold text-gray-500 mb-2">Ảnh xác nhận chuyển khoản:</p>
+            <div class="bg-gray-100 p-2 rounded-lg text-center border">
+                <img id="transfer-proof-img" src="https://via.placeholder.com/300x400?text=Anh+Bill+Chuyen+Khoan" alt="Ảnh hóa đơn" class="max-h-48 mx-auto rounded shadow-sm object-contain">
+            </div>
+        </div>
+
+        <button onclick="closePaymentInfoModal()" class="w-full bg-[#005229] hover:bg-[#00381c] text-white font-bold py-2 rounded-lg text-sm transition cursor-pointer">
+            Đóng
+        </button>
+    </div>
+</div>
+
+<!-- ===================================================== -->
+<!-- 6. JAVASCRIPT LƯU ĐƠN & CHUYỂN SANG USERBOOKING -->
+<!-- ===================================================== -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        loadBookingData();
+    });
+
+    let currentBookingData = null;
+
+    function loadBookingData() {
+        const dataStr = localStorage.getItem("bookingData");
+        if (!dataStr) return;
+
+        currentBookingData = JSON.parse(dataStr);
+        const data = currentBookingData;
+
+        // Mã lịch đặt
+        const bookingId = data.bookingId || data.id || "7853";
+        document.getElementById("booking-id").textContent = `#${bookingId}`;
+        document.getElementById("modal-transfer-content").textContent = `DATSAN ${bookingId}`;
+
+        // Thông tin sân
+        if (data.stadiumName) document.getElementById("club-name").textContent = data.stadiumName;
+        if (data.stadiumAddress || data.address) {
+            document.getElementById("club-address").textContent = data.stadiumAddress || data.address;
+        }
+
+        // Số điện thoại
+        if (data.phone) {
+            document.getElementById("club-phone").textContent = data.phone;
+            document.getElementById("phone-link").href = `tel:${data.phone}`;
+        }
+
+        // Ngày & Khung giờ
+        if (data.bookingDate) document.getElementById("booking-date").textContent = data.bookingDate;
+        if (data.totalHours) document.getElementById("total-hours").textContent = data.totalHours;
+
+        // Giá tiền
+        if (data.totalPrice) {
+            document.getElementById("total-price").textContent = data.totalPrice;
+            document.getElementById("deposit-price").textContent = data.totalPrice;
+        }
+
+        // Danh sách ca đặt
+        const courtsListContainer = document.getElementById("courts-detail-list");
+        if (data.courtDetail) {
+            courtsListContainer.innerHTML = `<p>${data.courtDetail}</p>`;
+        } else if (data.selectedSlotsDetail && data.selectedSlotsDetail.length > 0) {
+            courtsListContainer.innerHTML = "";
+            data.selectedSlotsDetail.forEach(slot => {
+                const p = document.createElement("p");
+                p.textContent = `- ${slot.courtName}: ${slot.timeSlot}`;
+                courtsListContainer.appendChild(p);
+            });
+        }
+
+        // Trạng thái đơn
+        const statusElem = document.getElementById("booking-status");
+        const statusUpper = (data.status || '').toUpperCase();
+
+        if (statusUpper === "APPROVED" || statusUpper === "CONFIRMED" || statusUpper === "PAID") {
+            statusElem.textContent = "Đã xác nhận";
+            statusElem.className = "font-bold text-emerald-300 bg-emerald-900/60 px-2 py-0.5 rounded text-xs border border-emerald-400/50";
+        } else if (statusUpper === "CANCELLED") {
+            statusElem.textContent = "Đã hủy";
+            statusElem.className = "font-bold text-rose-300 bg-rose-900/60 px-2 py-0.5 rounded text-xs border border-rose-400/50";
+        } else {
+            statusElem.textContent = "Chờ Admin xác nhận";
+            statusElem.className = "font-bold text-yellow-300 bg-yellow-900/60 px-2 py-0.5 rounded text-xs border border-yellow-400/50";
+        }
+
+        // TỰ ĐỘNG LƯU VÀO DANH SÁCH LỊCH SỬ ĐẶT SÂN
+        saveToBookingHistory(data);
+    }
+
+    // Hàm lưu đơn vào Lịch sử đặt sân (userBookingList trong localStorage)
+    function saveToBookingHistory(bookingItem) {
+        let historyList = JSON.parse(localStorage.getItem("userBookingList")) || [];
+
+        const bookingId = bookingItem.bookingId || bookingItem.id || "7853";
+        const existingIndex = historyList.findIndex(item => (item.id || item.bookingId) == bookingId);
+
+        const newRecord = {
+            id: bookingId,
+            bookingId: bookingId,
+            stadiumName: bookingItem.stadiumName || "Phúc Long Badminton - 460 Trần Quý Cáp",
+            address: bookingItem.stadiumAddress || bookingItem.address || "P. Trần Quý Cáp, Văn Miếu - Quốc Tử Giám, Hà Nội",
+            phone: bookingItem.phone || "0981852431",
+            bookingDate: bookingItem.bookingDate || "05/10/2026",
+            courtDetail: bookingItem.courtDetail || "- Cầu lông 4: 12h30 - 14h00",
+            totalHours: bookingItem.totalHours || "1h30",
+            totalPrice: bookingItem.totalPrice || "105.000 đ",
+            status: bookingItem.status || "PENDING"
+        };
+
+        if (existingIndex !== -1) {
+            historyList[existingIndex] = newRecord;
+        } else {
+            historyList.unshift(newRecord);
+        }
+
+        localStorage.setItem("userBookingList", JSON.stringify(historyList));
+    }
+
+    // Nút chuyển hướng sang Lịch sử đặt sân
+    function goToHistory() {
+        window.location.href = "userBooking.html";
+    }
+
+    function openPaymentInfoModal() {
+        document.getElementById("payment-info-modal").classList.remove("hidden");
+    }
+
+    function closePaymentInfoModal() {
+        document.getElementById("payment-info-modal").classList.add("hidden");
+    }
+
+    function cancelBooking() {
+        if (confirm("Bạn có chắc chắn muốn hủy đơn đặt lịch này không?")) {
+            if (currentBookingData) {
+                currentBookingData.status = "CANCELLED";
+                localStorage.setItem("bookingData", JSON.stringify(currentBookingData));
+                saveToBookingHistory(currentBookingData);
+            }
+            alert("Đã gửi yêu cầu hủy lịch. Quản trị viên sẽ kiểm tra và hoàn tiền theo quy định.");
+            window.location.href = "userBooking.html";
+        }
+    }
+</script>
+</body>
+</html>

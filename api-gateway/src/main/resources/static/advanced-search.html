@@ -76,7 +76,7 @@
 
                 <p class="text-emerald-100 mt-1 text-sm">
 
-                    Tìm sân phù hợp nhanh chóng và chính xác
+                    Tìm sân trống phù hợp nhanh chóng và chính xác
 
                 </p>
 
@@ -266,7 +266,7 @@
 
                 <i class="fa-regular fa-circle-check mr-2"></i>
 
-                Sân trống
+                Chỉ sân trống
 
             </button>
 
@@ -297,7 +297,7 @@
                 <input
                         type="date"
                         id="searchDate"
-
+                        onchange="applyFilters()"
                         class="w-full
                                border
                                rounded-lg
@@ -322,7 +322,7 @@
                 <input
                         type="time"
                         id="startTime"
-
+                        onchange="applyFilters()"
                         class="w-full
                                border
                                rounded-lg
@@ -347,7 +347,7 @@
                 <input
                         type="time"
                         id="endTime"
-
+                        onchange="applyFilters()"
                         class="w-full
                                border
                                rounded-lg
@@ -382,7 +382,7 @@
 
                 <select
                         id="cityFilter"
-
+                        onchange="applyFilters()"
                         class="border
                                rounded-lg
                                px-4 py-3
@@ -424,7 +424,7 @@
                 <input
                         type="text"
                         id="keywordInput"
-
+                        oninput="applyFilters()"
                         class="md:col-span-2
                                border
                                rounded-lg
@@ -621,14 +621,14 @@
 
             <h3 class="text-lg font-semibold">
 
-                Không tìm thấy sân phù hợp
+                Không tìm thấy sân phù hợp hoặc tất cả sân đã bị đặt trùng giờ
 
             </h3>
 
 
             <p class="text-gray-500 mt-2">
 
-                Hãy thử thay đổi môn thể thao,
+                Hãy thử thay đổi thời gian, môn thể thao,
                 khu vực hoặc từ khóa tìm kiếm.
 
             </p>
@@ -641,7 +641,7 @@
 
 
 <!-- ===================================================== -->
-<!-- MODAL CHI TIẾT -->
+<!-- MODAL CHI TIẾT (TÙY CHỌN DÙNG KHI CẦN) -->
 <!-- ===================================================== -->
 
 <div
@@ -702,10 +702,12 @@
 <script>
 
     // =====================================================
-    // API
+    // API CONFIGURATION
     // =====================================================
 
     const STADIUM_API = "/api/fields";
+
+    const AVAILABILITY_API = "/api/bookings/check-available";
 
 
     // =====================================================
@@ -745,24 +747,14 @@
 
         const today = new Date();
 
-        const year =
-            today.getFullYear();
+        const year = today.getFullYear();
 
-        const month =
-            String(
-                today.getMonth() + 1
-            ).padStart(2, "0");
+        const month = String(today.getMonth() + 1).padStart(2, "0");
 
-        const day =
-            String(
-                today.getDate()
-            ).padStart(2, "0");
+        const day = String(today.getDate()).padStart(2, "0");
 
 
-        document
-            .getElementById("searchDate")
-            .value =
-            `${year}-${month}-${day}`;
+        document.getElementById("searchDate").value = `${year}-${month}-${day}`;
 
     }
 
@@ -778,22 +770,17 @@
 
         try {
 
-            const response =
-                await fetch(STADIUM_API);
+            const response = await fetch(STADIUM_API);
 
 
             if (!response.ok) {
 
-                throw new Error(
-                    "HTTP "
-                    +
-                    response.status
-                );
+                throw new Error("HTTP " + response.status);
+
             }
 
 
-            allStadiums =
-                await response.json();
+            allStadiums = await response.json();
 
 
             if (!Array.isArray(allStadiums)) {
@@ -803,31 +790,20 @@
             }
 
 
-            applyFilters();
+            await applyFilters();
 
         }
 
         catch (error) {
 
-            console.error(
-                "Không thể tải sân:",
-                error
-            );
+            console.error("Không thể tải sân:", error);
 
 
-            document
-                .getElementById(
-                    "resultTitle"
-                )
-                .textContent =
-                "Không thể tải danh sách sân";
+            document.getElementById("resultTitle").textContent = "Không thể tải danh sách sân";
 
 
-            document
-                .getElementById(
-                    "stadiumResults"
-                )
-                .innerHTML =
+            document.getElementById("stadiumResults").innerHTML =
+
                 `
                 <div class="col-span-full
                             bg-red-50
@@ -864,25 +840,15 @@
 
     function selectSport(button) {
 
-        document
-            .querySelectorAll(
-                ".sport-btn"
-            )
-            .forEach(
-                btn =>
-                    btn.classList.remove(
-                        "active"
-                    )
-            );
+        document.querySelectorAll(".sport-btn").forEach(btn => btn.classList.remove("active"));
 
 
-        button
-            .classList
-            .add("active");
+        button.classList.add("active");
 
 
-        selectedSport =
-            button.dataset.sport;
+        selectedSport = button.dataset.sport;
+
+        applyFilters();
 
     }
 
@@ -893,29 +859,37 @@
 
     function toggleAvailable() {
 
-        onlyAvailable =
-            !onlyAvailable;
+        onlyAvailable = !onlyAvailable;
 
 
-        const button =
-            document.getElementById(
-                "availableButton"
-            );
+        const button = document.getElementById("availableButton");
 
 
         if (onlyAvailable) {
 
             button.className =
+
                 "border border-emerald-500 bg-emerald-50 text-emerald-700 px-8 py-2.5 rounded-lg font-medium";
+
+            button.innerHTML =
+
+                `<i class="fa-regular fa-circle-check mr-2"></i> Chỉ sân trống`;
 
         }
 
         else {
 
             button.className =
+
                 "border border-gray-300 bg-white text-gray-500 px-8 py-2.5 rounded-lg font-medium";
 
+            button.innerHTML =
+
+                `<i class="fa-regular fa-circle mr-2"></i> Hiển thị tất cả`;
+
         }
+
+        applyFilters();
 
     }
 
@@ -926,12 +900,7 @@
 
     function setKeyword(keyword) {
 
-        document
-            .getElementById(
-                "keywordInput"
-            )
-            .value =
-            keyword;
+        document.getElementById("keywordInput").value = keyword;
 
 
         applyFilters();
@@ -943,112 +912,283 @@
     // FILTER
     // =====================================================
 
-    function applyFilters() {
+    async function applyFilters() {
 
-        validateTime();
+        if (!validateTime()) return;
+
+        showLoading(true);
 
 
-        const keyword =
-            normalizeText(
-                document
-                    .getElementById(
-                        "keywordInput"
-                    )
-                    .value
+        const keyword = normalizeText(document.getElementById("keywordInput").value);
+
+
+        const location = normalizeText(document.getElementById("cityFilter").value);
+
+
+        const date = document.getElementById("searchDate").value;
+
+
+        const startTime = document.getElementById("startTime").value;
+
+
+        const endTime = document.getElementById("endTime").value;
+
+
+        let filtered = allStadiums.filter(stadium => {
+
+
+            // =============================
+            // SPORT
+            // =============================
+
+            const sportMatch = selectedSport === "all" || stadiumMatchesSport(stadium, selectedSport);
+
+
+            // =============================
+            // LOCATION
+            // =============================
+
+            const address = normalizeText(stadium.address || stadium.location || "");
+
+
+            const locationMatch = !location || address.includes(location);
+
+
+            // =============================
+            // KEYWORD
+            // =============================
+
+            const searchable = normalizeText(
+
+                [
+                    stadium.name,
+                    stadium.type,
+                    stadium.address,
+                    stadium.location,
+                    stadium.description
+                ]
+                    .filter(Boolean)
+                    .join(" ")
+
             );
 
 
-        const location =
-            normalizeText(
-                document
-                    .getElementById(
-                        "cityFilter"
-                    )
-                    .value
-            );
+            const keywordMatch = !keyword || searchable.includes(keyword);
 
 
-        const filtered =
-            allStadiums.filter(
-                stadium => {
+            return (sportMatch && locationMatch && keywordMatch);
+
+        });
 
 
-                    // =============================
-                    // SPORT
-                    // =============================
+        // =============================
+        // AVAILABILITY & OVERLAP CHECK
+        // =============================
 
-                    const sportMatch =
-                        selectedSport === "all"
-                        ||
-                        stadiumMatchesSport(
-                            stadium,
-                            selectedSport
-                        );
+        if (onlyAvailable) {
 
+            let availableIds = null;
 
-                    // =============================
-                    // LOCATION
-                    // =============================
+            // 1. Thử gọi API Backend để kiểm tra danh sách ID khả dụng
+            const queryParams = new URLSearchParams();
 
-                    const address =
-                        normalizeText(
-                            stadium.address
-                            ||
-                            stadium.location
-                            ||
-                            ""
-                        );
+            if (date) queryParams.append("date", date);
+
+            if (startTime) queryParams.append("startTime", startTime);
+
+            if (endTime) queryParams.append("endTime", endTime);
 
 
-                    const locationMatch =
-                        !location
-                        ||
-                        address.includes(
-                            location
-                        );
+            try {
+
+                const url = `${AVAILABILITY_API}?${queryParams.toString()}`;
+
+                const res = await fetch(url);
 
 
-                    // =============================
-                    // KEYWORD
-                    // =============================
+                if (res.ok) {
 
-                    const searchable =
-                        normalizeText(
-                            [
-                                stadium.name,
-                                stadium.type,
-                                stadium.address,
-                                stadium.location,
-                                stadium.description
-                            ]
-                                .filter(Boolean)
-                                .join(" ")
-                        );
+                    const availableData = await res.json();
 
 
-                    const keywordMatch =
-                        !keyword
-                        ||
-                        searchable.includes(
-                            keyword
-                        );
+                    if (Array.isArray(availableData) && availableData.length > 0) {
 
+                        availableIds = availableData.map(item => {
 
-                    return (
-                        sportMatch
-                        &&
-                        locationMatch
-                        &&
-                        keywordMatch
-                    );
+                            if (typeof item === "object" && item !== null) {
+
+                                return String(item.fieldId || item.id || item.stadiumId);
+
+                            }
+
+                            return String(item);
+
+                        });
+
+                    }
 
                 }
-            );
+
+            }
+
+            catch (err) {
+
+                // Bỏ qua lỗi kết nối API để chuyển ngay xuống LocalStorage
+
+            }
 
 
-        renderResults(
-            filtered
-        );
+            // 2. Nếu API trả về danh sách sân trống hợp lệ
+            if (availableIds !== null) {
+
+                filtered = filtered.filter(stadium => availableIds.includes(String(stadium.id)));
+
+            }
+
+            // 3. LỌC TRỰC TIẾP TỪ LOCALSTORAGE
+            else {
+
+                const bookedList = JSON.parse(localStorage.getItem("userBookingList") || "[]");
+
+                filtered = filtered.filter(stadium => {
+
+                    const stadiumIdStr = String(stadium.id);
+
+                    const stadiumNameNorm = normalizeText(stadium.name);
+
+                    // Kiểm tra xem cụm sân này có đơn hàng nào bị trùng lịch không
+                    const hasConflict = bookedList.some(b => {
+
+                        const bId = String(b.fieldId || b.stadiumId || b.id || "");
+
+                        const bName = normalizeText(b.stadiumName || b.fieldName || b.name || "");
+
+                        // So sánh ID hoặc So sánh Tên tương đối
+                        const isSameStadium = (bId && bId === stadiumIdStr) ||
+                            (bName && stadiumNameNorm && (bName.includes(stadiumNameNorm) || stadiumNameNorm.includes(bName)));
+
+                        // So sánh Ngày
+                        const bDate = b.bookingDate || b.date;
+
+                        const isSameDate = !date || !bDate || bDate === date;
+
+                        // Trạng thái đơn không phải đơn đã hủy
+                        const status = normalizeText(b.status || "");
+
+                        const isNotCancelled = !status.includes("cancel") && !status.includes("huy");
+
+
+                        if (isSameStadium && isSameDate && isNotCancelled) {
+
+                            let bStart = b.startTime;
+
+                            let bEnd = b.endTime;
+
+
+                            if (!bStart && b.timeSlot) {
+
+                                const parts = String(b.timeSlot).split('-');
+
+                                bStart = parts[0];
+
+                                bEnd = parts[1];
+
+                            }
+
+
+                            return isTimeOverlap(startTime, endTime, bStart, bEnd);
+
+                        }
+
+                        return false;
+
+                    });
+
+
+                    // BỎ SÂN BỊ TRÙNG, GIỮ LẠI SÂN TRỐNG
+                    return !hasConflict;
+
+                });
+
+            }
+
+        }
+
+
+        renderResults(filtered);
+
+        showLoading(false);
+
+    }
+
+
+    // =====================================================
+    // LOGIC CHUẨN HÓA & TÍNH TRÙNG GIỜ (TIME OVERLAP)
+    // =====================================================
+
+    function parseTimeToMinutes(tStr) {
+
+        if (!tStr) return null;
+
+        const cleanStr = String(tStr).toLowerCase().replace('h', ':').trim();
+
+        const match = cleanStr.match(/(\d{1,2}):(\d{2})/);
+
+        if (match) {
+
+            const hours = parseInt(match[1], 10);
+
+            const minutes = parseInt(match[2], 10);
+
+            if (!isNaN(hours) && !isNaN(minutes)) {
+
+                return hours * 60 + minutes;
+
+            }
+
+        }
+
+        return null;
+
+    }
+
+
+    function isTimeOverlap(start1, end1, start2, end2) {
+
+        // Nếu người dùng chọn ngày nhưng CHƯA chọn giờ -> Lọc toàn bộ khoảng giờ có trong ngày
+        const s1 = parseTimeToMinutes(start1) ?? 0;
+
+        const e1 = parseTimeToMinutes(end1) ?? (24 * 60);
+
+
+        let s2 = null, e2 = null;
+
+        if (typeof start2 === 'string' && start2.includes('-')) {
+
+            const parts = start2.split('-');
+
+            s2 = parseTimeToMinutes(parts[0]);
+
+            e2 = parseTimeToMinutes(parts[1]);
+
+        } else {
+
+            s2 = parseTimeToMinutes(start2);
+
+            e2 = parseTimeToMinutes(end2);
+
+        }
+
+
+        if (s2 === null || e2 === null) {
+
+            return false;
+
+        }
+
+
+        // Trùng khi khoảng giao nhau hợp lệ: Max(Bắt đầu) < Min(Kết thúc)
+        return Math.max(s1, s2) < Math.min(e1, e2);
 
     }
 
@@ -1057,55 +1197,30 @@
     // SPORT NORMALIZATION
     // =====================================================
 
-    function stadiumMatchesSport(
-        stadium,
-        sport
-    ) {
+    function stadiumMatchesSport(stadium, sport) {
 
-        const value =
-            normalizeText(
-                stadium.type || ""
-            );
+        const value = normalizeText(stadium.type || "");
 
 
         const mapping = {
 
-            football: [
-                "football",
-                "bong da"
-            ],
+            football: ["football", "bong da", "bóng đá"],
 
-            badminton: [
-                "badminton",
-                "cau long"
-            ],
+            badminton: ["badminton", "cau long", "cầu lông"],
 
-            pickleball: [
-                "pickleball"
-            ],
+            pickleball: ["pickleball"],
 
-            tennis: [
-                "tennis"
-            ],
+            tennis: ["tennis"],
 
-            volleyball: [
-                "volleyball",
-                "bong chuyen"
-            ]
+            volleyball: ["volleyball", "bong chuyen", "bóng chuyền"]
 
         };
 
 
-        const words =
-            mapping[sport]
-            ||
-            [sport];
+        const words = mapping[sport] || [sport];
 
 
-        return words.some(
-            item =>
-                value.includes(item)
-        );
+        return words.some(item => value.includes(item));
 
     }
 
@@ -1116,52 +1231,32 @@
 
     function renderResults(stadiums) {
 
-        const container =
-            document.getElementById(
-                "stadiumResults"
-            );
+        const container = document.getElementById("stadiumResults");
 
 
-        const noResult =
-            document.getElementById(
-                "noResult"
-            );
+        const noResult = document.getElementById("noResult");
 
 
-        document
-            .getElementById(
-                "resultTitle"
-            )
-            .textContent =
-            `Tìm thấy ${stadiums.length} cụm sân phù hợp`;
+        document.getElementById("resultTitle").textContent =
+
+            `Tìm thấy ${stadiums.length} cụm sân trống phù hợp`;
 
 
         if (stadiums.length === 0) {
 
             container.innerHTML = "";
 
-            noResult
-                .classList
-                .remove("hidden");
+            noResult.classList.remove("hidden");
 
             return;
 
         }
 
 
-        noResult
-            .classList
-            .add("hidden");
+        noResult.classList.add("hidden");
 
 
-        container.innerHTML =
-            stadiums.map(
-                stadium =>
-                    createStadiumCard(
-                        stadium
-                    )
-            )
-                .join("");
+        container.innerHTML = stadiums.map(stadium => createStadiumCard(stadium)).join("");
 
     }
 
@@ -1172,31 +1267,42 @@
 
     function createStadiumCard(stadium) {
 
-        const type =
-            sportDisplayName(
-                stadium.type
-            );
+        const type = sportDisplayName(stadium.type);
 
 
         return `
+
             <article
+
                 class="stadium-card
+
                        bg-white
+
                        rounded-xl
+
                        border
+
                        border-gray-200
+
                        p-5">
 
 
                 <div class="mb-3">
 
                     <span
+
                         class="inline-block
+
                                bg-emerald-100
+
                                text-emerald-700
+
                                px-3 py-1
+
                                rounded-full
+
                                text-xs
+
                                font-semibold">
 
                         ${escapeHtml(type)}
@@ -1207,79 +1313,122 @@
 
 
                 <h3
+
                     class="text-lg
+
                            font-bold
+
                            text-emerald-800
+
                            mb-3">
 
-                    ${escapeHtml(
-            stadium.name
-            ||
-            "Sân thể thao"
-        )}
+                    ${escapeHtml(stadium.name || "Sân thể thao")}
 
                 </h3>
 
 
                 <div
+
                     class="text-sm
+
                            text-gray-600
+
                            mb-3">
 
                     <i
+
                         class="fa-solid
+
                                fa-location-dot
+
                                text-rose-500
+
                                mr-2">
+
                     </i>
 
-                    ${escapeHtml(
-            stadium.address
-            ||
-            stadium.location
-            ||
-            "Chưa cập nhật địa chỉ"
-        )}
+                    ${escapeHtml(stadium.address || stadium.location || "Chưa cập nhật địa chỉ")}
 
                 </div>
 
 
                 <p
+
                     class="text-sm
+
                            text-gray-600
+
                            min-h-[62px]
+
                            mb-5">
 
-                    ${escapeHtml(
-            stadium.description
-            ||
-            "Chưa có mô tả cho sân này."
-        )}
+                    ${escapeHtml(stadium.description || "Chưa có mô tả cho sân này.")}
 
                 </p>
 
 
                 <button
-                    onclick="showDetail(${Number(stadium.id)})"
+
+                    onclick="goToGrid(${Number(stadium.id)})"
 
                     class="w-full
+
                            border
+
                            border-emerald-600
+
                            text-emerald-700
+
                            hover:bg-emerald-600
+
                            hover:text-white
+
                            rounded-lg
+
                            py-2.5
+
                            font-semibold
+
                            text-sm
+
                            transition">
 
-                    Xem chi tiết
+                    Đặt lịch ngay
 
                 </button>
 
             </article>
+
         `;
+
+    }
+
+
+    // =====================================================
+    // NAVIGATE TO GRID PAGE
+    // =====================================================
+
+    function goToGrid(fieldId) {
+
+        const date = document.getElementById("searchDate").value;
+
+        const startTime = document.getElementById("startTime").value;
+
+        const endTime = document.getElementById("endTime").value;
+
+
+        const params = new URLSearchParams();
+
+        if (fieldId) params.append("fieldId", fieldId);
+
+        if (date) params.append("date", date);
+
+        if (startTime) params.append("startTime", startTime);
+
+        if (endTime) params.append("endTime", endTime);
+
+
+        window.location.href = `/grid.html?${params.toString()}`;
 
     }
 
@@ -1290,57 +1439,38 @@
 
     function sportDisplayName(type) {
 
-        const value =
-            normalizeText(
-                type || ""
-            );
+        const value = normalizeText(type || "");
 
 
-        if (
-            value.includes("football")
-            ||
-            value.includes("bong da")
-        ) {
+        if (value.includes("football") || value.includes("bong da")) {
 
             return "Bóng đá";
 
         }
 
 
-        if (
-            value.includes("badminton")
-            ||
-            value.includes("cau long")
-        ) {
+        if (value.includes("badminton") || value.includes("cau long")) {
 
             return "Cầu lông";
 
         }
 
 
-        if (
-            value.includes("volleyball")
-            ||
-            value.includes("bong chuyen")
-        ) {
+        if (value.includes("volleyball") || value.includes("bong chuyen")) {
 
             return "Bóng chuyền";
 
         }
 
 
-        if (
-            value.includes("pickleball")
-        ) {
+        if (value.includes("pickleball")) {
 
             return "Pickleball";
 
         }
 
 
-        if (
-            value.includes("tennis")
-        ) {
+        if (value.includes("tennis")) {
 
             return "Tennis";
 
@@ -1353,18 +1483,12 @@
 
 
     // =====================================================
-    // DETAIL MODAL
+    // DETAIL MODAL (DÙNG KHI CẦN)
     // =====================================================
 
     function showDetail(id) {
 
-        const stadium =
-            allStadiums.find(
-                item =>
-                    Number(item.id)
-                    ===
-                    Number(id)
-            );
+        const stadium = allStadiums.find(item => Number(item.id) === Number(id));
 
 
         if (!stadium) {
@@ -1374,11 +1498,8 @@
         }
 
 
-        document
-            .getElementById(
-                "detailContent"
-            )
-            .innerHTML =
+        document.getElementById("detailContent").innerHTML =
+
             `
 
             <div class="space-y-4">
@@ -1387,18 +1508,20 @@
                 <div>
 
                     <span
+
                         class="bg-emerald-100
+
                                text-emerald-700
+
                                px-3 py-1
+
                                rounded-full
+
                                text-xs
+
                                font-semibold">
 
-                        ${escapeHtml(
-                sportDisplayName(
-                    stadium.type
-                )
-            )}
+                        ${escapeHtml(sportDisplayName(stadium.type))}
 
                     </span>
 
@@ -1406,56 +1529,60 @@
 
 
                 <h2
+
                     class="text-2xl
+
                            font-bold
+
                            text-emerald-800">
 
-                    ${escapeHtml(
-                stadium.name
-            )}
+                    ${escapeHtml(stadium.name)}
 
                 </h2>
 
 
                 <p
+
                     class="text-gray-600">
 
                     <i
+
                         class="fa-solid
+
                                fa-location-dot
+
                                text-rose-500
+
                                mr-2">
+
                     </i>
 
-                    ${escapeHtml(
-                stadium.address
-                ||
-                stadium.location
-                ||
-                "Chưa cập nhật"
-            )}
+                    ${escapeHtml(stadium.address || stadium.location || "Chưa cập nhật")}
 
                 </p>
 
 
                 <div
+
                     class="bg-gray-50
+
                            rounded-lg
+
                            p-4">
 
                     <strong>
+
                         Mô tả:
+
                     </strong>
 
                     <p
+
                         class="mt-2
+
                                text-gray-600">
 
-                        ${escapeHtml(
-                stadium.description
-                ||
-                "Chưa có mô tả."
-            )}
+                        ${escapeHtml(stadium.description || "Chưa có mô tả.")}
 
                     </p>
 
@@ -1463,12 +1590,17 @@
 
 
                 <div
+
                     class="border-t
+
                            pt-4
+
                            text-sm
+
                            text-gray-500">
 
                     ID sân:
+
                     ${escapeHtml(stadium.id)}
 
                 </div>
@@ -1478,40 +1610,24 @@
             `;
 
 
-        const modal =
-            document.getElementById(
-                "detailModal"
-            );
+        const modal = document.getElementById("detailModal");
 
 
-        modal
-            .classList
-            .remove("hidden");
+        modal.classList.remove("hidden");
 
-
-        modal
-            .classList
-            .add("flex");
+        modal.classList.add("flex");
 
     }
 
 
     function closeDetailModal() {
 
-        const modal =
-            document.getElementById(
-                "detailModal"
-            );
+        const modal = document.getElementById("detailModal");
 
 
-        modal
-            .classList
-            .add("hidden");
+        modal.classList.add("hidden");
 
-
-        modal
-            .classList
-            .remove("flex");
+        modal.classList.remove("flex");
 
     }
 
@@ -1522,40 +1638,22 @@
 
     function validateTime() {
 
-        const start =
-            document
-                .getElementById(
-                    "startTime"
-                )
-                .value;
+        const start = document.getElementById("startTime").value;
+
+        const end = document.getElementById("endTime").value;
 
 
-        const end =
-            document
-                .getElementById(
-                    "endTime"
-                )
-                .value;
+        if (start && end && start >= end) {
 
+            alert("Giờ kết thúc phải lớn hơn giờ bắt đầu.");
 
-        if (
-            start
-            &&
-            end
-            &&
-            start >= end
-        ) {
+            showLoading(false);
 
-            alert(
-                "Giờ kết thúc phải lớn hơn giờ bắt đầu."
-            );
-
-
-            throw new Error(
-                "Invalid time"
-            );
+            return false;
 
         }
+
+        return true;
 
     }
 
@@ -1566,67 +1664,47 @@
 
     function resetFilters() {
 
-        selectedSport =
-            "all";
+        selectedSport = "all";
 
 
-        onlyAvailable =
-            true;
+        onlyAvailable = true;
 
 
-        document
-            .querySelectorAll(
-                ".sport-btn"
-            )
-            .forEach(
-                button =>
-                    button
-                        .classList
-                        .remove("active")
-            );
+        document.querySelectorAll(".sport-btn").forEach(button => button.classList.remove("active"));
 
 
-        const allButton =
-            document.querySelector(
-                '[data-sport="all"]'
-            );
+        const allButton = document.querySelector('[data-sport="all"]');
 
 
-        allButton
-            .classList
-            .add("active");
+        if (allButton) {
+
+            allButton.classList.add("active");
+
+        }
 
 
-        document
-            .getElementById(
-                "cityFilter"
-            )
-            .value =
-            "";
+        const button = document.getElementById("availableButton");
 
 
-        document
-            .getElementById(
-                "keywordInput"
-            )
-            .value =
-            "";
+        button.className =
+
+            "border border-emerald-500 bg-emerald-50 text-emerald-700 px-8 py-2.5 rounded-lg font-medium";
+
+        button.innerHTML =
+
+            `<i class="fa-regular fa-circle-check mr-2"></i> Chỉ sân trống`;
 
 
-        document
-            .getElementById(
-                "startTime"
-            )
-            .value =
-            "";
+        document.getElementById("cityFilter").value = "";
 
 
-        document
-            .getElementById(
-                "endTime"
-            )
-            .value =
-            "";
+        document.getElementById("keywordInput").value = "";
+
+
+        document.getElementById("startTime").value = "";
+
+
+        document.getElementById("endTime").value = "";
 
 
         setDefaultDate();
@@ -1643,24 +1721,15 @@
 
     function readSearchFromUrl() {
 
-        const params =
-            new URLSearchParams(
-                window.location.search
-            );
+        const params = new URLSearchParams(window.location.search);
 
 
-        const keyword =
-            params.get("q");
+        const keyword = params.get("q");
 
 
         if (keyword) {
 
-            document
-                .getElementById(
-                    "keywordInput"
-                )
-                .value =
-                keyword;
+            document.getElementById("keywordInput").value = keyword;
 
         }
 
@@ -1673,8 +1742,7 @@
 
     function goHome() {
 
-        window.location.href =
-            "/index.html";
+        window.location.href = "/index.html";
 
     }
 
@@ -1685,15 +1753,7 @@
 
     function showLoading(show) {
 
-        document
-            .getElementById(
-                "loading"
-            )
-            .classList
-            .toggle(
-                "hidden",
-                !show
-            );
+        document.getElementById("loading").classList.toggle("hidden", !show);
 
     }
 
@@ -1704,15 +1764,14 @@
 
     function normalizeText(value) {
 
-        return String(
-            value || ""
-        )
+        return String(value || "")
+
             .normalize("NFD")
-            .replace(
-                /[\u0300-\u036f]/g,
-                ""
-            )
+
+            .replace(/[\u0300-\u036f]/g, "")
+
             .toLowerCase()
+
             .trim();
 
     }
@@ -1724,33 +1783,22 @@
 
     function escapeHtml(value) {
 
-        return String(
-            value ?? ""
-        )
-            .replaceAll(
-                "&",
-                "&amp;"
-            )
-            .replaceAll(
-                "<",
-                "&lt;"
-            )
-            .replaceAll(
-                ">",
-                "&gt;"
-            )
-            .replaceAll(
-                '"',
-                "&quot;"
-            )
-            .replaceAll(
-                "'",
-                "&#039;"
-            );
+        return String(value ?? "")
+
+            .replaceAll("&", "&amp;")
+
+            .replaceAll("<", "&lt;")
+
+            .replaceAll(">", "&gt;")
+
+            .replaceAll('"', "&quot;")
+
+            .replaceAll("'", "&#039;");
 
     }
 
 </script>
 
 </body>
+
 </html>

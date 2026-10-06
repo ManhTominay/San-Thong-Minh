@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch Sử Đặt Sân - Smart Stadium</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            background: #f4f6f8;
+        }
+
+        .card {
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen text-gray-800">
+
+<!-- ===================================================== -->
+<!-- HEADER -->
+<!-- ===================================================== -->
+<header class="bg-emerald-600 text-white shadow-md relative z-50">
+    <div class="max-w-6xl mx-auto px-5 py-4 flex items-center justify-between">
+        <!-- LOGO -->
+        <div class="flex items-center gap-2 cursor-pointer" onclick="goHome()">
+            <i class="fa-solid fa-shield-halved text-xl"></i>
+            <span class="text-xl font-bold">Smart Stadium</span>
+        </div>
+
+        <!-- ACTION & USER DROPDOWN -->
+        <div class="flex items-center gap-3">
+            <button onclick="goHome()" class="bg-emerald-700 hover:bg-emerald-800 px-4 py-2 rounded-lg text-sm transition cursor-pointer">
+                <i class="fa-solid fa-house mr-1"></i> Trang chủ
+            </button>
+
+            <!-- USER DROPDOWN MENU -->
+            <div class="relative group inline-block text-left" id="user-menu-wrapper">
+                <button onclick="toggleUserDropdown(event)"
+                        class="bg-[#00582f] hover:bg-[#004223] text-white text-xs md:text-sm font-medium py-2 px-3.5 rounded-full flex items-center space-x-2 transition shadow-sm border border-emerald-600/50 cursor-pointer">
+                    <i class="fa-regular fa-user text-sm"></i>
+                    <span>Xin chào, <span id="user-display-email">2311060324@hunre.edu.vn</span></span>
+                    <i class="fa-solid fa-chevron-down text-[10px] ml-1 text-emerald-200"></i>
+                </button>
+
+                <div id="user-dropdown-menu"
+                     class="hidden group-hover:block absolute right-0 mt-1 w-60 bg-white rounded-xl shadow-2xl py-2 border border-gray-100 text-gray-700 text-sm transition-all duration-150 origin-top-right">
+
+                    <div class="px-4 py-2 border-b border-gray-100 bg-gray-50/50 rounded-t-xl">
+                        <p class="text-[11px] text-gray-400 font-medium">Tài khoản đăng nhập</p>
+                        <p class="font-semibold text-gray-800 truncate text-xs" id="dropdown-user-email">2311060324@hunre.edu.vn</p>
+                    </div>
+
+                    <a href="profile.html" class="flex items-center px-4 py-2.5 hover:bg-emerald-50 hover:text-[#005229] transition space-x-3 group/item">
+                        <i class="fa-regular fa-id-card text-emerald-600 group-hover/item:scale-110 transition-transform w-4"></i>
+                        <span class="font-medium">Hồ sơ cá nhân</span>
+                    </a>
+
+                    <a href="userBooking.html" class="flex items-center px-4 py-2.5 bg-emerald-50 text-[#005229] font-medium space-x-3 group/item">
+                        <i class="fa-solid fa-receipt text-emerald-600 group-hover/item:scale-110 transition-transform w-4"></i>
+                        <span>Lịch sử đặt sân</span>
+                    </a>
+
+                    <div class="border-t border-gray-100 my-1"></div>
+
+                    <button onclick="handleLogout()" class="w-full text-left flex items-center px-4 py-2.5 hover:bg-red-50 text-red-600 transition space-x-3 cursor-pointer group/item">
+                        <i class="fa-solid fa-right-from-bracket group-hover/item:scale-110 transition-transform w-4"></i>
+                        <span class="font-medium">Đăng xuất</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- ===================================================== -->
+<!-- MAIN CONTENT -->
+<!-- ===================================================== -->
+<main class="max-w-6xl mx-auto px-5 py-8">
+
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Lịch sử đặt sân</h1>
+            <p class="text-sm text-gray-500 mt-1">Danh sách tất cả các sân bạn đã đăng ký và trạng thái thanh toán.</p>
+        </div>
+        <button onclick="loadBookings()" class="self-start md:self-auto bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-sm cursor-pointer">
+            <i class="fa-solid fa-rotate-right"></i> Làm mới
+        </button>
+    </div>
+
+    <!-- LIST CONTAINER -->
+    <div id="bookingList" class="space-y-4">
+        <div class="card bg-white rounded-2xl p-8 text-center text-gray-500">
+            <i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-600 mb-2"></i>
+            <p>Đang tải lịch sử đặt sân...</p>
+        </div>
+    </div>
+
+</main>
+
+<!-- ===================================================== -->
+<!-- JAVASCRIPT -->
+<!-- ===================================================== -->
+<script>
+    const BOOKING_API = "/api/bookings/my-bookings";
+    const DELETE_BOOKING_API = "/api/bookings";
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const token = localStorage.getItem("token") || localStorage.getItem("userToken");
+        const email = localStorage.getItem("userEmail") || "2311060324@hunre.edu.vn";
+
+        document.getElementById("user-display-email").textContent = email;
+        document.getElementById("dropdown-user-email").textContent = email;
+
+        loadBookings();
+    });
+
+    // Tải lịch sử đặt sân (Ưu tiên API -> Fallback LocalStorage)
+    async function loadBookings() {
+        const token = localStorage.getItem("token") || localStorage.getItem("userToken");
+        const email = localStorage.getItem("userEmail") || "2311060324@hunre.edu.vn";
+        const container = document.getElementById("bookingList");
+
+        let bookings = [];
+
+        try {
+            // 1. Thử gọi API từ Server
+            if (token) {
+                const response = await fetch(`${BOOKING_API}?email=${encodeURIComponent(email)}`, {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    bookings = await response.json();
+                }
+            }
+        } catch (error) {
+            console.warn("Chưa thể kết nối API Backend, đang chuyển sang dữ liệu LocalStorage...", error);
+        }
+
+        // 2. Nếu API không trả dữ liệu/lỗi -> Đọc danh sách từ LocalStorage
+        if (!bookings || bookings.length === 0) {
+            const localList = JSON.parse(localStorage.getItem("userBookingList")) || [];
+            const singleBooking = JSON.parse(localStorage.getItem("bookingData"));
+
+            if (localList.length > 0) {
+                bookings = localList;
+            } else if (singleBooking) {
+                bookings = [singleBooking];
+            }
+        }
+
+        // 3. Nếu vẫn không có dữ liệu -> Hiển thị màn hình trống
+        if (!bookings || bookings.length === 0) {
+            container.innerHTML = `
+                <div class="card bg-white rounded-2xl p-12 text-center text-gray-500">
+                    <i class="fa-solid fa-calendar-xmark text-4xl text-gray-300 mb-3"></i>
+                    <p class="text-base font-semibold text-gray-700">Chưa có lịch sử đặt sân nào</p>
+                    <p class="text-xs text-gray-400 mt-1 mb-4">Bạn chưa thực hiện đơn đặt sân nào trên hệ thống.</p>
+                    <button onclick="goHome()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition cursor-pointer">
+                        Đặt sân ngay
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        renderBookings(bookings);
+    }
+
+    // Render danh sách đơn
+    function renderBookings(bookings) {
+        const container = document.getElementById("bookingList");
+        container.innerHTML = bookings.map(item => {
+            const itemJson = JSON.stringify(item).replace(/'/g, "&apos;");
+            const bookingId = item.id || item.bookingId || '7853';
+
+            // Kiểm tra trạng thái có phải là Đã hủy không
+            const statusUpper = (item.status || '').toUpperCase();
+            const isCancelled = statusUpper === 'CANCELLED' || statusUpper === 'ĐÃ HỦY';
+
+            return `
+                <div class="card bg-white rounded-2xl border border-gray-200 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800">
+                                Mã đơn: #${bookingId}
+                            </span>
+                            ${getStatusBadge(item.status)}
+                        </div>
+                        <h3 class="font-bold text-lg text-gray-800 pt-1">${item.stadiumName || 'Phúc Long Badminton'}</h3>
+                        <p class="text-xs text-gray-500">
+                            <i class="fa-regular fa-calendar mr-1"></i> Ngày đá: <strong>${item.bookingDate || '--'}</strong>
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            <i class="fa-regular fa-clock mr-1"></i> Khung giờ / Ca: <strong>${item.courtDetail || item.timeSlot || '--'}</strong>
+                        </p>
+                    </div>
+
+                    <div class="flex flex-col md:items-end justify-between gap-3 border-t md:border-t-0 pt-3 md:pt-0 border-gray-100">
+                        <div>
+                            <p class="text-xs text-gray-400 md:text-right">Tổng thanh toán</p>
+                            <p class="text-xl font-bold text-emerald-600">${formatCurrency(item.totalPrice)}</p>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <!-- NÚT XÓA: Chỉ hiển thị khi đơn hàng ĐÃ HỦY -->
+                            ${isCancelled ? `
+                                <button onclick="deleteBooking('${bookingId}')"
+                                        class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1.5 cursor-pointer border border-red-200" title="Xóa đơn này">
+                                    <i class="fa-regular fa-trash-can"></i> Xóa
+                                </button>
+                            ` : ''}
+
+                            <!-- NÚT XEM CHI TIẾT -->
+                            <button onclick='viewBookingDetail(${itemJson})'
+                                    class="bg-[#005229] hover:bg-[#00381c] text-white text-xs font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+                                <i class="fa-solid fa-eye text-yellow-300"></i> Xem chi tiết
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Hàm Xóa đơn đặt sân
+    async function deleteBooking(bookingId) {
+        if (!confirm(`Bạn có chắc chắn muốn xóa đơn đặt sân #${bookingId} này không?`)) {
+            return;
+        }
+
+        const token = localStorage.getItem("token") || localStorage.getItem("userToken");
+
+        // 1. Gửi request Xóa lên Backend (nếu có Token)
+        try {
+            if (token) {
+                await fetch(`${DELETE_BOOKING_API}/${bookingId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+            }
+        } catch (error) {
+            console.warn("Lỗi khi kết nối API xóa, sẽ thực hiện xóa local:", error);
+        }
+
+        // 2. Xóa dữ liệu trong LocalStorage
+        let localList = JSON.parse(localStorage.getItem("userBookingList")) || [];
+        localList = localList.filter(item => (item.id || item.bookingId || '7853') != bookingId);
+        localStorage.setItem("userBookingList", JSON.stringify(localList));
+
+        // Nếu dữ liệu đơn đơn lẻ trùng ID thì xóa luôn
+        const singleBooking = JSON.parse(localStorage.getItem("bookingData"));
+        if (singleBooking && (singleBooking.id || singleBooking.bookingId) == bookingId) {
+            localStorage.removeItem("bookingData");
+        }
+
+        // 3. Tải lại danh sách
+        loadBookings();
+    }
+
+    function viewBookingDetail(item) {
+        localStorage.setItem("bookingData", JSON.stringify(item));
+        window.location.href = "booking-detail.html";
+    }
+
+    function getStatusBadge(status) {
+        switch ((status || '').toUpperCase()) {
+            case 'CONFIRMED':
+            case 'APPROVED':
+            case 'PAID':
+            case 'THÀNH CÔNG':
+                return `<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700"><i class="fa-solid fa-circle-check mr-1"></i> Đã xác nhận</span>`;
+            case 'PENDING':
+            case 'CHỜ DUYỆT':
+                return `<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700"><i class="fa-solid fa-clock mr-1"></i> Chờ duyệt</span>`;
+            case 'CANCELLED':
+            case 'ĐÃ HỦY':
+                return `<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-rose-100 text-rose-700"><i class="fa-solid fa-circle-xmark mr-1"></i> Đã hủy</span>`;
+            default:
+                return `<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700"><i class="fa-solid fa-clock mr-1"></i> Chờ duyệt</span>`;
+        }
+    }
+
+    function formatCurrency(amount) {
+        if (!amount) return '0 VNĐ';
+        if (typeof amount === 'string' && (amount.includes('đ') || amount.includes('VNĐ'))) return amount;
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    }
+
+    function toggleUserDropdown(e) {
+        e.stopPropagation();
+        const menu = document.getElementById("user-dropdown-menu");
+        menu.classList.toggle("hidden");
+    }
+
+    document.addEventListener("click", function (e) {
+        const wrapper = document.getElementById("user-menu-wrapper");
+        const menu = document.getElementById("user-dropdown-menu");
+        if (wrapper && !wrapper.contains(e.target)) {
+            menu.classList.add("hidden");
+        }
+    });
+
+    function goHome() {
+        window.location.href = "index.html";
+    }
+
+    function handleLogout() {
+        if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+            localStorage.clear();
+            window.location.href = "login.html";
+        }
+    }
+</script>
+</body>
+</html>
