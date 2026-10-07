@@ -1,53 +1,36 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lịch Sử Đặt Sân - Smart Stadium</title>
-
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
-        body {
-            background: #f4f6f8;
-        }
-
-        .card {
-            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
-        }
+        body { background: #f4f6f8; }
+        .card { box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05); }
     </style>
 </head>
 
 <body class="min-h-screen text-gray-800">
 
-<!-- ===================================================== -->
-<!-- HEADER -->
-<!-- ===================================================== -->
 <header class="bg-emerald-600 text-white shadow-md relative z-50">
     <div class="max-w-6xl mx-auto px-5 py-4 flex items-center justify-between">
-        <!-- LOGO -->
         <div class="flex items-center gap-2 cursor-pointer" onclick="goHome()">
             <i class="fa-solid fa-shield-halved text-xl"></i>
             <span class="text-xl font-bold">Smart Stadium</span>
         </div>
 
-        <!-- ACTION & USER DROPDOWN -->
         <div class="flex items-center gap-3">
             <button onclick="goHome()" class="bg-emerald-700 hover:bg-emerald-800 px-4 py-2 rounded-lg text-sm transition cursor-pointer">
                 <i class="fa-solid fa-house mr-1"></i> Trang chủ
             </button>
 
-            <!-- USER DROPDOWN MENU -->
             <div class="relative group inline-block text-left" id="user-menu-wrapper">
                 <button onclick="toggleUserDropdown(event)"
                         class="bg-[#00582f] hover:bg-[#004223] text-white text-xs md:text-sm font-medium py-2 px-3.5 rounded-full flex items-center space-x-2 transition shadow-sm border border-emerald-600/50 cursor-pointer">
                     <i class="fa-regular fa-user text-sm"></i>
-                    <span>Xin chào, <span id="user-display-email">2311060324@hunre.edu.vn</span></span>
+                    <span>Xin chào, <span id="user-display-email">...</span></span>
                     <i class="fa-solid fa-chevron-down text-[10px] ml-1 text-emerald-200"></i>
                 </button>
 
@@ -56,7 +39,7 @@
 
                     <div class="px-4 py-2 border-b border-gray-100 bg-gray-50/50 rounded-t-xl">
                         <p class="text-[11px] text-gray-400 font-medium">Tài khoản đăng nhập</p>
-                        <p class="font-semibold text-gray-800 truncate text-xs" id="dropdown-user-email">2311060324@hunre.edu.vn</p>
+                        <p class="font-semibold text-gray-800 truncate text-xs" id="dropdown-user-email">...</p>
                     </div>
 
                     <a href="profile.html" class="flex items-center px-4 py-2.5 hover:bg-emerald-50 hover:text-[#005229] transition space-x-3 group/item">
@@ -81,11 +64,7 @@
     </div>
 </header>
 
-<!-- ===================================================== -->
-<!-- MAIN CONTENT -->
-<!-- ===================================================== -->
 <main class="max-w-6xl mx-auto px-5 py-8">
-
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
             <h1 class="text-2xl font-bold text-gray-800">Lịch sử đặt sân</h1>
@@ -96,77 +75,210 @@
         </button>
     </div>
 
-    <!-- LIST CONTAINER -->
     <div id="bookingList" class="space-y-4">
         <div class="card bg-white rounded-2xl p-8 text-center text-gray-500">
             <i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-600 mb-2"></i>
             <p>Đang tải lịch sử đặt sân...</p>
         </div>
     </div>
-
 </main>
 
-<!-- ===================================================== -->
-<!-- JAVASCRIPT -->
-<!-- ===================================================== -->
 <script>
-    const BOOKING_API = "/api/bookings/my-bookings";
-    const DELETE_BOOKING_API = "/api/bookings";
+    const BASE_BOOKINGS_API = "http://localhost:8085/api/bookings";
 
-    document.addEventListener("DOMContentLoaded", function () {
-        const token = localStorage.getItem("token") || localStorage.getItem("userToken");
-        const email = localStorage.getItem("userEmail") || "2311060324@hunre.edu.vn";
+    function resolveCurrentUserId() {
+        let userId = localStorage.getItem("userId");
+        const email = localStorage.getItem("userEmail") || "";
 
-        document.getElementById("user-display-email").textContent = email;
-        document.getElementById("dropdown-user-email").textContent = email;
+        if (!userId || userId === "null" || userId === "undefined") {
+            if (email.includes("2311060324") || email.includes("hunre.edu.vn")) {
+                userId = "7";
+            } else if (email.includes("Tien@gmail.com")) {
+                userId = "6";
+            } else if (email.includes("ManhTomiay@gmail.com")) {
+                userId = "8";
+            } else if (email.includes("ManhTominay@gmail.com")) {
+                userId = "5";
+            } else {
+                userId = "7";
+            }
+            localStorage.setItem("userId", userId);
+        }
+        return userId;
+    }
 
-        loadBookings();
+    function formatToIsoDate(dateStr) {
+        if (!dateStr) return "2026-10-07";
+        if (dateStr.includes('-')) {
+            const parts = dateStr.split('-');
+            if (parts[0].length === 4) return dateStr;
+            if (parts[2].length === 4) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+        }
+        if (dateStr.includes('/')) {
+            const parts = dateStr.split('/');
+            if (parts[2].length === 4) {
+                return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+        }
+        return dateStr;
+    }
+
+    document.addEventListener("DOMContentLoaded", async function () {
+        const email = localStorage.getItem("userEmail") || "";
+
+        document.getElementById("user-display-email").textContent = email || "Tài khoản";
+        document.getElementById("dropdown-user-email").textContent = email || "Chưa đăng nhập";
+
+        resolveCurrentUserId();
+
+        await syncPendingLocalBookingsToDatabase();
+        await loadBookings();
     });
 
-    // Tải lịch sử đặt sân (Ưu tiên API -> Fallback LocalStorage)
+    async function syncPendingLocalBookingsToDatabase() {
+        const singleBooking = JSON.parse(localStorage.getItem("bookingData"));
+
+        if (singleBooking && !singleBooking.savedToDb && !singleBooking.id) {
+            console.log("👉 Đang đồng bộ đơn mới lên CSDL 8085...", singleBooking);
+            const savedResult = await saveBookingToBackend(singleBooking);
+            if (savedResult && (savedResult.id || savedResult.bookingId)) {
+                singleBooking.id = savedResult.id || savedResult.bookingId;
+                singleBooking.savedToDb = true;
+                localStorage.setItem("bookingData", JSON.stringify(singleBooking));
+            }
+        }
+    }
+
+    // MAP TÊN SÂN CHUẨN THEO ID SÂN (FIELD ID)
+    function getStadiumNameByFieldId(fieldId, fallbackName) {
+        if (fallbackName && fallbackName !== "Cụm Sân Cầu Lông" && fallbackName !== "null") {
+            return fallbackName;
+        }
+        const id = parseInt(fieldId, 10);
+        switch(id) {
+            case 1: return "Sân Bóng Đá Huyền Anh";
+            case 2: return "Sân Tennis";
+            case 3: return "Cụm Sân Cầu Lông";
+            case 4: return "Sân Pickleball";
+            case 5: return "Sân Bóng Chuyền";
+            default: return fallbackName || "Sân Bóng Đá Huyền Anh";
+        }
+    }
+
+    async function saveBookingToBackend(bookingData) {
+        const currentUserId = resolveCurrentUserId();
+        const priceText = bookingData.totalPrice || "0";
+        const numericPrice = parseFloat(priceText.toString().replace(/[^0-9]/g, '') || 0);
+        const fieldIdNum = parseInt(bookingData.stadiumId || bookingData.fieldId || "1", 10);
+
+        const isoDate = formatToIsoDate(bookingData.bookingDate);
+
+        let startTime = "07:30:00";
+        let endTime = "09:00:00";
+
+        if (bookingData.selectedSlotsDetail && bookingData.selectedSlotsDetail.length > 0) {
+            let startTimes = [];
+            let endTimes = [];
+
+            bookingData.selectedSlotsDetail.forEach(item => {
+                if (item.timeSlot) {
+                    const times = item.timeSlot.split('-').map(t => t.trim());
+                    if (times.length === 2) {
+                        startTimes.push(times[0].length === 5 ? times[0] + ":00" : times[0]);
+                        endTimes.push(times[1].length === 5 ? times[1] + ":00" : times[1]);
+                    }
+                }
+            });
+
+            if (startTimes.length > 0 && endTimes.length > 0) {
+                startTimes.sort();
+                endTimes.sort();
+                startTime = startTimes[0];
+                endTime = endTimes[endTimes.length - 1];
+            }
+        }
+
+        const stadiumNameCorrect = getStadiumNameByFieldId(fieldIdNum, bookingData.stadiumName);
+
+        const payload = {
+            userId: parseInt(currentUserId, 10),
+            fieldId: fieldIdNum,
+            stadiumName: stadiumNameCorrect,
+            bookingDate: isoDate,
+            startTime: startTime,
+            endTime: endTime,
+            courtSummary: bookingData.courtSummary || bookingData.courtDetail || "- Ca đặt sân",
+            totalPrice: numericPrice,
+            status: bookingData.status || "PENDING"
+        };
+
+        const token = localStorage.getItem("token") || localStorage.getItem("userToken");
+
+        try {
+            console.log("👉 Đang gửi payload chuẩn lên 8085:", payload);
+            const response = await fetch(BASE_BOOKINGS_API, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : ''
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log("✅ ĐÃ LƯU THÀNH CÔNG VÀO MYSQL (8085)! ID đơn:", data.id || data.bookingId);
+                return data;
+            } else {
+                const errErr = await response.text();
+                console.error("❌ Lỗi Backend 8085 trả về:", response.status, errErr);
+            }
+        } catch (err) {
+            console.error("❌ Không thể kết nối tới cổng 8085:", err);
+        }
+        return null;
+    }
+
     async function loadBookings() {
         const token = localStorage.getItem("token") || localStorage.getItem("userToken");
-        const email = localStorage.getItem("userEmail") || "2311060324@hunre.edu.vn";
+        const userId = resolveCurrentUserId();
         const container = document.getElementById("bookingList");
 
         let bookings = [];
+        const endpointsToTry = [
+            `${BASE_BOOKINGS_API}/my-bookings?userId=${userId}`,
+            `${BASE_BOOKINGS_API}/user/${userId}`,
+            `${BASE_BOOKINGS_API}?userId=${userId}`
+        ];
 
-        try {
-            // 1. Thử gọi API từ Server
-            if (token) {
-                const response = await fetch(`${BOOKING_API}?email=${encodeURIComponent(email)}`, {
+        for (const url of endpointsToTry) {
+            try {
+                const response = await fetch(url, {
                     headers: {
-                        "Authorization": `Bearer ${token}`
+                        "Authorization": token ? `Bearer ${token}` : "",
+                        "Content-Type": "application/json"
                     }
                 });
 
                 if (response.ok) {
-                    bookings = await response.json();
+                    const data = await response.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        bookings = data;
+                        console.log("✅ Đã lấy dữ liệu từ CSDL 8085 thành công:", bookings);
+                        break;
+                    }
                 }
-            }
-        } catch (error) {
-            console.warn("Chưa thể kết nối API Backend, đang chuyển sang dữ liệu LocalStorage...", error);
-        }
-
-        // 2. Nếu API không trả dữ liệu/lỗi -> Đọc danh sách từ LocalStorage
-        if (!bookings || bookings.length === 0) {
-            const localList = JSON.parse(localStorage.getItem("userBookingList")) || [];
-            const singleBooking = JSON.parse(localStorage.getItem("bookingData"));
-
-            if (localList.length > 0) {
-                bookings = localList;
-            } else if (singleBooking) {
-                bookings = [singleBooking];
+            } catch (error) {
+                console.warn("Lỗi gọi API GET:", url);
             }
         }
 
-        // 3. Nếu vẫn không có dữ liệu -> Hiển thị màn hình trống
         if (!bookings || bookings.length === 0) {
             container.innerHTML = `
                 <div class="card bg-white rounded-2xl p-12 text-center text-gray-500">
                     <i class="fa-solid fa-calendar-xmark text-4xl text-gray-300 mb-3"></i>
                     <p class="text-base font-semibold text-gray-700">Chưa có lịch sử đặt sân nào</p>
-                    <p class="text-xs text-gray-400 mt-1 mb-4">Bạn chưa thực hiện đơn đặt sân nào trên hệ thống.</p>
+                    <p class="text-xs text-gray-400 mt-1 mb-4">Tài khoản (ID: ${userId || 'N/A'}) chưa có đơn hàng nào trên CSDL MySQL.</p>
                     <button onclick="goHome()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition cursor-pointer">
                         Đặt sân ngay
                     </button>
@@ -178,16 +290,22 @@
         renderBookings(bookings);
     }
 
-    // Render danh sách đơn
     function renderBookings(bookings) {
         const container = document.getElementById("bookingList");
         container.innerHTML = bookings.map(item => {
             const itemJson = JSON.stringify(item).replace(/'/g, "&apos;");
-            const bookingId = item.id || item.bookingId || '7853';
+            const bookingId = item.id || item.bookingId || '1001';
 
-            // Kiểm tra trạng thái có phải là Đã hủy không
+            let timeSlotDisplay = item.courtSummary || item.courtDetail || item.timeSlot || '--';
+            if (item.startTime && item.endTime) {
+                timeSlotDisplay = `${item.startTime.substring(0, 5)} - ${item.endTime.substring(0, 5)}`;
+            }
+
             const statusUpper = (item.status || '').toUpperCase();
             const isCancelled = statusUpper === 'CANCELLED' || statusUpper === 'ĐÃ HỦY';
+
+            // 🔴 SỬA LỖI HIỂN THỊ: Tự nhận diện tên sân chính xác theo fieldId
+            const displayName = getStadiumNameByFieldId(item.fieldId, item.stadiumName);
 
             return `
                 <div class="card bg-white rounded-2xl border border-gray-200 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -198,12 +316,12 @@
                             </span>
                             ${getStatusBadge(item.status)}
                         </div>
-                        <h3 class="font-bold text-lg text-gray-800 pt-1">${item.stadiumName || 'Phúc Long Badminton'}</h3>
+                        <h3 class="font-bold text-lg text-gray-800 pt-1">${displayName}</h3>
                         <p class="text-xs text-gray-500">
-                            <i class="fa-regular fa-calendar mr-1"></i> Ngày đá: <strong>${item.bookingDate || '--'}</strong>
+                            <i class="fa-regular fa-calendar mr-1"></i> Ngày đặt: <strong>${item.bookingDate || '--'}</strong>
                         </p>
                         <p class="text-xs text-gray-500">
-                            <i class="fa-regular fa-clock mr-1"></i> Khung giờ / Ca: <strong>${item.courtDetail || item.timeSlot || '--'}</strong>
+                            <i class="fa-regular fa-clock mr-1"></i> Chi tiết ca: <strong>${timeSlotDisplay}</strong>
                         </p>
                     </div>
 
@@ -214,7 +332,6 @@
                         </div>
 
                         <div class="flex items-center gap-2">
-                            <!-- NÚT XÓA: Chỉ hiển thị khi đơn hàng ĐÃ HỦY -->
                             ${isCancelled ? `
                                 <button onclick="deleteBooking('${bookingId}')"
                                         class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1.5 cursor-pointer border border-red-200" title="Xóa đơn này">
@@ -222,7 +339,6 @@
                                 </button>
                             ` : ''}
 
-                            <!-- NÚT XEM CHI TIẾT -->
                             <button onclick='viewBookingDetail(${itemJson})'
                                     class="bg-[#005229] hover:bg-[#00381c] text-white text-xs font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5 cursor-pointer shadow-sm">
                                 <i class="fa-solid fa-eye text-yellow-300"></i> Xem chi tiết
@@ -234,7 +350,6 @@
         }).join('');
     }
 
-    // Hàm Xóa đơn đặt sân
     async function deleteBooking(bookingId) {
         if (!confirm(`Bạn có chắc chắn muốn xóa đơn đặt sân #${bookingId} này không?`)) {
             return;
@@ -242,33 +357,18 @@
 
         const token = localStorage.getItem("token") || localStorage.getItem("userToken");
 
-        // 1. Gửi request Xóa lên Backend (nếu có Token)
         try {
-            if (token) {
-                await fetch(`${DELETE_BOOKING_API}/${bookingId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        "Authorization": `Bearer ${token}`,
-                        "Content-Type": "application/json"
-                    }
-                });
-            }
+            await fetch(`${BASE_BOOKINGS_API}/${bookingId}`, {
+                method: 'DELETE',
+                headers: {
+                    "Authorization": `Bearer ${token || ''}`,
+                    "Content-Type": "application/json"
+                }
+            });
         } catch (error) {
-            console.warn("Lỗi khi kết nối API xóa, sẽ thực hiện xóa local:", error);
+            console.warn("Lỗi API xóa:", error);
         }
 
-        // 2. Xóa dữ liệu trong LocalStorage
-        let localList = JSON.parse(localStorage.getItem("userBookingList")) || [];
-        localList = localList.filter(item => (item.id || item.bookingId || '7853') != bookingId);
-        localStorage.setItem("userBookingList", JSON.stringify(localList));
-
-        // Nếu dữ liệu đơn đơn lẻ trùng ID thì xóa luôn
-        const singleBooking = JSON.parse(localStorage.getItem("bookingData"));
-        if (singleBooking && (singleBooking.id || singleBooking.bookingId) == bookingId) {
-            localStorage.removeItem("bookingData");
-        }
-
-        // 3. Tải lại danh sách
         loadBookings();
     }
 
@@ -282,6 +382,7 @@
             case 'CONFIRMED':
             case 'APPROVED':
             case 'PAID':
+            case 'SUCCESS':
             case 'THÀNH CÔNG':
                 return `<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700"><i class="fa-solid fa-circle-check mr-1"></i> Đã xác nhận</span>`;
             case 'PENDING':

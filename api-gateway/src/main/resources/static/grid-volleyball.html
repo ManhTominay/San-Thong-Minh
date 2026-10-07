@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ĐẶT LỊCH SÂN BÓNG CHUYỀN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-[#dcf0e2] min-h-screen flex flex-col justify-between font-sans pb-36">
+
+<div>
+    <header class="bg-[#005229] text-white px-4 py-3 flex items-center justify-between shadow-md">
+        <button onclick="window.location.href='index.html'" class="text-white hover:opacity-80 text-lg px-2"><i class="fa-solid fa-chevron-left"></i></button>
+        <h1 class="text-sm md:text-base font-bold uppercase">ĐẶT LỊCH SÂN BÓNG CHUYỀN</h1>
+        <div class="bg-[#216e45] text-white text-xs px-2.5 py-1 rounded flex items-center gap-2 border border-emerald-600 cursor-pointer" onclick="document.getElementById('booking-date').showPicker()">
+            <span id="display-date">07/10/2026</span>
+            <i class="fa-regular fa-calendar text-xs"></i>
+            <input type="date" id="booking-date" class="hidden" value="2026-10-07" onchange="handleDateChange(this.value)">
+        </div>
+    </header>
+
+    <div class="bg-[#005229] text-white px-4 py-2 flex items-center gap-4 text-[11px]">
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 bg-white border border-gray-300 rounded-sm inline-block"></span><span>Trống</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 bg-[#ef4444] rounded-sm inline-block"></span><span>Đã đặt</span></div>
+    </div>
+
+    <main class="p-2">
+        <div class="overflow-x-auto border border-gray-300 bg-white shadow-sm">
+            <table class="w-full border-collapse text-center text-xs select-none">
+                <thead>
+                <tr class="bg-[#d1e9fa] text-gray-700 border-b border-gray-300" id="header-row">
+                    <th class="p-2 border-r border-gray-300 min-w-[140px] bg-[#d1eedb] text-emerald-950 sticky left-0 z-10 font-bold">Sân</th>
+                </tr>
+                </thead>
+                <tbody id="grid-body"></tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<footer class="fixed bottom-0 left-0 right-0 z-30 bg-[#005229] text-white shadow-lg">
+    <div class="px-6 py-2 flex items-center justify-between text-sm font-bold">
+        <span>Tổng giờ: <span id="total-hours">0h00</span></span>
+        <span>Tổng tiền: <span id="total-price">0 đ</span></span>
+    </div>
+    <div class="p-2 bg-[#dcf0e2]">
+        <button onclick="goToConfirmPage()" class="w-full bg-[#e3a82b] hover:bg-[#d1971f] text-white font-bold py-3 rounded uppercase text-sm shadow">TIẾP THEO</button>
+    </div>
+</footer>
+
+<script>
+    const BASE_BOOKING_API = "http://localhost:8085/api/bookings";
+    let timeSlots = [];
+    const courtsList = ['Sân Bóng Chuyền 1', 'Sân Bóng Chuyền 2', 'Sân Bóng Chuyền 3', 'Sân Bóng Chuyền 4'];
+    const selectedSlots = new Set();
+    let bookedSlots = new Set();
+    let currentStadiumId = '5';
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        initSportConfig();
+        renderHeader();
+        await fetchBookedSlotsFromBackend();
+        renderGrid();
+    });
+
+    function initSportConfig() {
+        timeSlots = [];
+        for (let h = 7; h <= 22; h++) {
+            const hStr = h < 10 ? '0' + h : '' + h;
+            timeSlots.push(`${hStr}:00`);
+            if (h < 22) timeSlots.push(`${hStr}:30`);
+        }
+    }
+
+    async function fetchBookedSlotsFromBackend() {
+        bookedSlots.clear();
+        const dateVal = document.getElementById('booking-date').value;
+        try {
+            const res = await fetch(`${BASE_BOOKING_API}?fieldId=${currentStadiumId}&bookingDate=${dateVal}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data)) {
+                    data.forEach(b => {
+                        if (b.status && b.status.toUpperCase() !== 'CANCELLED') {
+                            const s = b.startTime.substring(0, 5), e = b.endTime.substring(0, 5);
+                            let inRange = false;
+                            timeSlots.forEach(slot => {
+                                if (slot === s) inRange = true;
+                                if (slot === e) inRange = false;
+                                if (inRange) bookedSlots.add(`${b.fieldId || currentStadiumId}_${slot}`);
+                            });
+                        }
+                    });
+                }
+            }
+        } catch (e) { console.error("Lỗi kết nối CSDL", e); }
+    }
+
+    function renderHeader() {
+        const hRow = document.getElementById('header-row');
+        hRow.innerHTML = '<th class="p-2 border-r border-gray-300 min-w-[140px] bg-[#d1eedb] text-emerald-950 sticky left-0 z-10 font-bold">Sân</th>';
+        timeSlots.forEach(slot => {
+            const th = document.createElement('th');
+            th.className = "p-1 border-r border-gray-300 font-normal text-[11px] text-gray-600 bg-[#d1e9fa] min-w-[45px]";
+            th.textContent = slot;
+            hRow.appendChild(th);
+        });
+    }
+
+    function renderGrid() {
+        const tbody = document.getElementById('grid-body');
+        tbody.innerHTML = '';
+        courtsList.forEach((cName, idx) => {
+            const cId = idx + 1;
+            const tr = document.createElement('tr');
+            tr.className = "border-b border-gray-300";
+            const tdName = document.createElement('td');
+            tdName.className = "p-2 border-r border-gray-300 font-semibold bg-[#d1eedb] text-emerald-950 sticky left-0 z-10 text-xs";
+            tdName.textContent = cName;
+            tr.appendChild(tdName);
+
+            timeSlots.forEach(slot => {
+                const td = document.createElement('td');
+                const key = `${cId}_${slot}`;
+                td.className = "border-r border-gray-300 h-8 min-w-[45px]";
+                if (bookedSlots.has(key)) {
+                    td.className += " bg-[#ef4444] cursor-not-allowed pointer-events-none";
+                } else if (selectedSlots.has(key)) {
+                    td.className += " bg-[#a2f0c1] border border-black cursor-pointer";
+                    td.onclick = () => { selectedSlots.delete(key); renderGrid(); updateTotal(); };
+                } else {
+                    td.className += " bg-white hover:bg-emerald-50 cursor-pointer";
+                    td.onclick = () => { selectedSlots.add(key); renderGrid(); updateTotal(); };
+                }
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+    }
+
+    function getVolleyballSlotPrice(timeSlot) {
+        const dateVal = document.getElementById('booking-date').value;
+        const isWeekend = (new Date(dateVal).getDay() % 6 === 0);
+        const [h, m] = timeSlot.split(':').map(Number);
+        const floatHour = h + (m / 60);
+        let hourly = 550000;
+        if (!isWeekend) {
+            if (floatHour >= 7 && floatHour < 17) hourly = 500000;
+            else hourly = 550000;
+        } else { hourly = 550000; }
+        return hourly / 2;
+    }
+
+    function updateTotal() {
+        const count = selectedSlots.size;
+        const hrs = Math.floor(count / 2), mins = (count % 2) * 30;
+        document.getElementById('total-hours').textContent = `${hrs}h${mins === 0 ? '00' : mins}`;
+        let total = 0;
+        selectedSlots.forEach(k => { total += getVolleyballSlotPrice(k.split('_')[1]); });
+        document.getElementById('total-price').textContent = Math.round(total).toLocaleString('vi-VN') + " đ";
+    }
+
+    async function goToConfirmPage() {
+        if (selectedSlots.size === 0) { alert("Vui lòng chọn khung giờ!"); return; }
+        const dateVal = document.getElementById('booking-date').value;
+        const sorted = Array.from(selectedSlots).sort();
+        const grouped = {};
+        sorted.forEach(k => {
+            const [c, t] = k.split('_');
+            if (!grouped[c]) grouped[c] = [];
+            grouped[c].push(t);
+        });
+
+        let startTimes = [], endTimes = [], details = [];
+        Object.keys(grouped).forEach(cId => {
+            const idxs = grouped[cId].map(t => timeSlots.indexOf(t)).sort((a,b) => a-b);
+            const sStr = timeSlots[idxs[0]];
+            const eStr = timeSlots[idxs[idxs.length-1] + 1] || timeSlots[idxs[idxs.length-1]];
+            startTimes.push(sStr + ":00");
+            endTimes.push(eStr + ":00");
+            details.push(`Bóng Chuyền ${cId}: ${sStr} - ${eStr}`);
+        });
+
+        startTimes.sort(); endTimes.sort();
+        const payload = {
+            userId: parseInt(localStorage.getItem("userId") || "7", 10),
+            fieldId: parseInt(currentStadiumId, 10),
+            stadiumName: "Sân Bóng Chuyền",
+            bookingDate: dateVal,
+            startTime: startTimes[0],
+            endTime: endTimes[endTimes.length - 1],
+            courtSummary: details.join(' | '),
+            totalPrice: parseFloat(document.getElementById('total-price').textContent.replace(/[^0-9]/g, '')),
+            status: "PENDING"
+        };
+
+        try {
+            const res = await fetch(BASE_BOOKING_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                const saved = await res.json();
+                payload.id = saved.id;
+            }
+        } catch(e) { console.error("Lỗi gửi MySQL", e); }
+
+        localStorage.setItem("bookingData", JSON.stringify(payload));
+        window.location.href = "confirm.html";
+    }
+
+    async function handleDateChange(val) {
+        if (!val) return;
+        selectedSlots.clear();
+        await fetchBookedSlotsFromBackend();
+        renderGrid();
+        updateTotal();
+    }
+</script>
+</body>
+</html>

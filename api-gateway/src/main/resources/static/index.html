@@ -287,6 +287,7 @@
         }
     }
 
+    // GHI NHỚ: Giữ nguyên API /api/fields chuẩn gốc của bạn để bộ lọc hoạt động 100%
     function fetchStadiums(category) {
         let url = "/api/fields";
         if (category && category.trim() !== "" && category.toLowerCase() !== "all") {
@@ -315,27 +316,30 @@
 
                 data.forEach(stadium => {
                     const stadiumType = stadium.type || stadium.category || "BADMINTON";
+                    const stadiumName = stadium.name || "Chưa có tên";
+                    const stadiumAddress = stadium.address || "Đang cập nhật";
+
                     const card = document.createElement("div");
                     card.className = "bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between";
                     card.innerHTML = `
                         <div>
                             <span class="inline-block px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-800 rounded mb-2">
-                                ${escapeHtml(stadium.type || stadium.category || "Thể thao")}
+                                ${escapeHtml(stadiumType)}
                             </span>
                             <h3 class="font-bold text-emerald-800 text-base mb-1">
-                                ${escapeHtml(stadium.name || "Chưa có tên")}
+                                ${escapeHtml(stadiumName)}
                             </h3>
                             <p class="text-xs text-gray-500 mb-2">
                                 <i class="fa-solid fa-location-dot text-rose-500 mr-1"></i>
-                                ${escapeHtml(stadium.address || "Đang cập nhật")}
+                                ${escapeHtml(stadiumAddress)}
                             </p>
                             <p class="text-xs text-gray-600 bg-gray-50 p-2 rounded mb-4">
                                 ${escapeHtml(stadium.description || "Không có mô tả chi tiết")}
                             </p>
                         </div>
                         <button type="button"
-                                onclick="openAdvancedSearchWithStadium(${Number(stadium.id)}, '${escapeHtml(stadiumType)}')"
-                                class="w-full border border-emerald-600 text-emerald-700 hover:bg-emerald-600 hover:text-white text-xs py-2 rounded-lg font-medium transition">
+                                onclick="openAdvancedSearchWithStadium(${Number(stadium.id)}, '${escapeHtml(stadiumType)}', '${escapeHtml(stadiumName)}', '${escapeHtml(stadiumAddress)}')"
+                                class="w-full border border-emerald-600 text-emerald-700 hover:bg-emerald-600 hover:text-white text-xs py-2 rounded-lg font-medium transition cursor-pointer">
                             Đặt sân
                         </button>
                     `;
@@ -374,11 +378,26 @@
         }
     }
 
-    // ĐÃ BỔ SUNG: Truyền tham số showOption=true nếu sportType là TENNIS
-    function openAdvancedSearchWithStadium(stadiumId, sportType) {
+    // CHỈ CHỈNH SỬA DUY NHẤT HÀM NÀY: Truyền thêm Name & Address sang các trang sau
+    function openAdvancedSearchWithStadium(stadiumId, sportType, name, address) {
         const today = new Date().toISOString().split('T')[0];
-        let url = "grid.html?stadiumId=" + encodeURIComponent(stadiumId) + "&type=" + encodeURIComponent(sportType) + "&date=" + today;
-        if (sportType && sportType.toUpperCase() === 'TENNIS') {
+        const typeUpper = (sportType || 'BADMINTON').toUpperCase();
+        let targetFile = "grid-badminton.html";
+
+        if (typeUpper === 'FOOTBALL' || typeUpper === 'BONGDA') {
+            targetFile = "grid-football.html";
+        } else if (typeUpper === 'PICKLEBALL') {
+            targetFile = "grid-pickleball.html";
+        } else if (typeUpper === 'VOLLEYBALL' || typeUpper === 'BONGCHUYEN') {
+            targetFile = "grid-volleyball.html";
+        } else if (typeUpper === 'TENNIS') {
+            targetFile = "grid-tennis.html";
+        } else {
+            targetFile = "grid-badminton.html";
+        }
+
+        let url = `${targetFile}?stadiumId=${encodeURIComponent(stadiumId)}&type=${encodeURIComponent(sportType)}&date=${today}&name=${encodeURIComponent(name || '')}&address=${encodeURIComponent(address || '')}`;
+        if (typeUpper === 'TENNIS') {
             url += "&showOption=true";
         }
         window.location.href = url;

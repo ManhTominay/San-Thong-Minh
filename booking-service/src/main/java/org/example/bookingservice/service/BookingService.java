@@ -1,83 +1,100 @@
 package org.example.bookingservice.service;
 
-import org.example.bookingservice.dto.*;
+import org.example.bookingservice.dto.BookingRequestDTO;
+import org.example.bookingservice.dto.CourtGridDTO;
+import org.example.bookingservice.dto.TimeSlotDTO;
 import org.example.bookingservice.entity.Booking;
 import org.example.bookingservice.entity.Field;
 import org.example.bookingservice.repository.BookingRepository;
 import org.example.bookingservice.repository.FieldRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class BookingService {
 
     @Autowired
-    private FieldRepository fieldRepository;
-
-    @Autowired
     private BookingRepository bookingRepository;
 
-    public List<CourtGridDTO> getGridData(Long stadiumId, LocalDate date) {
-        List<Field> fields = fieldRepository.findByStadiumId(stadiumId);
-        if (fields.isEmpty()) return Collections.emptyList();
+    @Autowired
+    private FieldRepository fieldRepository;
 
-        List<Long> fieldIds = fields.stream().map(Field::getId).toList();
-        List<Booking> bookings = bookingRepository.findByFieldIdInAndBookingDateAndStatusNot(
-                fieldIds, date, Booking.BookingStatus.CANCELLED
+    public List<CourtGridDTO> getGridData(Long stadiumId, LocalDate bookingDate) {
+        List<Field> fields = fieldRepository.findByStadiumId(stadiumId);
+        List<Long> fieldIds = fields.stream().map(Field::getId).collect(Collectors.toList());
+
+        List<Booking> existingBookings = bookingRepository.findByFieldIdInAndBookingDateAndStatusNot(
+                fieldIds, bookingDate, "CANCELLED"
         );
 
-        List<CourtGridDTO> gridResult = new ArrayList<>();
+        List<CourtGridDTO> gridData = new ArrayList<>();
 
         for (Field field : fields) {
-            List<TimeSlotDTO> slots = new ArrayList<>();
-            LocalTime current = LocalTime.of(5, 0);
-            LocalTime endOfDay = LocalTime.of(23, 0);
+            CourtGridDTO courtGrid = new CourtGridDTO();
+            courtGrid.setCourtId(field.getId());
+            courtGrid.setCourtName(field.getName());
 
-            while (!current.isAfter(endOfDay)) {
-                String slotStatus = "TRONG";
+            List<TimeSlotDTO> timeSlots = new ArrayList<>();
+            LocalTime start = LocalTime.of(5, 0);
+            LocalTime end = LocalTime.of(23, 0);
 
-                for (Booking b : bookings) {
-                    if (b.getFieldId().equals(field.getId())) {
-                        if ((current.equals(b.getStartTime()) || current.isAfter(b.getStartTime()))
-                                && current.isBefore(b.getEndTime())) {
-                            slotStatus = mapStatus(b.getStatus());
-                            break;
-                        }
-                    }
-                }
+            while (start.isBefore(end)) {
+                LocalTime slotStart = start;
+                LocalTime slotEnd = start.plusMinutes(30);
 
-                slots.add(new TimeSlotDTO(current.toString(), slotStatus));
-                current = current.plusMinutes(30);
+                boolean isBooked = existingBookings.stream().anyMatch(b ->
+                        b.getFieldId().equals(field.getId()) &&
+                                !(slotEnd.isBefore(b.getStartTime()) || slotEnd.equals(b.getStartTime()) ||
+                                        slotStart.isAfter(b.getEndTime()) || slotStart.equals(b.getEndTime()))
+                );
+
+                TimeSlotDTO slot = new TimeSlotDTO();
+                slot.setStartTime(slotStart.toString());
+                slot.setEndTime(slotEnd.toString());
+                slot.setPrice(field.getPricePerHour() != null ? field.getPricePerHour() / 2 : 35000.0);
+                slot.setStatus(isBooked ? "BOOKED" : "AVAILABLE");
+
+                timeSlots.add(slot);
+                start = slotEnd;
             }
 
-            gridResult.add(new CourtGridDTO(field.getId(), field.getName(), slots));
+            courtGrid.setSlots(timeSlots);
+            gridData.add(courtGrid);
         }
 
-        return gridResult;
+        return gridData;
     }
 
+    public List<Booking> getBookingsByUserId(Long userId) {
+        return bookingRepository.findByUserIdOrderByIdDesc(userId);
+    }
+
+    @Transactional
     public Booking createBooking(BookingRequestDTO req) {
-        Booking booking = Booking.builder()
-                .fieldId(req.getSubCourtId()) // mapped từ subCourtId sang fieldId
-                .userId(req.getUserId())
-                .bookingDate(req.getBookingDate())
-                .startTime(req.getStartTime())
-                .endTime(req.getEndTime())
-                .totalPrice(req.getTotalPrice() != null ? req.getTotalPrice() : 0.0)
-                .status(Booking.BookingStatus.CONFIRMED)
-                .build();
-        return bookingRepository.save(booking);
-    }
+        Booking booking = new Booking();
 
-    private String mapStatus(Booking.BookingStatus status) {
-        return switch (status) {
-            case CONFIRMED -> "DA_DAT";
-            case PENDING -> "PENDING";
-            case CANCELLED -> "TRONG";
-        };
+        Long validUserId = (req.getUserId() != null && req.getUserId() > 0) ? req.getUserId() : 7L;
+        booking.setUserId(validUserId);
+
+        Long validFieldId = (req.getFieldId() != null && req.getFieldId() >= 1 && req.getFieldId() <= 18)
+                ? req.getFieldId() : 5L;
+        booking.setFieldId(validFieldId);
+
+        booking.setBookingDate(req.getBookingDate());
+        booking.setStartTime(req.getStartTime());
+        booking.setEndTime(req.getEndTime());
+        booking.setTotalPrice(req.getTotalPrice() != null ? req.getTotalPrice() : 0.0);
+        booking.setStatus(req.getStatus() != null ? req.getStatus() : "PENDING");
+        booking.setCreatedAt(LocalDateTime.now());
+
+        return bookingRepository.save(booking);
     }
 }

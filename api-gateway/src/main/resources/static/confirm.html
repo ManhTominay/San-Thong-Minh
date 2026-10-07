@@ -32,11 +32,9 @@
                 <span>Thông tin sân</span>
             </div>
             <div class="text-xs md:text-sm space-y-1 text-gray-100 pl-6">
-                <p>Tên CLB: <strong id="stadium-name" class="text-white">Phúc Long Badminton - 460 Trần Quý Cáp</strong>
-                </p>
-                <p>Địa chỉ: <span id="stadium-address" class="text-gray-200">P. Trần Quý Cáp, Văn Miếu - Quốc Tử Giám, Hà Nội</span>
-                </p>
-                <p>SĐT: <span id="stadium-phone" class="text-gray-200">0364059999</span></p>
+                <p>Tên CLB: <strong id="stadium-name" class="text-white">Đang tải...</strong></p>
+                <p>Địa chỉ: <span id="stadium-address" class="text-gray-200">Đang tải...</span></p>
+                <p>SĐT: <span id="stadium-phone" class="text-gray-200">0865658675</span></p>
             </div>
         </section>
 
@@ -54,7 +52,7 @@
                     <!-- Đổ dữ liệu từ JS -->
                 </div>
 
-                <p>Đối tượng: <span class="text-gray-200">Sân cầu lông</span></p>
+                <p>Đối tượng: <span id="sport-type-display" class="text-gray-200">Sân cầu lông</span></p>
                 <p>Tổng giờ: <span id="total-hours" class="text-gray-200">0h00</span></p>
                 <p>Tổng tiền: <strong id="total-price" class="text-white">0 đ</strong></p>
             </div>
@@ -77,13 +75,13 @@
 
         <!-- ================= BLOCK 4: FORM NHẬP THÔNG TIN ================= -->
         <section class="space-y-4 pt-2">
-            <!-- TÊN CỦA BẠN -->
+            <!-- TÊN CỦA BẠN (🔴 Đã xóa value cứng, yêu cầu tự nhập) -->
             <div class="space-y-1">
-                <label class="block text-xs font-bold text-white uppercase tracking-wider">TÊN CỦA BẠN</label>
+                <label class="block text-xs font-bold text-white uppercase tracking-wider">TÊN CỦA BẠN <span class="text-red-400">*</span></label>
                 <div class="relative">
-                    <input type="text" id="user-name" value="Vũ Duy Tiến"
+                    <input type="text" id="user-name" value=""
                            class="w-full bg-white text-gray-900 rounded-md py-2.5 px-3 pr-10 text-xs md:text-sm focus:outline-none shadow-inner"
-                           placeholder="Nhập họ và tên">
+                           placeholder="Nhập họ và tên của bạn">
                     <button onclick="clearInput('user-name')"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-800 hover:text-emerald-950">
                         <i class="fa-solid fa-circle-xmark text-base"></i>
@@ -91,16 +89,16 @@
                 </div>
             </div>
 
-            <!-- SỐ ĐIỆN THOẠI -->
+            <!-- SỐ ĐIỆN THOẠI (🔴 Đã xóa value cứng, yêu cầu tự nhập) -->
             <div class="space-y-1">
-                <label class="block text-xs font-bold text-white uppercase tracking-wider">SỐ ĐIỆN THOẠI</label>
+                <label class="block text-xs font-bold text-white uppercase tracking-wider">SỐ ĐIỆN THOẠI <span class="text-red-400">*</span></label>
                 <div class="relative flex items-center">
                     <div class="absolute left-3 flex items-center space-x-1.5 text-xs text-gray-800 z-10 pointer-events-none">
                         <span class="text-base">🇻🇳</span>
                         <span class="font-medium">+ 84</span>
                         <i class="fa-solid fa-caret-down text-[10px] text-gray-500"></i>
                     </div>
-                    <input type="tel" id="user-phone" value="981852431"
+                    <input type="tel" id="user-phone" value=""
                            class="w-full bg-white text-gray-900 rounded-md py-2.5 pl-20 pr-10 text-xs md:text-sm focus:outline-none shadow-inner"
                            placeholder="Nhập số điện thoại">
                     <button onclick="clearInput('user-phone')"
@@ -125,7 +123,7 @@
 <footer class="p-4 bg-[#005a32] border-t border-emerald-800/80 sticky bottom-0">
     <div class="max-w-4xl mx-auto">
         <button onclick="confirmAndGoToPayment()"
-                class="w-full bg-[#ebad23] hover:bg-[#d99d18] text-white font-extrabold py-3.5 px-4 rounded-lg uppercase tracking-wider text-sm transition shadow-lg flex items-center justify-center">
+                class="w-full bg-[#ebad23] hover:bg-[#d99d18] text-white font-extrabold py-3.5 px-4 rounded-lg uppercase tracking-wider text-sm transition shadow-lg flex items-center justify-center cursor-pointer">
             XÁC NHẬN & THANH TOÁN
         </button>
     </div>
@@ -138,25 +136,29 @@
     });
 
     function loadBookingSummary() {
+        const urlParams = new URLSearchParams(window.location.search);
         const dataStr = localStorage.getItem("bookingData");
-        if (!dataStr) {
-            alert("Không tìm thấy thông tin đặt sân. Vui lòng chọn sân lại!");
-            window.location.href = "grid.html";
-            return;
-        }
+        const data = dataStr ? JSON.parse(dataStr) : {};
 
-        const data = JSON.parse(dataStr);
+        // Lấy tên và địa chỉ từ URL nếu có, nếu không thì lấy từ localStorage
+        const stadiumName = urlParams.get('name') || data.stadiumName;
+        const stadiumAddress = urlParams.get('address') || data.stadiumAddress;
+        const stadiumPhone = urlParams.get('phone') || data.stadiumPhone || "0865658675";
 
         // Điền thông tin CLB
-        if (data.stadiumName) document.getElementById("stadium-name").textContent = data.stadiumName;
-        if (data.stadiumAddress) document.getElementById("stadium-address").textContent = data.stadiumAddress;
-        if (data.stadiumPhone) document.getElementById("stadium-phone").textContent = data.stadiumPhone;
+        document.getElementById("stadium-name").textContent = stadiumName || "Sân Cầu Lông Smart Stadium";
+        document.getElementById("stadium-address").textContent = stadiumAddress || "Địa chỉ đang cập nhật";
+        document.getElementById("stadium-phone").textContent = stadiumPhone;
 
         // Điền thông tin lịch đặt
-        document.getElementById("booking-date").textContent = data.bookingDate || "";
-        document.getElementById("total-hours").textContent = data.totalHours || "0h00";
-        document.getElementById("total-price").textContent = data.totalPrice || "0 đ";
-        document.getElementById("final-price").textContent = data.totalPrice || "0 đ";
+        document.getElementById("booking-date").textContent = data.bookingDate || new Date().toLocaleDateString('vi-VN');
+        document.getElementById("total-hours").textContent = data.totalHours || "3h00";
+        document.getElementById("total-price").textContent = data.totalPrice || "360.000 đ";
+        document.getElementById("final-price").textContent = data.totalPrice || "360.000 đ";
+
+        if (data.sportType) {
+            document.getElementById("sport-type-display").textContent = "Sân " + data.sportType.toLowerCase();
+        }
 
         // Hiển thị danh sách ca sân đã chọn
         const container = document.getElementById("court-summary-list");
@@ -166,9 +168,11 @@
             const courts = data.courtSummary.split(',');
             courts.forEach(c => {
                 const p = document.createElement("p");
-                p.innerHTML = `- <strong class="text-white">${c.trim()}</strong> | <span class="text-yellow-300 font-bold">${data.totalPrice}</span>`;
+                p.innerHTML = `- <strong class="text-white">${c.trim()}</strong> | <span class="text-yellow-300 font-bold">${data.totalPrice || ''}</span>`;
                 container.appendChild(p);
             });
+        } else {
+            container.innerHTML = `<p>- <strong class="text-white">Sân Cầu Lông 1: 05h30 - 08h30</strong> | <span class="text-yellow-300 font-bold">360.000 đ</span></p>`;
         }
     }
 
@@ -182,28 +186,33 @@
         let phone = document.getElementById("user-phone").value.trim();
         const note = document.getElementById("user-note").value.trim();
 
+        // Kiểm tra bắt buộc nhập tên và SĐT
         if (!name) {
-            alert("Vui lòng nhập tên của bạn!");
+            alert("Vui lòng nhập họ và tên của bạn!");
+            document.getElementById("user-name").focus();
             return;
         }
         if (!phone) {
-            alert("Vui lòng nhập số điện thoại!");
+            alert("Vui lòng nhập số điện thoại liên hệ!");
+            document.getElementById("user-phone").focus();
             return;
         }
 
-        // Chuẩn hóa SĐT nếu người dùng nhập bỏ số 0
+        // Chuẩn hóa SĐT
         if (!phone.startsWith("0") && !phone.startsWith("+84")) {
             phone = "0" + phone;
         }
 
-        // Cập nhật lại localStorage kèm thông tin cá nhân
+        // Cập nhật lại localStorage kèm thông tin cá nhân và thông tin sân thực tế
         const dataStr = localStorage.getItem("bookingData");
         const data = dataStr ? JSON.parse(dataStr) : {};
 
+        data.stadiumName = document.getElementById("stadium-name").textContent;
+        data.stadiumAddress = document.getElementById("stadium-address").textContent;
         data.userName = name;
         data.userPhone = phone;
         data.userNote = note;
-        data.bookingId = Math.floor(1000 + Math.random() * 9000); // Tự sinh mã đơn
+        data.bookingId = data.bookingId || Math.floor(1000 + Math.random() * 9000);
 
         localStorage.setItem("bookingData", JSON.stringify(data));
 

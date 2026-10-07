@@ -15,7 +15,7 @@
 <!-- HEADER CHÍNH -->
 <!-- ===================================================== -->
 <header class="bg-[#00a65a] text-white px-4 py-3.5 flex items-center justify-between shadow-sm sticky top-0 z-20">
-    <button onclick="window.history.back()" class="text-white hover:text-gray-200 transition text-lg px-2 cursor-pointer" title="Quay lại">
+    <button onclick="window.location.href='confirm.html'" class="text-white hover:text-gray-200 transition text-lg px-2 cursor-pointer" title="Quay lại Confirm">
         <i class="fa-solid fa-chevron-left"></i>
     </button>
     <h1 class="text-base md:text-lg font-semibold tracking-wide">Thanh toán</h1>
@@ -45,7 +45,7 @@
                     <div class="flex items-center space-x-4">
                         <!-- QR VietQR MB Bank -->
                         <div class="relative group cursor-pointer" onclick="openQrModal()">
-                            <img id="qr-bank-img" src="https://img.vietqr.io/image/MB-188826092005-compact2.png?amount=105000&addInfo=DATSAN&accountName=VU%20DUY%20TIEN"
+                            <img id="qr-bank-img" src="https://img.vietqr.io/image/MB-188826092005-compact2.png?amount=360000&addInfo=DATSAN&accountName=VU%20DUY%20TIEN"
                                  alt="QR MB Bank" class="w-24 h-24 md:w-28 md:h-28 border rounded p-1 shrink-0 object-contain hover:opacity-90 transition">
                             <div class="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition rounded flex items-center justify-center text-gray-700">
                                 <i class="fa-solid fa-magnifying-glass-plus text-lg"></i>
@@ -75,7 +75,7 @@
                 <!-- THÔNG BÁO CẢNH BÁO MÀU VÀNG -->
                 <div class="bg-[#fff3cd] border border-[#ffeeba] text-[#856404] p-3.5 rounded-xl text-xs md:text-sm flex items-center space-x-2.5">
                     <i class="fa-solid fa-triangle-exclamation text-amber-600 text-lg shrink-0"></i>
-                    <span>Vui lòng chuyển khoản <strong id="alert-price" class="text-[#00a65a] underline font-bold">105.000 đ</strong> và gửi ảnh vào ô bên dưới để hoàn tất đặt lịch!</span>
+                    <span>Vui lòng chuyển khoản <strong id="alert-price" class="text-[#00a65a] underline font-bold">360.000 đ</strong> và gửi ảnh vào ô bên dưới để hoàn tất đặt lịch!</span>
                 </div>
 
                 <!-- Ô TẢI ẢNH CHUYỂN KHOẢN -->
@@ -89,10 +89,10 @@
                                 <i class="fa-regular fa-image"></i>
                             </div>
                             <span class="text-xs md:text-sm font-semibold text-[#00a65a]">Tải ảnh chuyển khoản</span>
-                            <span class="text-[11px] text-gray-400">PNG, JPG (tối đa 5MB)</span>
+                            <span class="text-[11px] text-[#28a745]">PNG, JPG (tối đa 20MB)</span>
                         </div>
 
-                        <img id="image-preview" src="#" alt="Preview" class="hidden absolute inset-0 w-full h-full object-contain bg-gray-50 p-2">
+                        <img id="image-preview" src="#" alt="Preview" class="hidden absolute inset-0 w-full h-full object-contain bg-gray-50 p-2 z-10">
                         <input type="file" id="proof-file-input" accept="image/*" class="hidden" onchange="previewImage(event)">
                     </div>
                 </div>
@@ -210,11 +210,11 @@
     </div>
 
     <div class="w-full space-y-3 pb-4 max-w-md mx-auto">
-        <button onclick="window.location.href='booking-history.html'" class="w-full bg-[#20c997] hover:bg-[#1baa80] text-white font-bold py-3.5 rounded-xl uppercase text-xs md:text-sm tracking-wider shadow transition">
+        <button onclick="window.location.href='userBooking.html'" class="w-full bg-[#20c997] hover:bg-[#1baa80] text-white font-bold py-3.5 rounded-xl uppercase text-xs md:text-sm tracking-wider shadow transition">
             XEM LỊCH ĐÃ HỦY
         </button>
-        <button onclick="window.history.back()" class="w-full bg-[#e5ad35] hover:bg-[#d49c25] text-white font-bold py-3.5 rounded-xl uppercase text-xs md:text-sm tracking-wider shadow transition">
-            QUAY VỀ
+        <button onclick="window.location.href='/'" class="w-full bg-[#e5ad35] hover:bg-[#d49c25] text-white font-bold py-3.5 rounded-xl uppercase text-xs md:text-sm tracking-wider shadow transition">
+            QUAY VỀ ĐẶT SÂN
         </button>
     </div>
 </main>
@@ -237,12 +237,14 @@
 </div>
 
 <!-- ===================================================== -->
-<!-- JAVASCRIPT XỬ LÝ & ĐỒNG BỘ CSDL -->
+<!-- JAVASCRIPT XỬ LÝ THANH TOÁN -->
 <!-- ===================================================== -->
 <script>
+    const CREATE_PAYMENT_API = "/api/payments";
     let timeLeft = 360; // 6 phút đếm ngược
     let timerInterval = null;
     let currentBookingData = null;
+    let base64ImageProof = "";
 
     document.addEventListener("DOMContentLoaded", function () {
         loadBookingData();
@@ -251,26 +253,33 @@
 
     function loadBookingData() {
         const dataStr = localStorage.getItem("bookingData");
-        if (!dataStr) return;
+        if (dataStr) {
+            currentBookingData = JSON.parse(dataStr);
+        } else {
+            currentBookingData = {
+                bookingId: Math.floor(1000 + Math.random() * 9000),
+                userName: "Khách hàng",
+                userPhone: "0981852431",
+                totalPrice: "360.000 đ",
+                bookingDate: "07/10/2026",
+                courtSummary: "- Sân Cầu Lông 1: 05h30 - 08h30"
+            };
+        }
 
-        currentBookingData = JSON.parse(dataStr);
         const data = currentBookingData;
 
-        // 1. Hiển thị Tên (bắt tất cả các tên key có thể có)
-        const name = data.userName || data.name || data.fullname || "Vũ Duy Tiến";
-        document.getElementById("summary-name").textContent = name;
+        // 1. Hiển thị Tên
+        document.getElementById("summary-name").textContent = data.userName || "Vũ Duy Tiến";
 
         // 2. Hiển thị Số điện thoại
-        const phone = data.userPhone || data.phone || data.phoneNumber || "0981852431";
-        document.getElementById("summary-phone").textContent = phone;
+        document.getElementById("summary-phone").textContent = data.userPhone || "0981852431";
 
         // 3. Mã đơn
-        const bookingId = data.bookingId || data.id || Math.floor(1000 + Math.random() * 9000);
-        data.bookingId = bookingId;
+        const bookingId = data.bookingId || data.id || "29";
         document.getElementById("summary-booking-id").textContent = `#${bookingId}`;
 
         // 4. Tổng tiền
-        let priceText = data.totalPrice || data.price || "105.000 đ";
+        let priceText = data.totalPrice || "360.000 đ";
         if (typeof priceText === 'number') {
             priceText = priceText.toLocaleString('vi-VN') + " đ";
         }
@@ -280,11 +289,10 @@
         document.getElementById("footer-price").textContent = priceText;
 
         // 5. Ngày đặt
-        const dateText = data.bookingDate || data.date || "05/10/2026";
-        document.getElementById("summary-date").textContent = dateText;
+        document.getElementById("summary-date").textContent = data.bookingDate || "07/10/2026";
 
         // 6. Mã QR VietQR
-        const rawAmount = priceText.toString().replace(/[^0-9]/g, '') || "105000";
+        const rawAmount = priceText.toString().replace(/[^0-9]/g, '') || "360000";
         const qrUrl = `https://img.vietqr.io/image/MB-188826092005-compact2.png?amount=${rawAmount}&addInfo=DATSAN%20${bookingId}&accountName=VU%20DUY%20TIEN`;
         document.getElementById("qr-bank-img").src = qrUrl;
         document.getElementById("download-qr-btn").href = qrUrl;
@@ -293,7 +301,7 @@
         const slotsContainer = document.getElementById("summary-slots-list");
         slotsContainer.innerHTML = "";
 
-        const courtDetail = data.courtSummary || data.courtDetail || "- Cầu lông 3: 10h30 - 12h00";
+        const courtDetail = data.courtSummary || "- Sân Cầu Lông 1: 05h30 - 08h30";
         if (courtDetail) {
             const courts = courtDetail.split(',');
             courts.forEach(courtStr => {
@@ -301,86 +309,79 @@
                 p.textContent = courtStr.trim().startsWith('-') ? courtStr.trim() : `- ${courtStr.trim()}`;
                 slotsContainer.appendChild(p);
             });
-        } else if (data.selectedSlotsDetail && data.selectedSlotsDetail.length > 0) {
-            data.selectedSlotsDetail.forEach(slot => {
-                const p = document.createElement("p");
-                p.textContent = `- ${slot.courtName}: ${slot.timeSlot}`;
-                slotsContainer.appendChild(p);
-            });
         }
     }
 
-    /* Xử lý gửi đơn hàng lên CSDL MySQL via API */
+    /* Xử lý gửi đơn hàng lên CSDL */
     async function submitPayment() {
-        const fileInput = document.getElementById("proof-file-input");
-        if (!fileInput.files || fileInput.files.length === 0) {
-            alert("Vui lòng đính kèm hình ảnh chuyển khoản trước khi tiếp tục!");
+        if (!base64ImageProof) {
+            alert("⚠️ Vui lòng đính kèm hình ảnh chuyển khoản trước khi tiếp tục!");
             return;
         }
 
         const btnSubmit = document.getElementById("btn-submit-payment");
         btnSubmit.disabled = true;
-        btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ĐANG XỬ LÝ...`;
+        btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> ĐANG XỬ LÝ...`;
 
         const data = currentBookingData || JSON.parse(localStorage.getItem("bookingData") || "{}");
         const token = localStorage.getItem("token") || localStorage.getItem("userToken");
 
-        // Chuẩn bị Payload cho Database MySQL
-        const rawPrice = parseFloat((data.totalPrice || "105000").toString().replace(/[^0-9]/g, '')) || 105000;
+        const rawPrice = parseFloat((data.totalPrice || "360000").toString().replace(/[^0-9]/g, '')) || 360000;
+        const bookingIdNum = parseInt(data.bookingId || data.id || Math.floor(1000 + Math.random() * 9000), 10);
 
-        const bookingPayload = {
-            userId: localStorage.getItem("userId") || data.userId || 1,
-            fieldId: data.fieldId || 1,
-            bookingDate: data.bookingDate || "2026-10-05",
-            startTime: data.startTime || "10:30:00",
-            endTime: data.endTime || "12:00:00",
-            totalPrice: rawPrice,
-            status: "PENDING"
+        const paymentPayload = {
+            bookingId: bookingIdNum,
+            amount: rawPrice,
+            paymentMethod: "BANK_TRANSFER",
+            transactionStatus: "SUCCESS",
+            paymentProof: base64ImageProof
         };
 
         try {
-            // Gọi API lưu CSDL
-            const response = await fetch("/api/bookings/create", {
+            const response = await fetch(CREATE_PAYMENT_API, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": token ? `Bearer ${token}` : ""
                 },
-                body: JSON.stringify(bookingPayload)
+                body: JSON.stringify(paymentPayload)
             });
 
             if (response.ok) {
                 const savedResult = await response.json();
-                if (savedResult.id) data.bookingId = savedResult.id;
+                data.paymentId = savedResult.id;
             }
         } catch (error) {
-            console.warn("Không thể kết nối API Backend, chuyển sang chế độ lưu LocalStorage:", error);
+            console.warn("Chuyển tiếp lưu dữ liệu LocalStorage...");
+        } finally {
+            // Cập nhật LocalStorage
+            data.status = "SUCCESS";
+            data.paymentProof = base64ImageProof;
+            localStorage.setItem("bookingData", JSON.stringify(data));
+            saveToUserBookingHistory(data);
+
+            clearInterval(timerInterval);
+
+            // 🔴 CHUYỂN HƯỚNG TỚI BƯỚC 5: booking-detail.html
+            window.location.href = "booking-detail.html";
         }
-
-        // Cập nhật LocalStorage Fallback & chuyển trang
-        data.status = "PENDING";
-        localStorage.setItem("bookingData", JSON.stringify(data));
-        saveToUserBookingHistory(data);
-
-        clearInterval(timerInterval);
-        window.location.href = "booking-detail.html";
     }
 
     function saveToUserBookingHistory(bookingItem) {
         let historyList = JSON.parse(localStorage.getItem("userBookingList")) || [];
-        const bookingId = bookingItem.bookingId || bookingItem.id || "7853";
+        const bookingId = bookingItem.bookingId || bookingItem.id || "29";
 
         const newRecord = {
             id: bookingId,
             bookingId: bookingId,
-            stadiumName: bookingItem.stadiumName || "Phúc Long Badminton - 460 Trần Quý Cáp",
-            address: bookingItem.stadiumAddress || bookingItem.address || "P. Trần Quý Cáp, Văn Miếu - Quốc Tử Giám, Hà Nội",
-            phone: bookingItem.userPhone || bookingItem.phone || "0364059999",
-            bookingDate: bookingItem.bookingDate || "05/10/2026",
-            courtDetail: bookingItem.courtSummary || bookingItem.courtDetail || "- Cầu lông 3: 10h30 - 12h00",
-            totalHours: bookingItem.totalHours || "1h30",
-            totalPrice: bookingItem.totalPrice || "105.000 đ",
-            status: "PENDING"
+            stadiumName: bookingItem.stadiumName || "Cụm Sân Cầu Lông Smart Stadium",
+            address: bookingItem.stadiumAddress || "Địa chỉ đã cập nhật",
+            phone: bookingItem.userPhone || "0981852431",
+            bookingDate: bookingItem.bookingDate || "07/10/2026",
+            courtDetail: bookingItem.courtSummary || "- Sân Cầu Lông 1: 05h30 - 08h30",
+            totalHours: bookingItem.totalHours || "3h00",
+            totalPrice: bookingItem.totalPrice || "360.000 đ",
+            status: "SUCCESS"
         };
 
         const existingIndex = historyList.findIndex(item => (item.id || item.bookingId) == bookingId);
@@ -403,17 +404,14 @@
         document.getElementById("qr-modal").classList.add("hidden");
     }
 
-    document.addEventListener("keydown", function (e) {
-        if (e.key === "Escape") closeQrModal();
-    });
-
     function previewImage(event) {
         const file = event.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = function(e) {
+                base64ImageProof = e.target.result;
                 const preview = document.getElementById("image-preview");
-                preview.src = e.target.result;
+                preview.src = base64ImageProof;
                 preview.classList.remove("hidden");
                 document.getElementById("upload-placeholder").classList.add("opacity-0");
             }

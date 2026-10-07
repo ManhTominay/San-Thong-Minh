@@ -1,12 +1,23 @@
+// TimeSlotDTO.java
 package org.example.bookingservice.dto;
 
-import lombok.*;
-
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
 public class TimeSlotDTO {
-    private String time;   // Ví dụ: "15:00"
-    private String status; // "TRONG", "DA_DAT", "KHOA", "SU_KIEN"
+    private String startTime;
+    private String endTime;
+    private Double price;
+    private String status; // "AVAILABLE" hoặc "BOOKED"
+
+    public TimeSlotDTO() {}
+
+    public String getStartTime() { return startTime; }
+    public void setStartTime(String startTime) { this.startTime = startTime; }
+
+    public String getEndTime() { return endTime; }
+    public void setEndTime(String endTime) { this.endTime = endTime; }
+
+    public Double getPrice() { return price; }
+    public void setPrice(Double price) { this.price = price; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }
