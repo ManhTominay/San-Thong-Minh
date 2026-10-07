@@ -1,6 +1,7 @@
 package org.example.userservice.controller;
 
 import org.example.userservice.dto.AuthRequest;
+import org.example.userservice.dto.AdminUserDTO;
 import org.example.userservice.entity.User;
 import org.example.userservice.repository.UserRepository;
 import org.example.userservice.service.UserService;
@@ -13,6 +14,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -488,11 +490,19 @@ public class UserController {
     // =========================================================
 
     @GetMapping("/admin/users")
-    public ResponseEntity<List<User>>
+    public ResponseEntity<List<AdminUserDTO>>
     getAllUsers() {
 
         return ResponseEntity.ok(
-                userRepository.findAll()
+                userRepository.findAll().stream()
+                        .map(user -> new AdminUserDTO(
+                                user.getId(),
+                                user.getUsername(),
+                                user.getName(),
+                                user.getEmail(),
+                                user.getRole()
+                        ))
+                        .collect(Collectors.toList())
         );
     }
 

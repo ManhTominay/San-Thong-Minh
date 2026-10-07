@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,7 +30,9 @@ public class BookingService {
 
     public List<CourtGridDTO> getGridData(Long stadiumId, LocalDate bookingDate) {
         List<Field> fields = fieldRepository.findByStadiumId(stadiumId);
-        List<Long> fieldIds = fields.stream().map(Field::getId).collect(Collectors.toList());
+        List<Long> fieldIds = fields.stream()
+                .map(Field::getId)
+                .collect(Collectors.toList());
 
         List<Booking> existingBookings = bookingRepository.findByFieldIdInAndBookingDateAndStatusNot(
                 fieldIds, bookingDate, "CANCELLED"
@@ -50,16 +53,20 @@ public class BookingService {
                 LocalTime slotStart = start;
                 LocalTime slotEnd = start.plusMinutes(30);
 
-                boolean isBooked = existingBookings.stream().anyMatch(b ->
-                        b.getFieldId().equals(field.getId()) &&
-                                !(slotEnd.isBefore(b.getStartTime()) || slotEnd.equals(b.getStartTime()) ||
-                                        slotStart.isAfter(b.getEndTime()) || slotStart.equals(b.getEndTime()))
+                boolean isBooked = existingBookings.stream().anyMatch(booking ->
+                        booking.getFieldId().equals(field.getId())
+                                && !(slotEnd.isBefore(booking.getStartTime())
+                                || slotEnd.equals(booking.getStartTime())
+                                || slotStart.isAfter(booking.getEndTime())
+                                || slotStart.equals(booking.getEndTime()))
                 );
 
                 TimeSlotDTO slot = new TimeSlotDTO();
                 slot.setStartTime(slotStart.toString());
                 slot.setEndTime(slotEnd.toString());
-                slot.setPrice(field.getPricePerHour() != null ? field.getPricePerHour() / 2 : 35000.0);
+                slot.setPrice(field.getPricePerHour() != null
+                        ? field.getPricePerHour() / 2
+                        : 35000.0);
                 slot.setStatus(isBooked ? "BOOKED" : "AVAILABLE");
 
                 timeSlots.add(slot);
@@ -77,15 +84,32 @@ public class BookingService {
         return bookingRepository.findByUserIdOrderByIdDesc(userId);
     }
 
+    public List<Booking> getAllBookings() {
+        return bookingRepository.findAll();
+    }
+
+    @Transactional
+    public Optional<Booking> updateBookingStatus(Long bookingId, String status) {
+        return bookingRepository.findById(bookingId).map(booking -> {
+            booking.setStatus(status);
+            return bookingRepository.save(booking);
+        });
+    }
+
     @Transactional
     public Booking createBooking(BookingRequestDTO req) {
         Booking booking = new Booking();
 
-        Long validUserId = (req.getUserId() != null && req.getUserId() > 0) ? req.getUserId() : 7L;
+        Long validUserId = req.getUserId() != null && req.getUserId() > 0
+                ? req.getUserId()
+                : 7L;
         booking.setUserId(validUserId);
 
-        Long validFieldId = (req.getFieldId() != null && req.getFieldId() >= 1 && req.getFieldId() <= 18)
-                ? req.getFieldId() : 5L;
+        Long validFieldId = req.getFieldId() != null
+                && req.getFieldId() >= 1
+                && req.getFieldId() <= 18
+                ? req.getFieldId()
+                : 5L;
         booking.setFieldId(validFieldId);
 
         booking.setBookingDate(req.getBookingDate());

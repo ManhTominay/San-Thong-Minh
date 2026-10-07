@@ -1,6 +1,7 @@
 package org.example.bookingservice.controller;
 
 import org.example.bookingservice.dto.BookingRequestDTO;
+import org.example.bookingservice.dto.BookingStatusDTO;
 import org.example.bookingservice.dto.CourtGridDTO;
 import org.example.bookingservice.entity.Booking;
 import org.example.bookingservice.service.BookingService;
@@ -11,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/bookings")
@@ -44,7 +47,28 @@ public class BookingController {
         if (userId != null && userId > 0) {
             return ResponseEntity.ok(bookingService.getBookingsByUserId(userId));
         }
-        return ResponseEntity.ok(bookingService.getBookingsByUserId(7L)); // Fallback trả về danh sách
+        return ResponseEntity.ok(bookingService.getAllBookings());
+    }
+
+    @PutMapping("/{bookingId}/status")
+    public ResponseEntity<?> updateBookingStatus(
+            @PathVariable Long bookingId,
+            @RequestBody BookingStatusDTO statusRequest) {
+
+        Set<String> allowedStatuses = Set.of("PENDING", "CONFIRMED", "CANCELLED");
+        String status = statusRequest != null && statusRequest.getStatus() != null
+                ? statusRequest.getStatus().trim().toUpperCase()
+                : "";
+
+        if (!allowedStatuses.contains(status)) {
+            return ResponseEntity.badRequest().body("Trạng thái đơn đặt sân không hợp lệ");
+        }
+
+        Optional<Booking> updatedBooking = bookingService.updateBookingStatus(bookingId, status);
+        if (updatedBooking.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(updatedBooking.get());
     }
 
     // 4. Endpoint Lấy dữ liệu Ma trận Sân (/api/bookings/grid)

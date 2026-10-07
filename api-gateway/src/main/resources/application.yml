@@ -27,11 +27,17 @@ spring:
 
       routes:
 
+        # Booking Service
+        - id: booking-service
+          uri: lb://booking-service
+          predicates:
+            - Path=/api/bookings,/api/bookings/**
+
         # User Service
         - id: user-service
           uri: lb://user-service
           predicates:
-            - Path=/api/auth/**,/api/users/**
+            - Path=/api/auth/**,/api/users/**,/api/admin/**
 
         # Stadium Service
         - id: stadium-service

@@ -82,6 +82,34 @@
 
                 </a>
 
+
+                <a href="javascript:void(0)"
+                   onclick="switchTab('bookings')"
+                   id="nav-bookings"
+
+                   class="flex items-center space-x-3
+                          px-4 py-2.5 rounded-lg
+                          text-emerald-200
+                          hover:bg-emerald-800
+                          hover:text-white
+                          transition">
+
+                    <i class="fa-solid fa-calendar-check w-5"></i>
+
+                    <span>
+                        Quản lý Đặt sân
+                    </span>
+
+                </a>
+
+                <a href="javascript:void(0)"
+                   onclick="switchTab('reports')"
+                   id="nav-reports"
+                   class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-emerald-200 hover:bg-emerald-800 hover:text-white transition">
+                    <i class="fa-solid fa-chart-column w-5"></i>
+                    <span>Báo cáo thống kê</span>
+                </a>
+
             </nav>
 
         </div>
@@ -633,6 +661,166 @@
             </section>
 
 
+            <!-- ======================================= -->
+            <!-- TAB QUẢN LÝ ĐẶT SÂN -->
+            <!-- ======================================= -->
+
+            <section id="tab-bookings-content"
+                     class="space-y-5 hidden">
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+
+                    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-3">
+
+                        <div>
+                            <h2 class="text-base font-bold text-gray-800">
+                                Danh sách đơn đặt sân
+                            </h2>
+                            <p id="bookingCount" class="text-xs text-gray-500 mt-1">
+                                Đang tải dữ liệu...
+                            </p>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <input id="bookingSearch"
+                                   type="search"
+                                   oninput="applyBookingFilters()"
+                                   placeholder="Tìm mã đơn, tên người đặt hoặc sân"
+                                   aria-label="Tìm kiếm đơn đặt sân theo mã, người đặt hoặc sân"
+                                   class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+
+                            <select id="bookingStatusFilter"
+                                    onchange="applyBookingFilters()"
+                                    aria-label="Lọc theo trạng thái"
+                                    class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="PENDING">Chờ xác nhận</option>
+                                <option value="CONFIRMED">Đã xác nhận</option>
+                                <option value="CANCELLED">Đã hủy</option>
+                            </select>
+
+                            <button type="button"
+                                    onclick="loadAdminBookings()"
+                                    class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition">
+                                <i class="fa-solid fa-rotate-right mr-1"></i>
+                                Tải lại
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <div class="overflow-x-auto mt-4">
+                        <table class="w-full text-left border-collapse min-w-[900px]">
+                            <thead>
+                            <tr class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase">
+                                <th class="p-3">Mã đơn</th>
+                                <th class="p-3">Người đặt</th>
+                                <th class="p-3">Tên sân</th>
+                                <th class="p-3">Ngày đặt</th>
+                                <th class="p-3">Khung giờ</th>
+                                <th class="p-3">Tổng tiền</th>
+                                <th class="p-3">Trạng thái</th>
+                                <th class="p-3 text-center">Cập nhật</th>
+                            </tr>
+                            </thead>
+                            <tbody id="admin-booking-table" class="text-xs divide-y divide-gray-100">
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- ======================================= -->
+            <!-- TAB BÁO CÁO THỐNG KÊ -->
+            <!-- ======================================= -->
+
+            <section id="tab-reports-content" class="space-y-5 hidden">
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-base font-bold text-gray-800">Báo cáo hoạt động đặt sân</h2>
+                            <p id="reportSubtitle" class="text-xs text-gray-500 mt-1">Đang tải dữ liệu...</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label for="reportPeriod" class="text-sm text-gray-600">Thời gian</label>
+                            <select id="reportPeriod"
+                                    onchange="renderAdminReports()"
+                                    class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <option value="7">7 ngày gần nhất</option>
+                                <option value="30" selected>30 ngày gần nhất</option>
+                                <option value="90">90 ngày gần nhất</option>
+                                <option value="all">Toàn thời gian</option>
+                            </select>
+                            <button type="button"
+                                    onclick="loadAdminReports()"
+                                    class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold">
+                                <i class="fa-solid fa-rotate-right mr-1"></i>Tải lại
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="reportError" class="hidden bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-4 text-sm"></div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Tổng đơn đặt</p>
+                        <p id="reportTotalBookings" class="text-2xl font-bold text-gray-800 mt-2">—</p>
+                        <p class="text-xs text-gray-500 mt-1">Trong khoảng thời gian đã chọn</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Đã xác nhận</p>
+                        <p id="reportConfirmedBookings" class="text-2xl font-bold text-emerald-700 mt-2">—</p>
+                        <p class="text-xs text-gray-500 mt-1">Đơn hợp lệ, không tính đơn hủy</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Chờ xác nhận</p>
+                        <p id="reportPendingBookings" class="text-2xl font-bold text-amber-600 mt-2">—</p>
+                        <p class="text-xs text-gray-500 mt-1">Cần xử lý</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Doanh thu ước tính</p>
+                        <p id="reportRevenue" class="text-2xl font-bold text-indigo-700 mt-2">—</p>
+                        <p class="text-xs text-gray-500 mt-1">Tổng tiền đơn đã xác nhận</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                        <h3 class="text-sm font-bold text-gray-800">Đơn đặt theo thời gian</h3>
+                        <p id="reportTrendCaption" class="text-xs text-gray-500 mt-1"></p>
+                        <div id="reportTrendChart" class="mt-5"></div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                        <h3 class="text-sm font-bold text-gray-800">Phân bố trạng thái</h3>
+                        <div id="reportStatusChart" class="space-y-4 mt-5"></div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                    <h3 class="text-sm font-bold text-gray-800">Sân được đặt nhiều nhất</h3>
+                    <p class="text-xs text-gray-500 mt-1">Xếp hạng theo số đơn trong khoảng thời gian đã chọn</p>
+                    <div class="overflow-x-auto mt-4">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                            <tr class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase">
+                                <th class="p-3">#</th>
+                                <th class="p-3">Tên sân</th>
+                                <th class="p-3 text-right">Số đơn</th>
+                                <th class="p-3 text-right">Doanh thu xác nhận</th>
+                            </tr>
+                            </thead>
+                            <tbody id="reportTopFields" class="text-sm divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </section>
+
+
         </main>
 
     </div>
@@ -1008,6 +1196,8 @@
 
     const USER_API = "/api/admin/users";
 
+    const BOOKING_API = "/api/bookings";
+
 
     // =========================================================
     // PHÂN TRANG
@@ -1064,6 +1254,16 @@
                 "tab-users-content"
             );
 
+        const bookingContent =
+            document.getElementById(
+                "tab-bookings-content"
+            );
+
+        const reportContent =
+            document.getElementById(
+                "tab-reports-content"
+            );
+
 
         const stadiumNav =
             document.getElementById(
@@ -1094,6 +1294,14 @@
                 .classList
                 .add("hidden");
 
+            bookingContent
+                .classList
+                .add("hidden");
+
+            reportContent
+                .classList
+                .add("hidden");
+
 
             stadiumNav.className =
                 "flex items-center space-x-3 px-4 py-2.5 rounded-lg bg-emerald-800 text-white font-medium transition";
@@ -1102,16 +1310,21 @@
             userNav.className =
                 "flex items-center space-x-3 px-4 py-2.5 rounded-lg text-emerald-200 hover:bg-emerald-800 hover:text-white transition";
 
+            document.getElementById("nav-bookings").className =
+                "flex items-center space-x-3 px-4 py-2.5 rounded-lg text-emerald-200 hover:bg-emerald-800 hover:text-white transition";
+
+            document.getElementById("nav-reports").className =
+                "flex items-center space-x-3 px-4 py-2.5 rounded-lg text-emerald-200 hover:bg-emerald-800 hover:text-white transition";
+
 
             title.textContent =
                 "Quản Lý Sân Thể Thao";
-
 
             loadAdminStadiums();
 
         }
 
-        else {
+        else if (tabName === "users") {
 
             userContent
                 .classList
@@ -1119,6 +1332,14 @@
 
 
             stadiumContent
+                .classList
+                .add("hidden");
+
+            bookingContent
+                .classList
+                .add("hidden");
+
+            reportContent
                 .classList
                 .add("hidden");
 
@@ -1130,12 +1351,558 @@
             stadiumNav.className =
                 "flex items-center space-x-3 px-4 py-2.5 rounded-lg text-emerald-200 hover:bg-emerald-800 hover:text-white transition";
 
+            document.getElementById("nav-bookings").className =
+                "flex items-center space-x-3 px-4 py-2.5 rounded-lg text-emerald-200 hover:bg-emerald-800 hover:text-white transition";
+
+            document.getElementById("nav-reports").className =
+                "flex items-center space-x-3 px-4 py-2.5 rounded-lg text-emerald-200 hover:bg-emerald-800 hover:text-white transition";
+
 
             title.textContent =
                 "Quản Lý Tài Khoản";
 
 
             loadAdminUsers();
+
+        }
+
+        else if (tabName === "bookings") {
+
+            const bookingNav =
+                document.getElementById("nav-bookings");
+
+            stadiumContent.classList.add("hidden");
+            userContent.classList.add("hidden");
+            reportContent.classList.add("hidden");
+            bookingContent.classList.remove("hidden");
+
+            stadiumNav.className =
+                "flex items-center space-x-3 px-4 py-2.5 rounded-lg text-emerald-200 hover:bg-emerald-800 hover:text-white transition";
+
+            userNav.className =
+                "flex items-center space-x-3 px-4 py-2.5 rounded-lg text-emerald-200 hover:bg-emerald-800 hover:text-white transition";
+
+            document.getElementById("nav-reports").className =
+                "flex items-center space-x-3 px-4 py-2.5 rounded-lg text-emerald-200 hover:bg-emerald-800 hover:text-white transition";
+
+            bookingNav.className =
+                "flex items-center space-x-3 px-4 py-2.5 rounded-lg bg-emerald-800 text-white font-medium transition";
+
+            title.textContent = "Quản Lý Đặt Sân";
+            loadAdminBookings();
+
+        }
+
+        else {
+
+            stadiumContent.classList.add("hidden");
+            userContent.classList.add("hidden");
+            bookingContent.classList.add("hidden");
+            reportContent.classList.remove("hidden");
+
+            stadiumNav.className =
+                "flex items-center space-x-3 px-4 py-2.5 rounded-lg text-emerald-200 hover:bg-emerald-800 hover:text-white transition";
+            userNav.className =
+                "flex items-center space-x-3 px-4 py-2.5 rounded-lg text-emerald-200 hover:bg-emerald-800 hover:text-white transition";
+            document.getElementById("nav-bookings").className =
+                "flex items-center space-x-3 px-4 py-2.5 rounded-lg text-emerald-200 hover:bg-emerald-800 hover:text-white transition";
+            document.getElementById("nav-reports").className =
+                "flex items-center space-x-3 px-4 py-2.5 rounded-lg bg-emerald-800 text-white font-medium transition";
+
+            title.textContent = "Báo Cáo Thống Kê";
+            loadAdminReports();
+
+        }
+    }
+
+
+    let reportBookings = [];
+
+    let reportFieldNames = new Map();
+
+
+    async function loadAdminReports() {
+
+        const subtitle = document.getElementById("reportSubtitle");
+        const errorBox = document.getElementById("reportError");
+        subtitle.textContent = "Đang tải dữ liệu...";
+        errorBox.classList.add("hidden");
+
+        try {
+
+            const [bookingResponse, fieldsResult] = await Promise.all([
+                fetch(BOOKING_API),
+                loadBookingNameMap(STADIUM_API, stadium => stadium.name)
+                    .then(value => ({ value }))
+                    .catch(error => ({ error }))
+            ]);
+
+            if (!bookingResponse.ok) {
+                throw new Error(await readError(bookingResponse));
+            }
+
+            const bookings = await bookingResponse.json();
+            if (!Array.isArray(bookings)) {
+                throw new Error("Dữ liệu đơn đặt sân không hợp lệ");
+            }
+
+            reportBookings = bookings;
+            reportFieldNames = fieldsResult.value || new Map();
+            if (fieldsResult.error) {
+                console.error("Không tải được tên sân cho báo cáo:", fieldsResult.error);
+            }
+
+            renderAdminReports();
+
+        } catch (error) {
+
+            console.error("Lỗi tải báo cáo:", error);
+            subtitle.textContent = "Không thể tải dữ liệu báo cáo";
+            errorBox.textContent = "Tải báo cáo thất bại: " + error.message;
+            errorBox.classList.remove("hidden");
+
+        }
+    }
+
+
+    function getLocalDateString(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
+
+
+    function normalizeBookingStatus(status) {
+        const normalized = String(status || "PENDING").trim().toUpperCase();
+        if (["CONFIRMED", "APPROVED", "SUCCESS"].includes(normalized)) {
+            return "CONFIRMED";
+        }
+        if (["CANCELLED", "CANCELED", "ĐÃ HỦY"].includes(normalized)) {
+            return "CANCELLED";
+        }
+        if (normalized === "PENDING") {
+            return "PENDING";
+        }
+        return "OTHER";
+    }
+
+
+    function renderAdminReports() {
+
+        const period = document.getElementById("reportPeriod").value;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayString = getLocalDateString(today);
+        const validDates = reportBookings
+            .map(booking => booking.bookingDate)
+            .filter(date => /^\d{4}-\d{2}-\d{2}$/.test(String(date || "")) && date <= todayString)
+            .sort();
+
+        let startDate = new Date(today);
+        if (period === "all") {
+            startDate = validDates.length > 0
+                ? new Date(`${validDates[0]}T00:00:00`)
+                : new Date(today);
+        } else {
+            startDate.setDate(startDate.getDate() - Number(period) + 1);
+        }
+
+        const startString = getLocalDateString(startDate);
+        const filtered = reportBookings.filter(booking => {
+            const date = String(booking.bookingDate || "");
+            return /^\d{4}-\d{2}-\d{2}$/.test(date)
+                && date >= startString
+                && date <= todayString;
+        });
+
+        const confirmed = filtered.filter(booking => normalizeBookingStatus(booking.status) === "CONFIRMED");
+        const pendingCount = filtered.filter(booking => normalizeBookingStatus(booking.status) === "PENDING").length;
+        const cancelledCount = filtered.filter(booking => normalizeBookingStatus(booking.status) === "CANCELLED").length;
+        const revenue = confirmed.reduce((sum, booking) => {
+            const amount = Number(booking.totalPrice);
+            return sum + (Number.isFinite(amount) ? amount : 0);
+        }, 0);
+
+        document.getElementById("reportTotalBookings").textContent = filtered.length.toLocaleString("vi-VN");
+        document.getElementById("reportConfirmedBookings").textContent = confirmed.length.toLocaleString("vi-VN");
+        document.getElementById("reportPendingBookings").textContent = pendingCount.toLocaleString("vi-VN");
+        document.getElementById("reportRevenue").textContent =
+            new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(revenue) + " ₫";
+        document.getElementById("reportSubtitle").textContent =
+            `Từ ${startString} đến ${todayString} · ${filtered.length.toLocaleString("vi-VN")} đơn · ${cancelledCount.toLocaleString("vi-VN")} đơn đã hủy`;
+
+        renderReportTrend(filtered, startDate, today);
+        renderReportStatuses(filtered);
+        renderReportTopFields(filtered);
+
+    }
+
+
+    function renderReportTrend(bookings, startDate, endDate) {
+
+        const chart = document.getElementById("reportTrendChart");
+        const caption = document.getElementById("reportTrendCaption");
+        const totalDays = Math.max(1, Math.floor((endDate - startDate) / 86400000) + 1);
+        const buckets = [];
+        const bucketCount = Math.min(7, totalDays);
+
+        for (let index = 0; index < bucketCount; index++) {
+            const firstOffset = Math.floor(index * totalDays / bucketCount);
+            const afterLastOffset = Math.floor((index + 1) * totalDays / bucketCount);
+            const bucketStart = new Date(startDate);
+            bucketStart.setDate(bucketStart.getDate() + firstOffset);
+            const bucketEnd = new Date(startDate);
+            bucketEnd.setDate(bucketEnd.getDate() + Math.max(firstOffset, afterLastOffset - 1));
+            const from = getLocalDateString(bucketStart);
+            const to = getLocalDateString(bucketEnd);
+            const count = bookings.filter(booking => {
+                const date = String(booking.bookingDate || "");
+                return date >= from && date <= to;
+            }).length;
+            buckets.push({ from, to, count });
+        }
+
+        const maxCount = Math.max(1, ...buckets.map(bucket => bucket.count));
+        caption.textContent = `Số đơn theo ${bucketCount} khoảng thời gian trong kỳ đã chọn`;
+        const horizontalLines = [0, 1, 2, 3, 4].map(() => `
+            <div class="border-t border-dashed border-gray-200"></div>
+        `).join("");
+
+        chart.innerHTML = `
+            <div class="overflow-x-auto pb-2">
+                <div class="min-w-[420px]">
+                    <div class="relative h-48 border-b border-l border-gray-300">
+                        <div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                            ${horizontalLines}
+                        </div>
+                        <div class="absolute inset-0 flex items-end justify-around gap-2 px-3">
+                            ${buckets.map(bucket => {
+                                const height = bucket.count === 0
+                                    ? 0
+                                    : Math.max(3, bucket.count / maxCount * 100);
+                                return `
+                                    <div class="h-full flex-1 grid grid-rows-[20px_1fr] min-w-0"
+                                         title="${escapeHtml(bucket.from)} – ${escapeHtml(bucket.to)}: ${bucket.count} đơn">
+                                        <span class="text-center text-xs font-semibold text-gray-700">${bucket.count}</span>
+                                        <div class="relative h-full flex items-end justify-center">
+                                            <div class="h-full w-full max-w-12 bg-emerald-500 hover:bg-emerald-600 rounded-t-md transition-colors"
+                                                 style="height:${height}%"></div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join("")}
+                        </div>
+                    </div>
+                    <div class="flex justify-around gap-2 px-3 pt-2">
+                        ${buckets.map(bucket => {
+                            const shortDate = date => {
+                                const [, month, day] = date.split("-");
+                                return `${day}/${month}`;
+                            };
+                            const label = bucket.from === bucket.to
+                                ? shortDate(bucket.from)
+                                : `${shortDate(bucket.from)}–${shortDate(bucket.to)}`;
+                            return `
+                                <span class="flex-1 min-w-0 text-center text-[10px] sm:text-xs text-gray-500 whitespace-nowrap"
+                                      title="${escapeHtml(bucket.from)} – ${escapeHtml(bucket.to)}">
+                                    ${label}
+                                </span>
+                            `;
+                        }).join("")}
+                    </div>
+                </div>
+            </div>
+        `;
+
+    }
+
+
+    function renderReportStatuses(bookings) {
+
+        const chart = document.getElementById("reportStatusChart");
+        const statuses = [
+            { key: "CONFIRMED", label: "Đã xác nhận", color: "bg-emerald-500" },
+            { key: "PENDING", label: "Chờ xác nhận", color: "bg-amber-400" },
+            { key: "CANCELLED", label: "Đã hủy", color: "bg-rose-400" },
+            { key: "OTHER", label: "Trạng thái khác", color: "bg-gray-400" }
+        ];
+        const counts = statuses.map(status => ({
+            ...status,
+            count: bookings.filter(booking => normalizeBookingStatus(booking.status) === status.key).length
+        }));
+        const maxCount = Math.max(1, ...counts.map(status => status.count));
+
+        chart.innerHTML = counts.map(status => `
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-gray-600">${status.label}</span>
+                    <span class="font-semibold text-gray-700">${status.count}</span>
+                </div>
+                <div class="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full ${status.color} rounded-full" style="width:${status.count === 0 ? 0 : Math.max(3, status.count / maxCount * 100)}%"></div>
+                </div>
+            </div>
+        `).join("");
+
+    }
+
+
+    function renderReportTopFields(bookings) {
+
+        const tbody = document.getElementById("reportTopFields");
+        const byField = new Map();
+
+        bookings.forEach(booking => {
+            const id = String(booking.fieldId ?? "");
+            if (!byField.has(id)) {
+                byField.set(id, { id, count: 0, revenue: 0 });
+            }
+
+            const report = byField.get(id);
+            report.count++;
+            if (normalizeBookingStatus(booking.status) === "CONFIRMED") {
+                const amount = Number(booking.totalPrice);
+                report.revenue += Number.isFinite(amount) ? amount : 0;
+            }
+        });
+
+        const topFields = [...byField.values()]
+            .sort((a, b) => b.count - a.count || b.revenue - a.revenue)
+            .slice(0, 5);
+
+        if (topFields.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="p-5 text-center text-gray-500">Không có dữ liệu trong khoảng thời gian này.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = topFields.map((field, index) => {
+            const name = reportFieldNames.get(field.id) || `Sân #${escapeHtml(field.id)}`;
+            const fieldRevenue = new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(field.revenue) + " ₫";
+            return `
+                <tr>
+                    <td class="p-3 text-gray-500">${index + 1}</td>
+                    <td class="p-3 font-medium text-gray-800">${escapeHtml(name)}</td>
+                    <td class="p-3 text-right">${field.count}</td>
+                    <td class="p-3 text-right whitespace-nowrap">${fieldRevenue}</td>
+                </tr>
+            `;
+        }).join("");
+
+    }
+
+
+    async function loadAdminBookings() {
+
+        const tbody = document.getElementById("admin-booking-table");
+        const count = document.getElementById("bookingCount");
+
+        tbody.innerHTML = `
+            <tr><td colspan="8" class="p-6 text-center text-gray-500">Đang tải dữ liệu...</td></tr>
+        `;
+        count.textContent = "Đang tải dữ liệu...";
+
+        try {
+
+            const response = await fetch(BOOKING_API);
+            if (!response.ok) {
+                throw new Error(await readError(response));
+            }
+
+            const bookings = await response.json();
+            if (!Array.isArray(bookings)) {
+                throw new Error("Dữ liệu đơn đặt sân không hợp lệ");
+            }
+
+            const [usersResult, fieldsResult] = await Promise.allSettled([
+                loadBookingNameMap(USER_API, user => user.name || user.username || user.email),
+                loadBookingNameMap(STADIUM_API, stadium => stadium.name)
+            ]);
+
+            bookingUserNames = usersResult.status === "fulfilled"
+                ? usersResult.value
+                : new Map();
+            bookingFieldNames = fieldsResult.status === "fulfilled"
+                ? fieldsResult.value
+                : new Map();
+
+            if (usersResult.status === "rejected") {
+                console.error("Không tải được tên người đặt:", usersResult.reason);
+            }
+            if (fieldsResult.status === "rejected") {
+                console.error("Không tải được tên sân:", fieldsResult.reason);
+            }
+
+            bookings.sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+            allBookings = bookings;
+            applyBookingFilters();
+
+        } catch (error) {
+
+            console.error("Lỗi tải đơn đặt sân:", error);
+            count.textContent = "Không thể tải dữ liệu";
+            tbody.innerHTML = `
+                <tr><td colspan="8" class="p-6 text-center text-red-500">${escapeHtml(error.message)}</td></tr>
+            `;
+
+        }
+    }
+
+
+    function applyBookingFilters() {
+
+        const searchText = document.getElementById("bookingSearch").value.trim().toLowerCase();
+        const statusFilter = document.getElementById("bookingStatusFilter").value;
+
+        const filteredBookings = allBookings.filter(booking => {
+            const searchValues = [
+                booking.id,
+                booking.userId,
+                booking.fieldId,
+                bookingUserNames.get(String(booking.userId)),
+                bookingFieldNames.get(String(booking.fieldId))
+            ]
+                .map(value => String(value ?? "").toLowerCase());
+            const matchesSearch = !searchText || searchValues.some(value => value.includes(searchText));
+            const bookingStatus = String(booking.status || "PENDING").toUpperCase();
+            const normalizedStatus = ["APPROVED", "SUCCESS"].includes(bookingStatus)
+                ? "CONFIRMED"
+                : bookingStatus;
+            const matchesStatus = !statusFilter || normalizedStatus === statusFilter;
+            return matchesSearch && matchesStatus;
+        });
+
+        renderAdminBookings(filteredBookings, allBookings.length);
+
+    }
+
+
+    let allBookings = [];
+
+    let bookingUserNames = new Map();
+
+    let bookingFieldNames = new Map();
+
+
+    async function loadBookingNameMap(url, getName) {
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`${url}: ${await readError(response)}`);
+        }
+
+        const records = await response.json();
+        if (!Array.isArray(records)) {
+            throw new Error(`${url}: dữ liệu không hợp lệ`);
+        }
+
+        return new Map(records.map(record => [
+            String(record.id),
+            String(getName(record) || "").trim()
+        ]));
+
+    }
+
+
+    function renderAdminBookings(bookings, totalCount = bookings.length) {
+
+        const tbody = document.getElementById("admin-booking-table");
+        const count = document.getElementById("bookingCount");
+        count.textContent = `Hiển thị ${bookings.length} / ${totalCount} đơn`;
+
+        if (bookings.length === 0) {
+            tbody.innerHTML = `
+                <tr><td colspan="8" class="p-6 text-center text-gray-500">Không có đơn đặt sân phù hợp.</td></tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = bookings.map(booking => {
+            const status = String(booking.status || "PENDING").toUpperCase();
+            const selectedStatus = ["APPROVED", "SUCCESS"].includes(status)
+                ? "CONFIRMED"
+                : status;
+            const statusLabels = {
+                PENDING: "Chờ xác nhận",
+                CONFIRMED: "Đã xác nhận",
+                APPROVED: "Đã xác nhận",
+                SUCCESS: "Đã xác nhận",
+                CANCELLED: "Đã hủy"
+            };
+            const statusClasses = {
+                PENDING: "bg-amber-100 text-amber-700",
+                CONFIRMED: "bg-emerald-100 text-emerald-700",
+                APPROVED: "bg-emerald-100 text-emerald-700",
+                SUCCESS: "bg-emerald-100 text-emerald-700",
+                CANCELLED: "bg-gray-100 text-gray-600"
+            };
+            const date = escapeHtml(booking.bookingDate || "—");
+            const startTime = escapeHtml(String(booking.startTime || "—").slice(0, 5));
+            const endTime = escapeHtml(String(booking.endTime || "—").slice(0, 5));
+            const price = Number(booking.totalPrice);
+            const formattedPrice = Number.isFinite(price)
+                ? new Intl.NumberFormat("vi-VN").format(price) + " ₫"
+                : "—";
+            const userName = bookingUserNames.get(String(booking.userId));
+            const fieldName = bookingFieldNames.get(String(booking.fieldId));
+            const userDisplayName = userName || `Chưa tải được tên (ID: ${escapeHtml(booking.userId)})`;
+            const fieldDisplayName = fieldName || `Chưa tải được tên (ID: ${escapeHtml(booking.fieldId)})`;
+
+            return `
+                <tr>
+                    <td class="p-3 font-semibold text-gray-800">#${escapeHtml(booking.id)}</td>
+                    <td class="p-3">${escapeHtml(userDisplayName)}</td>
+                    <td class="p-3">${escapeHtml(fieldDisplayName)}</td>
+                    <td class="p-3 whitespace-nowrap">${date}</td>
+                    <td class="p-3 whitespace-nowrap">${startTime} - ${endTime}</td>
+                    <td class="p-3 whitespace-nowrap">${formattedPrice}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-1 rounded-full font-semibold ${statusClasses[status] || "bg-blue-100 text-blue-700"}">
+                            ${escapeHtml(statusLabels[status] || status)}
+                        </span>
+                    </td>
+                    <td class="p-3 text-center">
+                        <select aria-label="Trạng thái đơn ${escapeHtml(booking.id)}"
+                                onchange="updateBookingStatus(${Number(booking.id)}, this.value)"
+                                class="px-2 py-1 border border-gray-300 rounded text-xs"
+                                ${status === "CANCELLED" ? "disabled" : ""}>
+                            <option value="PENDING" ${selectedStatus === "PENDING" ? "selected" : ""}>Chờ xác nhận</option>
+                            <option value="CONFIRMED" ${selectedStatus === "CONFIRMED" ? "selected" : ""}>Đã xác nhận</option>
+                            <option value="CANCELLED" ${status === "CANCELLED" ? "selected" : ""}>Đã hủy</option>
+                        </select>
+                    </td>
+                </tr>
+            `;
+        }).join("");
+
+    }
+
+
+    async function updateBookingStatus(bookingId, status) {
+
+        if (!Number.isInteger(bookingId) || bookingId <= 0) {
+            alert("Mã đơn đặt sân không hợp lệ.");
+            return;
+        }
+
+        try {
+
+            const response = await fetch(`${BOOKING_API}/${bookingId}/status`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status })
+            });
+
+            if (!response.ok) {
+                throw new Error(await readError(response));
+            }
+
+            await loadAdminBookings();
+
+        } catch (error) {
+
+            alert("Cập nhật trạng thái thất bại: " + error.message);
+            await loadAdminBookings();
 
         }
     }
