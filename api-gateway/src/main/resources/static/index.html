@@ -380,7 +380,8 @@
 
     // CHỈ CHỈNH SỬA DUY NHẤT HÀM NÀY: Truyền thêm Name & Address sang các trang sau
     function openAdvancedSearchWithStadium(stadiumId, sportType, name, address) {
-        const today = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         const typeUpper = (sportType || 'BADMINTON').toUpperCase();
         let targetFile = "grid-badminton.html";
 
@@ -396,11 +397,34 @@
             targetFile = "grid-badminton.html";
         }
 
-        let url = `${targetFile}?stadiumId=${encodeURIComponent(stadiumId)}&type=${encodeURIComponent(sportType)}&date=${today}&name=${encodeURIComponent(name || '')}&address=${encodeURIComponent(address || '')}`;
+        const params = new URLSearchParams({
+            stadiumId: String(stadiumId),
+            type: sportType || '',
+            date: today,
+            name: name || '',
+            address: address || '',
+            returnUrl: getSportSearchUrl(sportType)
+        });
         if (typeUpper === 'TENNIS') {
-            url += "&showOption=true";
+            params.set("showOption", "true");
         }
-        window.location.href = url;
+        window.location.href = `${targetFile}?${params.toString()}`;
+    }
+
+    function getSportSearchUrl(sportType) {
+        const normalizedType = (sportType || '').toLowerCase();
+        const sport = normalizedType.includes('football') || normalizedType.includes('bongda')
+            ? 'football'
+            : normalizedType.includes('volleyball') || normalizedType.includes('bongchuyen')
+                ? 'volleyball'
+                : normalizedType.includes('pickleball')
+                    ? 'pickleball'
+                    : normalizedType.includes('tennis')
+                        ? 'tennis'
+                        : 'badminton';
+        const searchUrl = new URL('advanced-search.html', window.location.href);
+        searchUrl.searchParams.set('sport', sport);
+        return searchUrl.href;
     }
 </script>
 </body>

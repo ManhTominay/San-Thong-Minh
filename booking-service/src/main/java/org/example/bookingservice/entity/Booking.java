@@ -19,6 +19,9 @@ public class Booking {
     @Column(name = "field_id", nullable = false)
     private Long fieldId;
 
+    @Column(name = "stadium_id")
+    private Long stadiumId;
+
     @Column(name = "booking_date", nullable = false)
     private LocalDate bookingDate;
 
@@ -27,6 +30,15 @@ public class Booking {
 
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
+
+    @Column(name = "court_summary", length = 2000)
+    private String courtSummary;
+
+    @Column(name = "stadium_name")
+    private String stadiumName;
+
+    @Column(name = "stadium_address", length = 1000)
+    private String stadiumAddress;
 
     @Column(name = "total_price", nullable = false)
     private Double totalPrice;
@@ -58,6 +70,9 @@ public class Booking {
     public Long getFieldId() { return fieldId; }
     public void setFieldId(Long fieldId) { this.fieldId = fieldId; }
 
+    public Long getStadiumId() { return stadiumId; }
+    public void setStadiumId(Long stadiumId) { this.stadiumId = stadiumId; }
+
     public LocalDate getBookingDate() { return bookingDate; }
     public void setBookingDate(LocalDate bookingDate) { this.bookingDate = bookingDate; }
 
@@ -66,6 +81,15 @@ public class Booking {
 
     public LocalTime getEndTime() { return endTime; }
     public void setEndTime(LocalTime endTime) { this.endTime = endTime; }
+
+    public String getCourtSummary() { return courtSummary; }
+    public void setCourtSummary(String courtSummary) { this.courtSummary = courtSummary; }
+
+    public String getStadiumName() { return stadiumName; }
+    public void setStadiumName(String stadiumName) { this.stadiumName = stadiumName; }
+
+    public String getStadiumAddress() { return stadiumAddress; }
+    public void setStadiumAddress(String stadiumAddress) { this.stadiumAddress = stadiumAddress; }
 
     public Double getTotalPrice() { return totalPrice; }
     public void setTotalPrice(Double totalPrice) { this.totalPrice = totalPrice; }

@@ -108,7 +108,10 @@
     }
 
     function formatToIsoDate(dateStr) {
-        if (!dateStr) return "2026-10-07";
+        if (!dateStr) {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        }
         if (dateStr.includes('-')) {
             const parts = dateStr.split('-');
             if (parts[0].length === 4) return dateStr;
@@ -121,6 +124,12 @@
             }
         }
         return dateStr;
+    }
+
+    function formatDateForDisplay(dateStr) {
+        const isoDate = formatToIsoDate(dateStr);
+        const parts = isoDate.split('-');
+        return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateStr || '--';
     }
 
     document.addEventListener("DOMContentLoaded", async function () {
@@ -204,6 +213,7 @@
             userId: parseInt(currentUserId, 10),
             fieldId: fieldIdNum,
             stadiumName: stadiumNameCorrect,
+            stadiumAddress: bookingData.stadiumAddress || bookingData.address || "",
             bookingDate: isoDate,
             startTime: startTime,
             endTime: endTime,
@@ -304,8 +314,8 @@
             const statusUpper = (item.status || '').toUpperCase();
             const isCancelled = statusUpper === 'CANCELLED' || statusUpper === 'ĐÃ HỦY';
 
-            // 🔴 SỬA LỖI HIỂN THỊ: Tự nhận diện tên sân chính xác theo fieldId
-            const displayName = getStadiumNameByFieldId(item.fieldId, item.stadiumName);
+            const displayName = getBookingStadiumName(item);
+            const displayAddress = item.stadiumAddress || item.address || "Địa chỉ đang cập nhật";
 
             return `
                 <div class="card bg-white rounded-2xl border border-gray-200 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -318,7 +328,10 @@
                         </div>
                         <h3 class="font-bold text-lg text-gray-800 pt-1">${displayName}</h3>
                         <p class="text-xs text-gray-500">
-                            <i class="fa-regular fa-calendar mr-1"></i> Ngày đặt: <strong>${item.bookingDate || '--'}</strong>
+                            <i class="fa-solid fa-location-dot mr-1"></i> Địa chỉ sân: <strong>${displayAddress}</strong>
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            <i class="fa-regular fa-calendar mr-1"></i> Ngày đặt: <strong>${formatDateForDisplay(item.bookingDate)}</strong>
                         </p>
                         <p class="text-xs text-gray-500">
                             <i class="fa-regular fa-clock mr-1"></i> Chi tiết ca: <strong>${timeSlotDisplay}</strong>
@@ -375,6 +388,21 @@
     function viewBookingDetail(item) {
         localStorage.setItem("bookingData", JSON.stringify(item));
         window.location.href = "booking-detail.html";
+    }
+
+    function getBookingStadiumName(item) {
+        if (item.stadiumName && item.stadiumName !== "null") {
+            return item.stadiumName;
+        }
+
+        const summary = item.courtSummary || item.courtDetail || "";
+        if (/cầu\s*lông/i.test(summary)) return "Cụm Sân Cầu Lông";
+        if (/pickleball/i.test(summary)) return "Sân Pickleball";
+        if (/bóng\s*chuyền/i.test(summary)) return "Sân Bóng Chuyền";
+        if (/tennis/i.test(summary)) return "Sân Tennis";
+        if (/bóng\s*đá/i.test(summary)) return "Sân Bóng Đá";
+
+        return getStadiumNameByFieldId(item.fieldId, item.stadiumName);
     }
 
     function getStatusBadge(status) {

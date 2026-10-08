@@ -15,7 +15,7 @@
 <!-- HEADER CHÍNH -->
 <!-- ===================================================== -->
 <header class="bg-[#00a65a] text-white px-4 py-3.5 flex items-center justify-between shadow-sm sticky top-0 z-20">
-    <button onclick="window.location.href='confirm.html'" class="text-white hover:text-gray-200 transition text-lg px-2 cursor-pointer" title="Quay lại Confirm">
+    <button onclick="returnToHome()" class="text-white hover:text-gray-200 transition text-lg px-2 cursor-pointer" title="Về trang chủ">
         <i class="fa-solid fa-chevron-left"></i>
     </button>
     <h1 class="text-base md:text-lg font-semibold tracking-wide">Thanh toán</h1>
@@ -247,25 +247,22 @@
     let base64ImageProof = "";
 
     document.addEventListener("DOMContentLoaded", function () {
-        loadBookingData();
-        startCountdown();
+        if (loadBookingData()) startCountdown();
     });
+
+    function returnToHome() {
+        window.location.replace("index.html");
+    }
 
     function loadBookingData() {
         const dataStr = localStorage.getItem("bookingData");
-        if (dataStr) {
-            currentBookingData = JSON.parse(dataStr);
-        } else {
-            currentBookingData = {
-                bookingId: Math.floor(1000 + Math.random() * 9000),
-                userName: "Khách hàng",
-                userPhone: "0981852431",
-                totalPrice: "360.000 đ",
-                bookingDate: "07/10/2026",
-                courtSummary: "- Sân Cầu Lông 1: 05h30 - 08h30"
-            };
+        if (!dataStr) {
+            alert("Không tìm thấy thông tin đặt sân. Vui lòng chọn sân và đặt lịch trước.");
+            window.location.replace("index.html");
+            return false;
         }
 
+        currentBookingData = JSON.parse(dataStr);
         const data = currentBookingData;
 
         // 1. Hiển thị Tên
@@ -289,7 +286,7 @@
         document.getElementById("footer-price").textContent = priceText;
 
         // 5. Ngày đặt
-        document.getElementById("summary-date").textContent = data.bookingDate || "07/10/2026";
+        document.getElementById("summary-date").textContent = formatBookingDate(data.rawBookingDate || data.bookingDate) || "--/--/----";
 
         // 6. Mã QR VietQR
         const rawAmount = priceText.toString().replace(/[^0-9]/g, '') || "360000";
@@ -310,6 +307,79 @@
                 slotsContainer.appendChild(p);
             });
         }
+        return true;
+    }
+
+    async function ensureBookingSaved(data) {
+        const dateValue = data.rawBookingDate || data.bookingDate || "";
+        let bookingDate = "";
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+            bookingDate = dateValue;
+        } else {
+            const match = dateValue.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+            if (match) bookingDate = `${match[3]}-${match[2]}-${match[1]}`;
+        }
+
+        const fieldId = Number(data.stadiumId || data.fieldId);
+        const courtSummary = data.courtSummary || data.courtDetail || "";
+        if (!bookingDate || !Number.isSafeInteger(fieldId) || fieldId <= 0 || !courtSummary) {
+            throw new Error("Thiếu ngày, sân hoặc khung giờ của đơn đặt. Vui lòng quay lại chọn sân.");
+        }
+
+        if (data.savedToDb && Number.isSafeInteger(Number(data.id)) && Number(data.id) > 0) {
+            data.bookingId = Number(data.id);
+            return Number(data.id);
+        }
+
+        const dateQuery = new URLSearchParams({ bookingDate, stadiumId: String(fieldId) });
+        const bookingsResponse = await fetch(`/api/bookings?${dateQuery}`);
+        if (!bookingsResponse.ok) {
+            throw new Error(`Không kiểm tra được đơn đặt trong CSDL (HTTP ${bookingsResponse.status}).`);
+        }
+        const bookings = await bookingsResponse.json();
+        if (!Array.isArray(bookings)) throw new Error("Dữ liệu booking từ máy chủ không hợp lệ.");
+
+        const existing = bookings.find(booking =>
+            Number(booking.id) === Number(data.id || data.bookingId)
+        );
+
+        if (existing) {
+            data.id = Number(existing.id);
+            data.bookingId = Number(existing.id);
+            data.savedToDb = true;
+            return Number(existing.id);
+        }
+
+        const timeRanges = [...courtSummary.matchAll(/(\d{1,2})[h:](\d{2})\s*-\s*(\d{1,2})[h:](\d{2})/gi)];
+        const startTime = data.startTime || timeRanges
+            .map(range => `${range[1].padStart(2, "0")}:${range[2]}:00`)
+            .sort()[0];
+        const endTime = data.endTime || timeRanges
+            .map(range => `${range[3].padStart(2, "0")}:${range[4]}:00`)
+            .sort()
+            .at(-1);
+        const amount = Number(String(data.totalPrice || "").replace(/[^\d]/g, ""));
+        if (!startTime || !endTime || !Number.isFinite(amount) || amount <= 0) {
+            throw new Error("Thiếu giờ đặt hoặc số tiền hợp lệ, không thể khôi phục đơn vào CSDL.");
+        }
+
+        const saved = await saveBookingRecord({
+            userId: Number(localStorage.getItem("userId") || 7),
+            fieldId,
+            stadiumId: fieldId,
+            bookingDate,
+            startTime: startTime.length === 5 ? `${startTime}:00` : startTime,
+            endTime: endTime.length === 5 ? `${endTime}:00` : endTime,
+            courtSummary,
+            stadiumName: data.stadiumName || "",
+            stadiumAddress: data.stadiumAddress || data.address || "",
+            totalPrice: amount,
+            status: "PENDING"
+        });
+        data.id = saved.id;
+        data.bookingId = saved.bookingId;
+        data.savedToDb = true;
+        return saved.id;
     }
 
     /* Xử lý gửi đơn hàng lên CSDL */
@@ -319,18 +389,21 @@
             return;
         }
 
+        const data = currentBookingData || JSON.parse(localStorage.getItem("bookingData") || "{}");
+        const token = localStorage.getItem("token") || localStorage.getItem("userToken");
+
+        const rawPrice = parseFloat((data.totalPrice || "").toString().replace(/[^0-9]/g, ''));
+        if (!Number.isFinite(rawPrice) || rawPrice <= 0) {
+            alert("Số tiền thanh toán không hợp lệ. Vui lòng quay lại tạo đơn đặt sân.");
+            return;
+        }
+
         const btnSubmit = document.getElementById("btn-submit-payment");
         btnSubmit.disabled = true;
         btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> ĐANG XỬ LÝ...`;
 
-        const data = currentBookingData || JSON.parse(localStorage.getItem("bookingData") || "{}");
-        const token = localStorage.getItem("token") || localStorage.getItem("userToken");
-
-        const rawPrice = parseFloat((data.totalPrice || "360000").toString().replace(/[^0-9]/g, '')) || 360000;
-        const bookingIdNum = parseInt(data.bookingId || data.id || Math.floor(1000 + Math.random() * 9000), 10);
-
         const paymentPayload = {
-            bookingId: bookingIdNum,
+            bookingId: 0,
             amount: rawPrice,
             paymentMethod: "BANK_TRANSFER",
             transactionStatus: "SUCCESS",
@@ -338,6 +411,8 @@
         };
 
         try {
+            const bookingIdNum = await ensureBookingSaved(data);
+            paymentPayload.bookingId = bookingIdNum;
             const response = await fetch(CREATE_PAYMENT_API, {
                 method: "POST",
                 headers: {
@@ -347,23 +422,29 @@
                 body: JSON.stringify(paymentPayload)
             });
 
-            if (response.ok) {
-                const savedResult = await response.json();
-                data.paymentId = savedResult.id;
+            if (!response.ok) {
+                const errorMessage = await response.text();
+                throw new Error(`Máy chủ không lưu được thanh toán (${response.status})${errorMessage ? `: ${errorMessage}` : ''}`);
             }
-        } catch (error) {
-            console.warn("Chuyển tiếp lưu dữ liệu LocalStorage...");
-        } finally {
-            // Cập nhật LocalStorage
+
+            const savedResult = await response.json();
+            data.paymentId = savedResult.id;
             data.status = "SUCCESS";
-            data.paymentProof = base64ImageProof;
-            localStorage.setItem("bookingData", JSON.stringify(data));
-            saveToUserBookingHistory(data);
+            delete data.paymentProof;
+            try {
+                localStorage.setItem("bookingData", JSON.stringify(data));
+                saveToUserBookingHistory(data);
+            } catch (storageError) {
+                console.error("Thanh toán đã lưu nhưng không cập nhật được localStorage:", storageError);
+            }
 
             clearInterval(timerInterval);
-
-            // 🔴 CHUYỂN HƯỚNG TỚI BƯỚC 5: booking-detail.html
-            window.location.href = "booking-detail.html";
+            window.location.replace("booking-detail.html");
+        } catch (error) {
+            console.error("Không thể lưu thanh toán:", error);
+            alert(error.message || "Không thể lưu thanh toán. Vui lòng thử lại.");
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = `<span>TIẾP TỤC THANH TOÁN</span>`;
         }
     }
 
@@ -377,7 +458,7 @@
             stadiumName: bookingItem.stadiumName || "Cụm Sân Cầu Lông Smart Stadium",
             address: bookingItem.stadiumAddress || "Địa chỉ đã cập nhật",
             phone: bookingItem.userPhone || "0981852431",
-            bookingDate: bookingItem.bookingDate || "07/10/2026",
+            bookingDate: bookingItem.rawBookingDate || bookingItem.bookingDate || "",
             courtDetail: bookingItem.courtSummary || "- Sân Cầu Lông 1: 05h30 - 08h30",
             totalHours: bookingItem.totalHours || "3h00",
             totalPrice: bookingItem.totalPrice || "360.000 đ",
@@ -394,6 +475,13 @@
         localStorage.setItem("userBookingList", JSON.stringify(historyList));
     }
 
+    function formatBookingDate(value) {
+        if (!value) return "";
+        const isoDate = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (isoDate) return `${isoDate[3]}/${isoDate[2]}/${isoDate[1]}`;
+        return /^\d{2}\/\d{2}\/\d{4}$/.test(value) ? value : "";
+    }
+
     function openQrModal() {
         const currentQrSrc = document.getElementById("qr-bank-img").src;
         document.getElementById("modal-qr-img").src = currentQrSrc;
@@ -404,18 +492,57 @@
         document.getElementById("qr-modal").classList.add("hidden");
     }
 
-    function previewImage(event) {
+    async function previewImage(event) {
         const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                base64ImageProof = e.target.result;
-                const preview = document.getElementById("image-preview");
-                preview.src = base64ImageProof;
-                preview.classList.remove("hidden");
-                document.getElementById("upload-placeholder").classList.add("opacity-0");
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+            alert("Vui lòng chọn tệp hình ảnh.");
+            event.target.value = "";
+            return;
+        }
+
+        try {
+            const bitmap = await createImageBitmap(file);
+            let scale = Math.min(1, 1600 / bitmap.width, 1600 / bitmap.height);
+            let compressedBlob;
+
+            for (let attempt = 0; attempt < 6; attempt++) {
+                const canvas = document.createElement("canvas");
+                canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+                canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+                const context = canvas.getContext("2d");
+                if (!context) throw new Error("Không thể xử lý ảnh trên trình duyệt này.");
+                context.fillStyle = "#ffffff";
+                context.fillRect(0, 0, canvas.width, canvas.height);
+                context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+
+                compressedBlob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", Math.max(0.52, 0.82 - attempt * 0.06)));
+                if (!compressedBlob) throw new Error("Không thể nén ảnh biên nhận.");
+                if (compressedBlob.size <= 1500000) break;
+                scale *= 0.8;
             }
-            reader.readAsDataURL(file);
+            bitmap.close();
+
+            if (!compressedBlob || compressedBlob.size > 2000000) {
+                throw new Error("Ảnh vẫn quá lớn sau khi nén. Vui lòng chọn ảnh nhỏ hơn.");
+            }
+
+            base64ImageProof = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error("Không đọc được ảnh biên nhận."));
+                reader.readAsDataURL(compressedBlob);
+            });
+
+            const preview = document.getElementById("image-preview");
+            preview.src = base64ImageProof;
+            preview.classList.remove("hidden");
+            document.getElementById("upload-placeholder").classList.add("opacity-0");
+        } catch (error) {
+            console.error("Không thể xử lý ảnh thanh toán:", error);
+            base64ImageProof = "";
+            event.target.value = "";
+            alert(error.message || "Không thể xử lý ảnh biên nhận.");
         }
     }
 
@@ -447,5 +574,6 @@
         alert("Đã sao chép số tài khoản MB Bank: " + stk);
     }
 </script>
+<script src="booking-api.js"></script>
 </body>
 </html>

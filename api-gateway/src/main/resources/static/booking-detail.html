@@ -230,7 +230,7 @@
         document.getElementById("user-note").textContent = data.userNote || "Không có";
 
         // 4. Ngày, Thời gian, Giá tiền
-        if (data.bookingDate) document.getElementById("booking-date").textContent = data.bookingDate;
+        document.getElementById("booking-date").textContent = formatBookingDate(data.rawBookingDate || data.bookingDate) || "--/--/----";
         if (data.totalHours) document.getElementById("total-hours").textContent = data.totalHours;
 
         const priceText = data.totalPrice || "0 đ";
@@ -275,16 +275,20 @@
         const startTime = cleanTimeFormat(bookingData.startTime || "08:00:00");
         const endTime = cleanTimeFormat(bookingData.endTime || "09:30:00");
 
-        let formattedDate = "2026-10-07";
+        let formattedDate = bookingData.rawBookingDate || "";
         if (bookingData.rawBookingDate) {
             formattedDate = bookingData.rawBookingDate;
         } else if (bookingData.bookingDate) {
             const parts = bookingData.bookingDate.split('/');
             if (parts.length === 3) {
                 formattedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-            } else {
+            } else if (/^\d{4}-\d{2}-\d{2}$/.test(bookingData.bookingDate)) {
                 formattedDate = bookingData.bookingDate;
+            } else {
+                throw new Error("Ngày đặt sân không hợp lệ.");
             }
+        } else {
+            throw new Error("Thiếu ngày đặt sân, không thể đồng bộ booking lên CSDL.");
         }
 
         const payload = {
@@ -330,7 +334,7 @@
             stadiumName: bookingItem.stadiumName || "Smart Stadium",
             address: bookingItem.stadiumAddress || bookingItem.address || "Địa chỉ đã cập nhật",
             phone: bookingItem.userPhone || bookingItem.stadiumPhone || "0981852431",
-            bookingDate: bookingItem.bookingDate || "07/10/2026",
+            bookingDate: bookingItem.rawBookingDate || bookingItem.bookingDate || "",
             courtDetail: bookingItem.courtSummary || bookingItem.courtDetail,
             courtSummary: bookingItem.courtSummary || bookingItem.courtDetail,
             totalHours: bookingItem.totalHours || "1h00",
@@ -346,6 +350,13 @@
         }
 
         localStorage.setItem("userBookingList", JSON.stringify(historyList));
+    }
+
+    function formatBookingDate(value) {
+        if (!value) return "";
+        const isoDate = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (isoDate) return `${isoDate[3]}/${isoDate[2]}/${isoDate[1]}`;
+        return /^\d{2}\/\d{2}\/\d{4}$/.test(value) ? value : "";
     }
 
     function goToHistory() {

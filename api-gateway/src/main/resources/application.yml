@@ -39,6 +39,18 @@ spring:
           predicates:
             - Path=/api/fields,/api/fields/**
 
+        # Booking Service is not registered with Eureka.
+        - id: booking-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/bookings,/api/bookings/**
+
+        # Payment Service runs directly on port 8086 and is not registered with Eureka.
+        - id: payment-service
+          uri: http://localhost:8086
+          predicates:
+            - Path=/api/payments,/api/payments/**
+
 eureka:
   client:
     service-url:

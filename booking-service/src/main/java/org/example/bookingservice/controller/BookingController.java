@@ -5,6 +5,7 @@ import org.example.bookingservice.dto.CourtGridDTO;
 import org.example.bookingservice.entity.Booking;
 import org.example.bookingservice.service.BookingService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,9 +39,22 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.getBookingsByUserId(userId));
     }
 
-    // 3. BỔ SUNG: Endpoint lấy danh sách bookings có filter optional userId (/api/bookings?userId=7)
+    // Lịch theo ngày dùng dữ liệu của mọi người đặt; userId chỉ lọc lịch cá nhân khi không có ngày.
     @GetMapping
-    public ResponseEntity<?> getAllBookings(@RequestParam(required = false) Long userId) {
+    public ResponseEntity<?> getAllBookings(
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bookingDate,
+            @RequestParam(required = false) Long fieldId,
+            @RequestParam(required = false) Long stadiumId) {
+        if (bookingDate != null) {
+            if ((fieldId != null && fieldId <= 0) || (stadiumId != null && stadiumId <= 0)) {
+                return ResponseEntity.badRequest().body("fieldId không hợp lệ");
+            }
+            if (fieldId != null && stadiumId != null) {
+                return ResponseEntity.badRequest().body("Chỉ truyền một trong hai tham số fieldId hoặc stadiumId");
+            }
+            return ResponseEntity.ok(bookingService.getBookingsByDate(bookingDate, fieldId, stadiumId));
+        }
         if (userId != null && userId > 0) {
             return ResponseEntity.ok(bookingService.getBookingsByUserId(userId));
         }

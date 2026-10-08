@@ -41,8 +41,8 @@
 </div>
 
 <script>
-    const LOGIN_API = "http://localhost:8085/api/auth/login";
-    const USER_PROFILE_API = "http://localhost:8085/api/users/by-email";
+    const LOGIN_API = "/api/auth/login";
+    const USER_PROFILE_API = "/api/users/profile";
 
     document.getElementById("login-form").addEventListener("submit", async function (e) {
         e.preventDefault();
@@ -125,7 +125,7 @@
             }
         } catch (err) {
             console.error("Lỗi kết nối Server:", err);
-            errorDiv.textContent = "Không thể kết nối đến máy chủ cổng 8085!";
+            errorDiv.textContent = "Không thể kết nối đến máy chủ. Vui lòng thử lại.";
             errorDiv.classList.remove("hidden");
         }
     });
