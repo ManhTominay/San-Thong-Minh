@@ -16,8 +16,23 @@ public class Booking {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    @Column(name = "user_name")
+    private String userName;
+
+    @Column(name = "user_email")
+    private String userEmail;
+
     @Column(name = "field_id", nullable = false)
     private Long fieldId;
+
+    @Column(name = "field_name", length = 1000)
+    private String fieldName;
+
+    @Column(name = "stadium_id")
+    private Long stadiumId;
+
+    @Column(name = "stadium_name")
+    private String stadiumName;
 
     @Column(name = "booking_date", nullable = false)
     private LocalDate bookingDate;
@@ -55,8 +70,23 @@ public class Booking {
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
 
+    public String getUserName() { return userName; }
+    public void setUserName(String userName) { this.userName = userName; }
+
+    public String getUserEmail() { return userEmail; }
+    public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
+
     public Long getFieldId() { return fieldId; }
     public void setFieldId(Long fieldId) { this.fieldId = fieldId; }
+
+    public String getFieldName() { return fieldName; }
+    public void setFieldName(String fieldName) { this.fieldName = fieldName; }
+
+    public Long getStadiumId() { return stadiumId; }
+    public void setStadiumId(Long stadiumId) { this.stadiumId = stadiumId; }
+
+    public String getStadiumName() { return stadiumName; }
+    public void setStadiumName(String stadiumName) { this.stadiumName = stadiumName; }
 
     public LocalDate getBookingDate() { return bookingDate; }
     public void setBookingDate(LocalDate bookingDate) { this.bookingDate = bookingDate; }

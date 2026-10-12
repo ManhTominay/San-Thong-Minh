@@ -506,6 +506,19 @@ public class UserController {
         );
     }
 
+    @GetMapping("/admin/users/{id}")
+    public ResponseEntity<AdminUserDTO> getUserById(@PathVariable Long id) {
+        return userRepository.findById(id)
+                .map(user -> ResponseEntity.ok(new AdminUserDTO(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getName(),
+                        user.getEmail(),
+                        user.getRole()
+                )))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
 
     // =========================================================
     // ADMIN - THÊM USER

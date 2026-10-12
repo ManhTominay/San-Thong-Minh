@@ -1,11 +1,11 @@
 package org.example.bookingservice.controller;
 
 import org.example.bookingservice.dto.BookingRequestDTO;
+import org.example.bookingservice.dto.BookingResponseDTO;
+import org.example.bookingservice.dto.BookingStatisticsDTO;
 import org.example.bookingservice.dto.BookingStatusDTO;
 import org.example.bookingservice.dto.CourtGridDTO;
-import org.example.bookingservice.entity.Booking;
 import org.example.bookingservice.service.BookingService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,8 +20,11 @@ import java.util.Set;
 @CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
 public class BookingController {
 
-    @Autowired
-    private BookingService bookingService;
+    private final BookingService bookingService;
+
+    public BookingController(BookingService bookingService) {
+        this.bookingService = bookingService;
+    }
 
     // 1. Endpoint lấy danh sách theo Query Param (/api/bookings/my-bookings?userId=7)
     @GetMapping("/my-bookings")
@@ -50,6 +53,13 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.getAllBookings());
     }
 
+    @GetMapping("/statistics")
+    public ResponseEntity<BookingStatisticsDTO> getStatistics(
+            @RequestParam(required = false) LocalDate from,
+            @RequestParam(required = false) LocalDate to) {
+        return ResponseEntity.ok(bookingService.getStatistics(from, to));
+    }
+
     @PutMapping("/{bookingId}/status")
     public ResponseEntity<?> updateBookingStatus(
             @PathVariable Long bookingId,
@@ -64,7 +74,7 @@ public class BookingController {
             return ResponseEntity.badRequest().body("Trạng thái đơn đặt sân không hợp lệ");
         }
 
-        Optional<Booking> updatedBooking = bookingService.updateBookingStatus(bookingId, status);
+        Optional<BookingResponseDTO> updatedBooking = bookingService.updateBookingStatus(bookingId, status);
         if (updatedBooking.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -92,20 +102,11 @@ public class BookingController {
     // 5. Endpoint Tạo Đơn Đặt Sân (/api/bookings)
     @PostMapping
     public ResponseEntity<?> createBooking(@RequestBody BookingRequestDTO bookingRequest) {
-        try {
-            System.out.println("👉 [POST /api/bookings] Payload nhận được: " + bookingRequest);
-
-            if (bookingRequest == null) {
-                return ResponseEntity.badRequest().body("Dữ liệu đơn hàng không được để trống");
-            }
-
-            Booking createdBooking = bookingService.createBooking(bookingRequest);
-
-            System.out.println("✅ [POST /api/bookings] Tạo đơn thành công ID: " + createdBooking.getId());
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdBooking);
-        } catch (Exception e) {
-            e.printStackTrace(); // In log lỗi chi tiết trong IntelliJ Console
-            return ResponseEntity.badRequest().body("Lỗi tạo đơn đặt sân: " + e.getMessage());
+        if (bookingRequest == null) {
+            return ResponseEntity.badRequest().body("Dữ liệu đơn hàng không được để trống");
         }
+
+        BookingResponseDTO createdBooking = bookingService.createBooking(bookingRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdBooking);
     }
 }

@@ -29,7 +29,8 @@ spring:
 
         # Booking Service
         - id: booking-service
-          uri: lb://booking-service
+          # Keep booking management available without Eureka; override for non-local deployments.
+          uri: ${BOOKING_SERVICE_URL:http://localhost:8085}
           predicates:
             - Path=/api/bookings,/api/bookings/**
 

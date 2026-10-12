@@ -747,7 +747,7 @@
                         <div class="flex items-center gap-2">
                             <label for="reportPeriod" class="text-sm text-gray-600">Thời gian</label>
                             <select id="reportPeriod"
-                                    onchange="renderAdminReports()"
+                                   onchange="loadAdminReports()"
                                     class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
                                 <option value="7">7 ngày gần nhất</option>
                                 <option value="30" selected>30 ngày gần nhất</option>
@@ -1416,10 +1416,7 @@
     }
 
 
-    let reportBookings = [];
-
-    let reportFieldNames = new Map();
-
+    let reportStatistics = null;
 
     async function loadAdminReports() {
 
@@ -1430,28 +1427,32 @@
 
         try {
 
-            const [bookingResponse, fieldsResult] = await Promise.all([
-                fetch(BOOKING_API),
-                loadBookingNameMap(STADIUM_API, stadium => stadium.name)
-                    .then(value => ({ value }))
-                    .catch(error => ({ error }))
-            ]);
+            const period = document.getElementById("reportPeriod").value;
+            const endDate = new Date();
+            endDate.setHours(0, 0, 0, 0);
+            const toDate = getLocalDateString(endDate);
+            const query = new URLSearchParams({ to: toDate });
 
-            if (!bookingResponse.ok) {
-                throw new Error(await readError(bookingResponse));
+            if (period !== "all") {
+                const startDate = new Date(endDate);
+                startDate.setDate(startDate.getDate() - Number(period) + 1);
+                query.set("from", getLocalDateString(startDate));
             }
 
-            const bookings = await bookingResponse.json();
-            if (!Array.isArray(bookings)) {
-                throw new Error("Dữ liệu đơn đặt sân không hợp lệ");
+            const statisticsResponse = await fetch(`${BOOKING_API}/statistics?${query}`);
+
+            if (!statisticsResponse.ok) {
+                throw new Error(await readError(statisticsResponse));
             }
 
-            reportBookings = bookings;
-            reportFieldNames = fieldsResult.value || new Map();
-            if (fieldsResult.error) {
-                console.error("Không tải được tên sân cho báo cáo:", fieldsResult.error);
+            const statistics = await statisticsResponse.json();
+            if (!statistics || !statistics.overview
+                || !Array.isArray(statistics.dailyBookings)
+                || !Array.isArray(statistics.topFields)) {
+                throw new Error("Dữ liệu thống kê không hợp lệ");
             }
 
+            reportStatistics = statistics;
             renderAdminReports();
 
         } catch (error) {
@@ -1473,73 +1474,35 @@
     }
 
 
-    function normalizeBookingStatus(status) {
-        const normalized = String(status || "PENDING").trim().toUpperCase();
-        if (["CONFIRMED", "APPROVED", "SUCCESS"].includes(normalized)) {
-            return "CONFIRMED";
-        }
-        if (["CANCELLED", "CANCELED", "ĐÃ HỦY"].includes(normalized)) {
-            return "CANCELLED";
-        }
-        if (normalized === "PENDING") {
-            return "PENDING";
-        }
-        return "OTHER";
-    }
-
-
     function renderAdminReports() {
 
-        const period = document.getElementById("reportPeriod").value;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayString = getLocalDateString(today);
-        const validDates = reportBookings
-            .map(booking => booking.bookingDate)
-            .filter(date => /^\d{4}-\d{2}-\d{2}$/.test(String(date || "")) && date <= todayString)
-            .sort();
+        if (!reportStatistics) return;
 
-        let startDate = new Date(today);
-        if (period === "all") {
-            startDate = validDates.length > 0
-                ? new Date(`${validDates[0]}T00:00:00`)
-                : new Date(today);
-        } else {
-            startDate.setDate(startDate.getDate() - Number(period) + 1);
-        }
-
-        const startString = getLocalDateString(startDate);
-        const filtered = reportBookings.filter(booking => {
-            const date = String(booking.bookingDate || "");
-            return /^\d{4}-\d{2}-\d{2}$/.test(date)
-                && date >= startString
-                && date <= todayString;
-        });
-
-        const confirmed = filtered.filter(booking => normalizeBookingStatus(booking.status) === "CONFIRMED");
-        const pendingCount = filtered.filter(booking => normalizeBookingStatus(booking.status) === "PENDING").length;
-        const cancelledCount = filtered.filter(booking => normalizeBookingStatus(booking.status) === "CANCELLED").length;
-        const revenue = confirmed.reduce((sum, booking) => {
-            const amount = Number(booking.totalPrice);
-            return sum + (Number.isFinite(amount) ? amount : 0);
-        }, 0);
-
-        document.getElementById("reportTotalBookings").textContent = filtered.length.toLocaleString("vi-VN");
-        document.getElementById("reportConfirmedBookings").textContent = confirmed.length.toLocaleString("vi-VN");
-        document.getElementById("reportPendingBookings").textContent = pendingCount.toLocaleString("vi-VN");
+        const { fromDate, toDate, overview } = reportStatistics;
+        document.getElementById("reportTotalBookings").textContent =
+            Number(overview.totalBookings || 0).toLocaleString("vi-VN");
+        document.getElementById("reportConfirmedBookings").textContent =
+            Number(overview.confirmedBookings || 0).toLocaleString("vi-VN");
+        document.getElementById("reportPendingBookings").textContent =
+            Number(overview.pendingBookings || 0).toLocaleString("vi-VN");
         document.getElementById("reportRevenue").textContent =
-            new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(revenue) + " ₫";
+            new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 })
+                .format(Number(overview.totalRevenue || 0)) + " ₫";
         document.getElementById("reportSubtitle").textContent =
-            `Từ ${startString} đến ${todayString} · ${filtered.length.toLocaleString("vi-VN")} đơn · ${cancelledCount.toLocaleString("vi-VN")} đơn đã hủy`;
+            `Từ ${fromDate} đến ${toDate} · ${Number(overview.totalBookings || 0).toLocaleString("vi-VN")} đơn · ${Number(overview.cancelledBookings || 0).toLocaleString("vi-VN")} đơn đã hủy`;
 
-        renderReportTrend(filtered, startDate, today);
-        renderReportStatuses(filtered);
-        renderReportTopFields(filtered);
+        renderReportTrend(
+            reportStatistics.dailyBookings,
+            new Date(`${fromDate}T00:00:00`),
+            new Date(`${toDate}T00:00:00`)
+        );
+        renderReportStatuses(overview);
+        renderReportTopFields(reportStatistics.topFields);
 
     }
 
 
-    function renderReportTrend(bookings, startDate, endDate) {
+    function renderReportTrend(dailyBookings, startDate, endDate) {
 
         const chart = document.getElementById("reportTrendChart");
         const caption = document.getElementById("reportTrendCaption");
@@ -1556,10 +1519,9 @@
             bucketEnd.setDate(bucketEnd.getDate() + Math.max(firstOffset, afterLastOffset - 1));
             const from = getLocalDateString(bucketStart);
             const to = getLocalDateString(bucketEnd);
-            const count = bookings.filter(booking => {
-                const date = String(booking.bookingDate || "");
-                return date >= from && date <= to;
-            }).length;
+            const count = dailyBookings
+                .filter(day => day.bookingDate >= from && day.bookingDate <= to)
+                .reduce((total, day) => total + Number(day.bookingCount || 0), 0);
             buckets.push({ from, to, count });
         }
 
@@ -1618,7 +1580,7 @@
     }
 
 
-    function renderReportStatuses(bookings) {
+    function renderReportStatuses(overview) {
 
         const chart = document.getElementById("reportStatusChart");
         const statuses = [
@@ -1629,7 +1591,12 @@
         ];
         const counts = statuses.map(status => ({
             ...status,
-            count: bookings.filter(booking => normalizeBookingStatus(booking.status) === status.key).length
+            count: Number(overview[{
+                CONFIRMED: "confirmedBookings",
+                PENDING: "pendingBookings",
+                CANCELLED: "cancelledBookings",
+                OTHER: "otherBookings"
+            }[status.key]] || 0)
         }));
         const maxCount = Math.max(1, ...counts.map(status => status.count));
 
@@ -1648,28 +1615,9 @@
     }
 
 
-    function renderReportTopFields(bookings) {
+    function renderReportTopFields(topFields) {
 
         const tbody = document.getElementById("reportTopFields");
-        const byField = new Map();
-
-        bookings.forEach(booking => {
-            const id = String(booking.fieldId ?? "");
-            if (!byField.has(id)) {
-                byField.set(id, { id, count: 0, revenue: 0 });
-            }
-
-            const report = byField.get(id);
-            report.count++;
-            if (normalizeBookingStatus(booking.status) === "CONFIRMED") {
-                const amount = Number(booking.totalPrice);
-                report.revenue += Number.isFinite(amount) ? amount : 0;
-            }
-        });
-
-        const topFields = [...byField.values()]
-            .sort((a, b) => b.count - a.count || b.revenue - a.revenue)
-            .slice(0, 5);
 
         if (topFields.length === 0) {
             tbody.innerHTML = `<tr><td colspan="4" class="p-5 text-center text-gray-500">Không có dữ liệu trong khoảng thời gian này.</td></tr>`;
@@ -1677,13 +1625,16 @@
         }
 
         tbody.innerHTML = topFields.map((field, index) => {
-            const name = reportFieldNames.get(field.id) || `Sân #${escapeHtml(field.id)}`;
-            const fieldRevenue = new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(field.revenue) + " ₫";
+            const name = field.fieldName && field.stadiumName && field.fieldName !== field.stadiumName
+                ? `${field.fieldName} - ${field.stadiumName}`
+                : field.fieldName || field.stadiumName || `Sân #${escapeHtml(field.fieldId)}`;
+            const fieldRevenue = new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 })
+                .format(Number(field.revenue || 0)) + " ₫";
             return `
                 <tr>
                     <td class="p-3 text-gray-500">${index + 1}</td>
                     <td class="p-3 font-medium text-gray-800">${escapeHtml(name)}</td>
-                    <td class="p-3 text-right">${field.count}</td>
+                    <td class="p-3 text-right">${Number(field.bookingCount || 0).toLocaleString("vi-VN")}</td>
                     <td class="p-3 text-right whitespace-nowrap">${fieldRevenue}</td>
                 </tr>
             `;
@@ -1714,25 +1665,6 @@
                 throw new Error("Dữ liệu đơn đặt sân không hợp lệ");
             }
 
-            const [usersResult, fieldsResult] = await Promise.allSettled([
-                loadBookingNameMap(USER_API, user => user.name || user.username || user.email),
-                loadBookingNameMap(STADIUM_API, stadium => stadium.name)
-            ]);
-
-            bookingUserNames = usersResult.status === "fulfilled"
-                ? usersResult.value
-                : new Map();
-            bookingFieldNames = fieldsResult.status === "fulfilled"
-                ? fieldsResult.value
-                : new Map();
-
-            if (usersResult.status === "rejected") {
-                console.error("Không tải được tên người đặt:", usersResult.reason);
-            }
-            if (fieldsResult.status === "rejected") {
-                console.error("Không tải được tên sân:", fieldsResult.reason);
-            }
-
             bookings.sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
             allBookings = bookings;
             applyBookingFilters();
@@ -1759,8 +1691,10 @@
                 booking.id,
                 booking.userId,
                 booking.fieldId,
-                bookingUserNames.get(String(booking.userId)),
-                bookingFieldNames.get(String(booking.fieldId))
+                booking.userName,
+                booking.userEmail,
+                booking.fieldName,
+                booking.stadiumName
             ]
                 .map(value => String(value ?? "").toLowerCase());
             const matchesSearch = !searchText || searchValues.some(value => value.includes(searchText));
@@ -1778,31 +1712,6 @@
 
 
     let allBookings = [];
-
-    let bookingUserNames = new Map();
-
-    let bookingFieldNames = new Map();
-
-
-    async function loadBookingNameMap(url, getName) {
-
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`${url}: ${await readError(response)}`);
-        }
-
-        const records = await response.json();
-        if (!Array.isArray(records)) {
-            throw new Error(`${url}: dữ liệu không hợp lệ`);
-        }
-
-        return new Map(records.map(record => [
-            String(record.id),
-            String(getName(record) || "").trim()
-        ]));
-
-    }
-
 
     function renderAdminBookings(bookings, totalCount = bookings.length) {
 
@@ -1843,10 +1752,10 @@
             const formattedPrice = Number.isFinite(price)
                 ? new Intl.NumberFormat("vi-VN").format(price) + " ₫"
                 : "—";
-            const userName = bookingUserNames.get(String(booking.userId));
-            const fieldName = bookingFieldNames.get(String(booking.fieldId));
-            const userDisplayName = userName || `Chưa tải được tên (ID: ${escapeHtml(booking.userId)})`;
-            const fieldDisplayName = fieldName || `Chưa tải được tên (ID: ${escapeHtml(booking.fieldId)})`;
+            const userDisplayName = booking.userName || booking.userEmail || `Người dùng #${escapeHtml(booking.userId)}`;
+            const fieldDisplayName = booking.fieldName && booking.stadiumName && booking.fieldName !== booking.stadiumName
+                ? `${booking.fieldName} - ${booking.stadiumName}`
+                : booking.fieldName || booking.stadiumName || `Sân #${escapeHtml(booking.fieldId)}`;
 
             return `
                 <tr>
