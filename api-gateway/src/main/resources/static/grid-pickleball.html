@@ -11,18 +11,19 @@
 
 <div>
     <header class="bg-[#005229] text-white px-4 py-3 flex items-center justify-between shadow-md">
-        <button onclick="window.location.href='index.html'" class="text-white hover:opacity-80 text-lg px-2"><i class="fa-solid fa-chevron-left"></i></button>
-        <h1 class="text-sm md:text-base font-bold uppercase">ĐẶT LỊCH SÂN PICKLEBALL</h1>
+        <button onclick="goBackToPreviousPage()" class="text-white hover:opacity-80 text-lg px-2"><i class="fa-solid fa-chevron-left"></i></button>
+        <h1 class="text-sm md:text-base font-bold uppercase" id="stadium-header-title">ĐẶT LỊCH SÂN PICKLEBALL</h1>
         <div class="bg-[#216e45] text-white text-xs px-2.5 py-1 rounded flex items-center gap-2 border border-emerald-600 cursor-pointer" onclick="document.getElementById('booking-date').showPicker()">
-            <span id="display-date">07/10/2026</span>
+            <span id="display-date"></span>
             <i class="fa-regular fa-calendar text-xs"></i>
-            <input type="date" id="booking-date" class="hidden" value="2026-10-07" onchange="handleDateChange(this.value)">
+            <input type="date" id="booking-date" class="hidden" onchange="handleDateChange(this.value)">
         </div>
     </header>
 
     <div class="bg-[#005229] text-white px-4 py-2 flex items-center gap-4 text-[11px]">
         <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 bg-white border border-gray-300 rounded-sm inline-block"></span><span>Trống</span></div>
         <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 bg-[#ef4444] rounded-sm inline-block"></span><span>Đã đặt</span></div>
+        <button onclick="openPriceModal()" class="text-[#facc15] underline font-semibold ml-2 cursor-pointer">Xem bảng giá</button>
     </div>
 
     <main class="p-2">
@@ -39,6 +40,28 @@
     </main>
 </div>
 
+<div id="price-modal" class="fixed inset-0 z-[60] bg-black/60 hidden items-center justify-center p-2 md:p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] overflow-y-auto relative p-4 text-gray-800">
+        <button onclick="closePriceModal()" class="absolute top-3 right-3 text-white bg-black/40 hover:bg-black/70 rounded-full w-8 h-8 flex items-center justify-center z-10" aria-label="Đóng bảng giá">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <h2 class="bg-[#005229] text-white text-center py-3 font-bold rounded-t">Bảng giá sân Pickleball</h2>
+        <div class="overflow-x-auto mt-2">
+            <table class="w-full border-collapse text-center text-xs md:text-sm">
+                <thead><tr class="bg-emerald-100 font-bold"><th class="p-3 border">Thứ</th><th class="p-3 border">Khung giờ</th><th class="p-3 border">Cố định</th><th class="p-3 border">Vãng lai</th></tr></thead>
+                <tbody>
+                    <tr><td class="p-3 border">Mặc định</td><td class="p-3 border">—</td><td class="p-3 border">0 đ</td><td class="p-3 border">0 đ</td></tr>
+                    <tr><td rowspan="2" class="p-3 border">T2 - T6</td><td class="p-3 border">5h30 - 8h</td><td class="p-3 border">100.000 đ</td><td class="p-3 border">120.000 đ</td></tr>
+                    <tr><td class="p-3 border">17h - 22h</td><td class="p-3 border">200.000 đ</td><td class="p-3 border">220.000 đ</td></tr>
+                    <tr><td rowspan="3" class="p-3 border">T7 - CN</td><td class="p-3 border">5h30 - 13h</td><td class="p-3 border">140.000 đ</td><td class="p-3 border">160.000 đ</td></tr>
+                    <tr><td class="p-3 border">13h - 16h</td><td class="p-3 border">160.000 đ</td><td class="p-3 border">180.000 đ</td></tr>
+                    <tr><td class="p-3 border">16h - 22h</td><td class="p-3 border">200.000 đ</td><td class="p-3 border">220.000 đ</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <footer class="fixed bottom-0 left-0 right-0 z-30 bg-[#005229] text-white shadow-lg">
     <div class="px-6 py-2 flex items-center justify-between text-sm font-bold">
         <span>Tổng giờ: <span id="total-hours">0h00</span></span>
@@ -50,19 +73,44 @@
 </footer>
 
 <script>
-    const BASE_BOOKING_API = "http://localhost:8085/api/bookings";
+    const BASE_BOOKING_API = "/api/bookings";
     let timeSlots = [];
     const courtsList = ['Pickleball 1', 'Pickleball 2', 'Pickleball 3'];
     const selectedSlots = new Set();
     let bookedSlots = new Set();
     let currentStadiumId = '4';
+    let currentStadiumName = 'Sân Pickleball';
+    let currentStadiumAddress = '';
 
     document.addEventListener("DOMContentLoaded", async () => {
+        const params = new URLSearchParams(window.location.search);
+        currentStadiumId = params.get('stadiumId') || params.get('fieldId') || currentStadiumId;
+        currentStadiumName = params.get('name') || currentStadiumName;
+        currentStadiumAddress = params.get('address') || currentStadiumAddress;
+        const selectedDate = params.get('date') || getLocalDateIso();
+        document.getElementById('booking-date').value = selectedDate;
+        updateDisplayDate(selectedDate);
+        document.getElementById('stadium-header-title').textContent = currentStadiumName.toUpperCase();
         initSportConfig();
         renderHeader();
-        await fetchBookedSlotsFromBackend();
+        try {
+            await fetchBookedSlotsFromBackend();
+        } catch (error) {
+            console.error("Không thể tải lịch Pickleball:", error);
+            alert("Không thể tải lịch đặt sân Pickleball. Vui lòng tải lại trang.");
+        }
         renderGrid();
     });
+
+    function getLocalDateIso() {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    }
+
+    function updateDisplayDate(value) {
+        const parts = value.split('-');
+        if (parts.length === 3) document.getElementById('display-date').textContent = `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
 
     function initSportConfig() {
         timeSlots = [];
@@ -72,28 +120,50 @@
         }
     }
 
+    function openPriceModal() {
+        const modal = document.getElementById('price-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closePriceModal() {
+        const modal = document.getElementById('price-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
     async function fetchBookedSlotsFromBackend() {
         bookedSlots.clear();
         const dateVal = document.getElementById('booking-date').value;
-        try {
-            const res = await fetch(`${BASE_BOOKING_API}?fieldId=${currentStadiumId}&bookingDate=${dateVal}`);
-            if (res.ok) {
-                const data = await res.json();
-                if (Array.isArray(data)) {
-                    data.forEach(b => {
-                        if (b.status && b.status.toUpperCase() !== 'CANCELLED') {
-                            const s = b.startTime.substring(0, 5), e = b.endTime.substring(0, 5);
-                            let inRange = false;
-                            timeSlots.forEach(slot => {
-                                if (slot === s) inRange = true;
-                                if (slot === e) inRange = false;
-                                if (inRange) bookedSlots.add(`${b.fieldId || currentStadiumId}_${slot}`);
-                            });
-                        }
-                    });
-                }
+        const res = await fetch(`${BASE_BOOKING_API}?stadiumId=${encodeURIComponent(currentStadiumId)}&bookingDate=${dateVal}`);
+        if (!res.ok) throw new Error(`Không tải được lịch Pickleball (${res.status})`);
+        const data = await res.json();
+        if (!Array.isArray(data)) throw new Error("Dữ liệu lịch Pickleball không hợp lệ");
+        data.forEach(booking => {
+            if ((booking.status || '').toUpperCase() === 'CANCELLED') return;
+            if (!bookingMatchesSport(booking, "pickleball", currentStadiumId, currentStadiumName)) return;
+            const parts = (booking.courtSummary || '').split('|').filter(Boolean);
+            if (parts.length) {
+                parts.forEach(part => {
+                    const courtMatch = part.match(/pickleball\s*(\d+)/i);
+                    const times = part.match(/(\d{1,2})[h:](\d{2})\s*-\s*(\d{1,2})[h:](\d{2})/i);
+                    if (courtMatch && times) {
+                        markBookedRange(courtMatch[1], `${times[1].padStart(2, '0')}:${times[2]}`, `${times[3].padStart(2, '0')}:${times[4]}`);
+                    }
+                });
+            } else if (booking.startTime && booking.endTime) {
+                markBookedRange('1', booking.startTime, booking.endTime);
             }
-        } catch (e) { console.error("Lỗi kết nối CSDL", e); }
+        });
+    }
+
+    function markBookedRange(courtId, startTime, endTime) {
+        let inRange = false;
+        timeSlots.forEach(slot => {
+            if (slot === startTime.substring(0, 5)) inRange = true;
+            if (slot === endTime.substring(0, 5)) inRange = false;
+            if (inRange) bookedSlots.add(`${courtId}_${slot}`);
+        });
     }
 
     function renderHeader() {
@@ -143,15 +213,14 @@
         const isWeekend = (new Date(dateVal).getDay() % 6 === 0);
         const [h, m] = timeSlot.split(':').map(Number);
         const floatHour = h + (m / 60);
-        let hourly = 80000;
+        let hourly = 0;
         if (!isWeekend) {
-            if (floatHour >= 5 && floatHour < 16) hourly = 80000;
-            else if (floatHour >= 16 && floatHour < 20) hourly = 180000;
-            else hourly = 130000;
+            if (floatHour >= 5.5 && floatHour < 8) hourly = 120000;
+            else if (floatHour >= 17 && floatHour < 22) hourly = 220000;
         } else {
-            if (floatHour >= 5 && floatHour < 16) hourly = 100000;
-            else if (floatHour >= 16 && floatHour < 20) hourly = 180000;
-            else hourly = 130000;
+            if (floatHour >= 5.5 && floatHour < 13) hourly = 160000;
+            else if (floatHour >= 13 && floatHour < 16) hourly = 180000;
+            else if (floatHour >= 16 && floatHour < 22) hourly = 220000;
         }
         return hourly / 2;
     }
@@ -190,8 +259,11 @@
         const payload = {
             userId: parseInt(localStorage.getItem("userId") || "7", 10),
             fieldId: parseInt(currentStadiumId, 10),
-            stadiumName: "Sân Pickleball",
+            stadiumId: parseInt(currentStadiumId, 10),
+            stadiumName: currentStadiumName,
+            stadiumAddress: currentStadiumAddress,
             bookingDate: dateVal,
+            rawBookingDate: dateVal,
             startTime: startTimes[0],
             endTime: endTimes[endTimes.length - 1],
             courtSummary: details.join(' | '),
@@ -200,16 +272,13 @@
         };
 
         try {
-            const res = await fetch(BASE_BOOKING_API, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if (res.ok) {
-                const saved = await res.json();
-                payload.id = saved.id;
-            }
-        } catch(e) { console.error("Lỗi gửi MySQL", e); }
+            Object.assign(payload, await saveBookingRecord(payload));
+            payload.savedToDb = true;
+        } catch(error) {
+            console.error("Không lưu được booking Pickleball:", error);
+            alert(`Không thể lưu lịch đặt sân: ${error.message}`);
+            return;
+        }
 
         localStorage.setItem("bookingData", JSON.stringify(payload));
         window.location.href = "confirm.html";
@@ -217,11 +286,19 @@
 
     async function handleDateChange(val) {
         if (!val) return;
+        updateDisplayDate(val);
         selectedSlots.clear();
-        await fetchBookedSlotsFromBackend();
+        try {
+            await fetchBookedSlotsFromBackend();
+        } catch (error) {
+            console.error("Không thể tải lịch Pickleball:", error);
+            alert("Không thể tải lịch đặt sân Pickleball. Vui lòng thử lại.");
+        }
         renderGrid();
         updateTotal();
     }
 </script>
+<script src="booking-api.js"></script>
+<script src="booking-navigation.js"></script>
 </body>
 </html>

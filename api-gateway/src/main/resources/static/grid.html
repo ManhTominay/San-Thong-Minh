@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đang mở lịch đặt sân</title>
+</head>
+<body>
+<p>Đang chuyển đến lịch đặt sân...</p>
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const fieldId = params.get("stadiumId") || params.get("fieldId");
+    const sport = (params.get("type") || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+    const gridByStadium = {
+        "1": "grid-football.html",
+        "2": "grid-football.html",
+        "3": "grid-badminton.html",
+        "4": "grid-badminton.html",
+        "5": "grid-football.html",
+        "6": "grid-volleyball.html",
+        "7": "grid-pickleball.html",
+        "8": "grid-badminton.html",
+        "9": "grid-football.html",
+        "10": "grid-tennis.html"
+    };
+    const gridBySport = [
+        [/football|bong da/, "grid-football.html"],
+        [/badminton|cau long/, "grid-badminton.html"],
+        [/volleyball|bong chuyen/, "grid-volleyball.html"],
+        [/pickleball/, "grid-pickleball.html"],
+        [/tennis|tenit/, "grid-tennis.html"]
+    ];
+    const target = gridBySport.find(([pattern]) => pattern.test(sport))?.[1] || gridByStadium[fieldId];
+
+    if (!params.has("date")) {
+        const today = new Date();
+        params.set("date", `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`);
+    }
+    if (!params.has("returnUrl") && document.referrer) {
+        const referrer = new URL(document.referrer);
+        if (referrer.origin === window.location.origin) params.set("returnUrl", referrer.href);
+    }
+
+    if (target) {
+        window.location.replace(`${target}?${params.toString()}`);
+    } else {
+        document.body.textContent = "Không xác định được loại sân để mở lịch. Vui lòng quay lại bộ lọc và chọn lại sân.";
+    }
+</script>
+</body>
+</html>

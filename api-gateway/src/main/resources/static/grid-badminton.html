@@ -15,14 +15,14 @@
 
 <div>
     <header class="bg-[#005229] text-white px-4 py-3 flex items-center justify-between shadow-md">
-        <button onclick="window.location.href='index.html'" class="text-white hover:opacity-80 text-lg px-2 cursor-pointer">
+        <button onclick="goBackToPreviousPage()" class="text-white hover:opacity-80 text-lg px-2 cursor-pointer">
             <i class="fa-solid fa-chevron-left"></i>
         </button>
         <h1 class="text-sm md:text-base font-bold tracking-wider uppercase" id="stadium-header-title">ĐẶT LỊCH SÂN CẦU LÔNG</h1>
         <div class="bg-[#216e45] text-white text-xs px-2.5 py-1 rounded flex items-center gap-2 border border-emerald-600 cursor-pointer" onclick="document.getElementById('booking-date').showPicker()">
-            <span id="display-date">07/10/2026</span>
+            <span id="display-date"></span>
             <i class="fa-regular fa-calendar text-xs"></i>
-            <input type="date" id="booking-date" class="hidden" value="2026-10-07" onchange="handleDateChange(this.value)">
+            <input type="date" id="booking-date" class="hidden" onchange="handleDateChange(this.value)">
         </div>
     </header>
 
@@ -117,8 +117,8 @@
 </footer>
 
 <script>
-    const BASE_BOOKING_API = "http://localhost:8085/api/bookings";
-    const BASE_FIELD_API = "http://localhost:8085/api/fields";
+    const BASE_BOOKING_API = "/api/bookings";
+    const BASE_FIELD_API = "/api/fields";
 
     let timeSlots = [];
     const courtsList = ['Sân Cầu Lông 1', 'Sân Cầu Lông 2', 'Sân Cầu Lông 3', 'Sân Cầu Lông 4'];
@@ -135,25 +135,36 @@
     document.addEventListener("DOMContentLoaded", async () => {
         const urlParams = new URLSearchParams(window.location.search);
         currentStadiumId = urlParams.get('stadiumId') || urlParams.get('fieldId') || '3';
+        const selectedDate = urlParams.get('date') || getLocalDateIso();
+        document.getElementById('booking-date').value = selectedDate;
+        updateDisplayDate(selectedDate);
 
         const nameParam = urlParams.get('name');
         const addressParam = urlParams.get('address');
         if (nameParam) currentStadiumInfo.name = nameParam;
         if (addressParam) currentStadiumInfo.address = addressParam;
 
-        const dateParam = urlParams.get('date');
-        if (dateParam) {
-            document.getElementById('booking-date').value = dateParam;
-            const p = dateParam.split('-');
-            if (p.length === 3) document.getElementById('display-date').textContent = `${p[2]}/${p[1]}/${p[0]}`;
-        }
-
         await fetchStadiumDetails();
         initSportConfig();
+        restoreDraftSelectedSlots();
         renderHeader();
         await loadAllBookedSlots();
+        selectedSlots.forEach(key => {
+            if (bookedSlots.has(key)) selectedSlots.delete(key);
+        });
         renderGrid();
+        updateTotal();
     });
+
+    function getLocalDateIso() {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    }
+
+    function updateDisplayDate(value) {
+        const parts = value.split('-');
+        if (parts.length === 3) document.getElementById('display-date').textContent = `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
 
     async function fetchStadiumDetails() {
         try {
@@ -180,43 +191,55 @@
         }
     }
 
-    // 🔴 HÀM NẠP ĐẦY ĐỦ CÁC Ô ĐÃ ĐẶT TỪ CẢ CSDL VÀ LOCALSTORAGE
-    async function loadAllBookedSlots() {
-        bookedSlots.clear();
-        const dateVal = document.getElementById('booking-date').value;
-        const displayDateVal = document.getElementById('display-date').textContent;
-
-        // 1. Tải từ CSDL API Backend Port 8085
-        try {
-            const res = await fetch(`${BASE_BOOKING_API}?bookingDate=${dateVal}`);
-            if (res.ok) {
-                const data = await res.json();
-                if (Array.isArray(data)) {
-                    data.forEach(b => processBookingRecord(b));
-                }
-            }
-        } catch (e) {
-            console.warn("Lỗi kết nối API CSDL, nạp tiếp từ LocalStorage...", e);
+    function restoreDraftSelectedSlots() {
+        const bookingData = JSON.parse(localStorage.getItem("bookingData") || "null");
+        if (!bookingData || bookingData.returnUrl !== window.location.href || !Array.isArray(bookingData.selectedSlotsDetail)) {
+            return;
         }
 
-        // 2. Tải bổ sung từ LocalStorage
-        const historyList = JSON.parse(localStorage.getItem("userBookingList")) || [];
-        const currentBooking = JSON.parse(localStorage.getItem("bookingData")) || null;
+        bookingData.selectedSlotsDetail.forEach(item => {
+            const courtMatch = (item.courtName || "").match(/(\d+)$/);
+            const timeMatch = (item.timeSlot || "").match(/(\d{2})h(\d{2})\s*-\s*(\d{2})h(\d{2})/i);
+            if (!courtMatch || !timeMatch) return;
 
-        if (currentBooking) historyList.push(currentBooking);
-
-        historyList.forEach(b => {
-            const bDate = b.bookingDate || '';
-            const bRawDate = b.rawBookingDate || '';
-            if ((bDate === dateVal || bDate === displayDateVal || bRawDate === dateVal) && (b.status || '').toUpperCase() !== 'CANCELLED') {
-                processBookingRecord(b);
-            }
+            const courtId = courtMatch[1];
+            const startTime = `${timeMatch[1]}:${timeMatch[2]}`;
+            const endTime = `${timeMatch[3]}:${timeMatch[4]}`;
+            let inRange = false;
+            timeSlots.forEach(slot => {
+                if (slot === startTime) inRange = true;
+                if (slot === endTime) inRange = false;
+                if (inRange) selectedSlots.add(`${courtId}_${slot}`);
+            });
         });
     }
 
+    // Load booked slots from the booking service so deleted bookings disappear on refresh.
+    async function loadAllBookedSlots() {
+        bookedSlots.clear();
+        const dateVal = document.getElementById('booking-date').value;
+        const res = await fetch(`${BASE_BOOKING_API}?bookingDate=${dateVal}&stadiumId=${encodeURIComponent(currentStadiumId)}`);
+        if (!res.ok) {
+            throw new Error(`Không tải được lịch đặt sân (${res.status})`);
+        }
+
+        const data = await res.json();
+        if (!Array.isArray(data)) {
+            throw new Error("Dữ liệu lịch đặt sân không hợp lệ");
+        }
+        data.forEach(b => processBookingRecord(b));
+    }
+
     function processBookingRecord(b) {
+        if (b.status && b.status.toUpperCase() === 'CANCELLED') return;
+        if (!bookingMatchesSport(b, "badminton", currentStadiumId, currentStadiumInfo.name)) return;
         const summary = b.courtSummary || b.courtDetail || "";
-        if (!summary) return;
+        if (!summary) {
+            if (b.startTime && b.endTime) {
+                markRange('1', b.startTime, b.endTime);
+            }
+            return;
+        }
 
         const courtParts = summary.split('|');
         courtParts.forEach(courtInfo => {
@@ -370,6 +393,7 @@
             const payload = {
                 userId: parseInt(localStorage.getItem("userId") || "7", 10),
                 fieldId: parseInt(currentStadiumId, 10),
+                stadiumId: parseInt(currentStadiumId, 10),
                 stadiumName: currentStadiumInfo.name,
                 stadiumAddress: currentStadiumInfo.address,
                 bookingDate: dateVal,
@@ -379,6 +403,7 @@
                 totalPrice: numericPrice,
                 status: "PENDING"
             };
+            bookingData.returnUrl = window.location.href;
 
             const token = localStorage.getItem('token') || localStorage.getItem('userToken') || '';
 
@@ -439,8 +464,9 @@
             stadiumId: currentStadiumId,
             stadiumName: currentStadiumInfo.name,
             stadiumAddress: currentStadiumInfo.address,
+            address: currentStadiumInfo.address,
             stadiumPhone: currentStadiumInfo.phone,
-            bookingDate: document.getElementById('display-date').textContent,
+            bookingDate: dateVal,
             rawBookingDate: dateVal,
             courtSummary: details.join(' | '),
             selectedSlotsDetail: selectedSlotsDetail,
@@ -452,7 +478,12 @@
         };
 
         // 🔴 1. Gửi request lưu CSDL MySQL Backend Port 8085
-        await saveBookingToBackend(bookingData, startTimes[0], endTimes[endTimes.length - 1]);
+        try {
+            await saveBookingToBackend(bookingData, startTimes[0], endTimes[endTimes.length - 1]);
+        } catch (error) {
+            alert(`Không thể lưu lịch đặt sân: ${error.message}`);
+            return;
+        }
 
         // 🔴 2. Lưu vào bookingData hiện tại
         localStorage.setItem("bookingData", JSON.stringify(bookingData));
@@ -471,7 +502,8 @@
             id: tempId,
             bookingId: tempId,
             stadiumName: item.stadiumName,
-            address: item.stadiumAddress,
+            stadiumAddress: item.stadiumAddress || item.address,
+            address: item.stadiumAddress || item.address,
             phone: item.stadiumPhone,
             bookingDate: item.bookingDate,
             rawBookingDate: item.rawBookingDate,
@@ -498,13 +530,37 @@
 
     async function handleDateChange(val) {
         if (!val) return;
-        const p = val.split('-');
-        if (p.length === 3) document.getElementById('display-date').textContent = `${p[2]}/${p[1]}/${p[0]}`;
+        updateDisplayDate(val);
         selectedSlots.clear();
         await loadAllBookedSlots();
         renderGrid();
         updateTotal();
     }
 </script>
+<script>
+    async function saveBookingToBackend(bookingData, startTime, endTime) {
+        const rawPrice = bookingData.totalPrice ? bookingData.totalPrice.replace(/[^0-9]/g, '') : '0';
+        const payload = {
+            userId: parseInt(localStorage.getItem("userId") || "7", 10),
+            fieldId: parseInt(currentStadiumId, 10),
+            stadiumId: parseInt(currentStadiumId, 10),
+            stadiumName: currentStadiumInfo.name,
+            stadiumAddress: currentStadiumInfo.address,
+            bookingDate: document.getElementById('booking-date').value,
+            startTime,
+            endTime,
+            courtSummary: bookingData.courtSummary,
+            totalPrice: parseFloat(rawPrice || 0),
+            status: "PENDING"
+        };
+        bookingData.returnUrl = window.location.href;
+        const saved = await saveBookingRecord(payload);
+        bookingData.id = saved.id;
+        bookingData.bookingId = saved.bookingId;
+        bookingData.savedToDb = true;
+    }
+</script>
+<script src="booking-api.js"></script>
+<script src="booking-navigation.js"></script>
 </body>
 </html>

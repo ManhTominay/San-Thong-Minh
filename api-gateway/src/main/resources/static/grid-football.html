@@ -15,14 +15,14 @@
 
 <div>
     <header class="bg-[#005229] text-white px-4 py-3 flex items-center justify-between shadow-md">
-        <button onclick="window.location.href='index.html'" class="text-white hover:opacity-80 text-lg px-2 cursor-pointer">
+        <button onclick="goBackToPreviousPage()" class="text-white hover:opacity-80 text-lg px-2 cursor-pointer">
             <i class="fa-solid fa-chevron-left"></i>
         </button>
         <h1 class="text-sm md:text-base font-bold tracking-wider uppercase" id="stadium-header-title">ĐẶT LỊCH SÂN BÓNG ĐÁ</h1>
         <div class="bg-[#216e45] text-white text-xs px-2.5 py-1 rounded flex items-center gap-2 border border-emerald-600 cursor-pointer" onclick="document.getElementById('booking-date').showPicker()">
-            <span id="display-date">07/10/2026</span>
+            <span id="display-date"></span>
             <i class="fa-regular fa-calendar text-xs"></i>
-            <input type="date" id="booking-date" class="hidden" value="2026-10-07" onchange="handleDateChange(this.value)">
+            <input type="date" id="booking-date" class="hidden" onchange="handleDateChange(this.value)">
         </div>
     </header>
 
@@ -94,7 +94,7 @@
 </footer>
 
 <script>
-    const BASE_BOOKING_API = "http://localhost:8085/api/bookings";
+    const BASE_BOOKING_API = "/api/bookings";
     const BASE_FIELD_API = "http://localhost:8085/api/fields";
 
     let timeSlots = [];
@@ -112,13 +112,9 @@
     document.addEventListener("DOMContentLoaded", async () => {
         const urlParams = new URLSearchParams(window.location.search);
         currentStadiumId = urlParams.get('stadiumId') || urlParams.get('fieldId') || '1';
-        const dateParam = urlParams.get('date');
-
-        if (dateParam) {
-            document.getElementById('booking-date').value = dateParam;
-            const p = dateParam.split('-');
-            if (p.length === 3) document.getElementById('display-date').textContent = `${p[2]}/${p[1]}/${p[0]}`;
-        }
+        const selectedDate = urlParams.get('date') || getLocalDateIso();
+        document.getElementById('booking-date').value = selectedDate;
+        updateDisplayDate(selectedDate);
 
         await fetchStadiumDetails();
         initSportConfig();
@@ -126,6 +122,16 @@
         await fetchBookedSlotsFromBackend();
         renderGrid();
     });
+
+    function getLocalDateIso() {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    }
+
+    function updateDisplayDate(value) {
+        const parts = value.split('-');
+        if (parts.length === 3) document.getElementById('display-date').textContent = `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
 
     async function fetchStadiumDetails() {
         try {
@@ -159,7 +165,7 @@
         bookedSlots.clear();
         const dateVal = document.getElementById('booking-date').value;
         try {
-            const res = await fetch(`${BASE_BOOKING_API}?bookingDate=${dateVal}`);
+            const res = await fetch(`${BASE_BOOKING_API}?bookingDate=${dateVal}&stadiumId=${encodeURIComponent(currentStadiumId)}`);
             if (res.ok) {
                 const data = await res.json();
                 console.log("👉 Dữ liệu lịch đặt CSDL 8085:", data);
@@ -168,7 +174,8 @@
                     data.forEach(b => {
                         const statusUpper = (b.status || '').toUpperCase();
                         // Bỏ qua các đơn đã bị hủy
-                        if (statusUpper !== 'CANCELLED' && statusUpper !== 'ĐÃ HỦY') {
+                        if (statusUpper !== 'CANCELLED' && statusUpper !== 'ĐÃ HỦY' &&
+                            bookingMatchesSport(b, "football", currentStadiumId, currentStadiumInfo.name)) {
 
                             const summary = b.courtSummary || "";
                             const courtParts = summary.split('|');
@@ -340,6 +347,7 @@
             const payload = {
                 userId: parseInt(localStorage.getItem("userId") || "7", 10),
                 fieldId: parseInt(currentStadiumId, 10),
+                stadiumId: parseInt(currentStadiumId, 10),
                 stadiumName: currentStadiumInfo.name,
                 stadiumAddress: currentStadiumInfo.address,
                 bookingDate: dateVal,
@@ -378,63 +386,12 @@
         }
     }
 
-    async function goToConfirmPage() {
-        if (!validateBooking()) return;
-
-        const dateVal = document.getElementById('booking-date').value;
-        const sorted = Array.from(selectedSlots).sort();
-        const grouped = {};
-        sorted.forEach(k => {
-            const [c, t] = k.split('_');
-            if (!grouped[c]) grouped[c] = [];
-            grouped[c].push(t);
-        });
-
-        let startTimes = [], endTimes = [], details = [];
-        const selectedSlotsDetail = [];
-
-        Object.keys(grouped).forEach(cId => {
-            const courtName = courtsList[parseInt(cId) - 1] || `Sân ${cId}`;
-            const idxs = grouped[cId].map(t => timeSlots.indexOf(t)).sort((a,b) => a-b);
-
-            const sStr = timeSlots[idxs[0]];
-            const lastTimeIdx = idxs[idxs.length-1] + 1;
-            const eStr = timeSlots[lastTimeIdx] || timeSlots[idxs[idxs.length-1]];
-
-            startTimes.push(sStr.length === 5 ? sStr + ":00" : sStr);
-            endTimes.push(eStr.length === 5 ? eStr + ":00" : eStr);
-
-            const slotStr = `${sStr.replace(':', 'h')} - ${eStr.replace(':', 'h')}`;
-            selectedSlotsDetail.push({ courtName: courtName, timeSlot: slotStr });
-            details.push(`${courtName}: ${slotStr}`);
-        });
-
-        startTimes.sort(); endTimes.sort();
-
-        const bookingData = {
-            stadiumId: currentStadiumId,
-            stadiumName: currentStadiumInfo.name,
-            stadiumAddress: currentStadiumInfo.address,
-            stadiumPhone: currentStadiumInfo.phone,
-            bookingDate: document.getElementById('display-date').textContent,
-            courtSummary: details.join(' | '),
-            selectedSlotsDetail: selectedSlotsDetail,
-            totalHours: document.getElementById('total-hours').textContent,
-            totalPrice: document.getElementById('total-price').textContent
-        };
-
-        await saveBookingToBackend(bookingData, startTimes[0], endTimes[endTimes.length - 1]);
-        localStorage.setItem("bookingData", JSON.stringify(bookingData));
-        window.location.href = "confirm.html";
-    }
-
     function openPriceModal() { document.getElementById('price-modal').classList.remove('hidden'); }
     function closePriceModal() { document.getElementById('price-modal').classList.add('hidden'); }
 
     async function handleDateChange(val) {
         if (!val) return;
-        const p = val.split('-');
-        if (p.length === 3) document.getElementById('display-date').textContent = `${p[2]}/${p[1]}/${p[0]}`;
+        updateDisplayDate(val);
         selectedSlots.clear();
         await fetchBookedSlotsFromBackend();
         renderGrid();
@@ -478,7 +435,7 @@
             stadiumName: currentStadiumInfo.name,
             stadiumAddress: currentStadiumInfo.address,
             stadiumPhone: currentStadiumInfo.phone,
-            bookingDate: document.getElementById('display-date').textContent,
+            bookingDate: dateVal,
             rawBookingDate: dateVal,
             courtSummary: details.join(' | '),
             selectedSlotsDetail: selectedSlotsDetail,
@@ -488,6 +445,13 @@
             endTime: endTimes[endTimes.length - 1],
             status: "PENDING"
         };
+
+        try {
+            await saveBookingToBackend(bookingData, startTimes[0], endTimes[endTimes.length - 1]);
+        } catch (error) {
+            alert(`Không thể lưu lịch đặt sân: ${error.message}`);
+            return;
+        }
 
         // 🔴 Lưu vào bookingData hiện tại
         localStorage.setItem("bookingData", JSON.stringify(bookingData));
@@ -528,5 +492,29 @@
         localStorage.setItem("userBookingList", JSON.stringify(historyList));
     }
 </script>
+<script>
+    async function saveBookingToBackend(bookingData, startTime, endTime) {
+        const rawPrice = bookingData.totalPrice ? bookingData.totalPrice.replace(/[^0-9]/g, '') : '0';
+        const payload = {
+            userId: parseInt(localStorage.getItem("userId") || "7", 10),
+            fieldId: parseInt(currentStadiumId, 10),
+            stadiumId: parseInt(currentStadiumId, 10),
+            stadiumName: currentStadiumInfo.name,
+            stadiumAddress: currentStadiumInfo.address,
+            bookingDate: document.getElementById('booking-date').value,
+            startTime,
+            endTime,
+            courtSummary: bookingData.courtSummary,
+            totalPrice: parseFloat(rawPrice || 0),
+            status: "PENDING"
+        };
+        const saved = await saveBookingRecord(payload);
+        bookingData.id = saved.id;
+        bookingData.bookingId = saved.bookingId;
+        bookingData.savedToDb = true;
+    }
+</script>
+<script src="booking-api.js"></script>
+<script src="booking-navigation.js"></script>
 </body>
 </html>

@@ -7,6 +7,10 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <title>Tìm Kiếm Nâng Cao - Smart Stadium</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -269,6 +273,9 @@
                 Chỉ sân trống
 
             </button>
+            <p class="text-xs text-gray-500 mt-2">
+                Khi bật “Chỉ sân trống”, cụm chỉ bị ẩn nếu tất cả sân con đều đã đặt trùng giờ. Các sân con còn trống vẫn được tính là có thể đặt.
+            </p>
 
         </div>
 
@@ -621,7 +628,7 @@
 
             <h3 class="text-lg font-semibold">
 
-                Không tìm thấy sân phù hợp hoặc tất cả sân đã bị đặt trùng giờ
+                Không tìm thấy sân phù hợp hoặc các sân đều đã có lịch trùng giờ
 
             </h3>
 
@@ -631,6 +638,9 @@
                 Hãy thử thay đổi thời gian, môn thể thao,
                 khu vực hoặc từ khóa tìm kiếm.
 
+            </p>
+            <p class="text-gray-500 mt-2">
+                Muốn xem cả sân đã có lịch trùng? Tắt “Chỉ sân trống” để hiện tất cả các sân.
             </p>
 
         </div>
@@ -707,7 +717,7 @@
 
     const STADIUM_API = "/api/fields";
 
-    const AVAILABILITY_API = "/api/bookings/check-available";
+    const BOOKINGS_API = "/api/bookings";
 
 
     // =====================================================
@@ -719,6 +729,8 @@
     let selectedSport = "all";
 
     let onlyAvailable = true;
+    let filterRequestId = 0;
+    let keywordFilterTimer = null;
 
 
     // =====================================================
@@ -732,6 +744,7 @@
             setDefaultDate();
 
             readSearchFromUrl();
+            bindAutomaticFilters();
 
             await loadStadiums();
 
@@ -756,6 +769,17 @@
 
         document.getElementById("searchDate").value = `${year}-${month}-${day}`;
 
+    }
+
+    function bindAutomaticFilters() {
+        ["searchDate", "startTime", "endTime", "cityFilter"].forEach(id => {
+            document.getElementById(id).addEventListener("change", applyFilters);
+        });
+
+        document.getElementById("keywordInput").addEventListener("input", () => {
+            clearTimeout(keywordFilterTimer);
+            keywordFilterTimer = setTimeout(applyFilters, 250);
+        });
     }
 
 
@@ -916,6 +940,8 @@
 
         if (!validateTime()) return;
 
+        updateSearchUrl();
+        const requestId = ++filterRequestId;
         showLoading(true);
 
 
@@ -985,135 +1011,43 @@
         // AVAILABILITY & OVERLAP CHECK
         // =============================
 
-        if (onlyAvailable) {
-
-            let availableIds = null;
-
-            // 1. Thử gọi API Backend để kiểm tra danh sách ID khả dụng
-            const queryParams = new URLSearchParams();
-
-            if (date) queryParams.append("date", date);
-
-            if (startTime) queryParams.append("startTime", startTime);
-
-            if (endTime) queryParams.append("endTime", endTime);
-
-
+        if (onlyAvailable && date && startTime && endTime) {
             try {
-
-                const url = `${AVAILABILITY_API}?${queryParams.toString()}`;
-
-                const res = await fetch(url);
-
-
-                if (res.ok) {
-
-                    const availableData = await res.json();
-
-
-                    if (Array.isArray(availableData) && availableData.length > 0) {
-
-                        availableIds = availableData.map(item => {
-
-                            if (typeof item === "object" && item !== null) {
-
-                                return String(item.fieldId || item.id || item.stadiumId);
-
-                            }
-
-                            return String(item);
-
-                        });
-
-                    }
-
-                }
-
-            }
-
-            catch (err) {
-
-                // Bỏ qua lỗi kết nối API để chuyển ngay xuống LocalStorage
-
-            }
-
-
-            // 2. Nếu API trả về danh sách sân trống hợp lệ
-            if (availableIds !== null) {
-
-                filtered = filtered.filter(stadium => availableIds.includes(String(stadium.id)));
-
-            }
-
-            // 3. LỌC TRỰC TIẾP TỪ LOCALSTORAGE
-            else {
-
-                const bookedList = JSON.parse(localStorage.getItem("userBookingList") || "[]");
-
-                filtered = filtered.filter(stadium => {
-
-                    const stadiumIdStr = String(stadium.id);
-
-                    const stadiumNameNorm = normalizeText(stadium.name);
-
-                    // Kiểm tra xem cụm sân này có đơn hàng nào bị trùng lịch không
-                    const hasConflict = bookedList.some(b => {
-
-                        const bId = String(b.fieldId || b.stadiumId || b.id || "");
-
-                        const bName = normalizeText(b.stadiumName || b.fieldName || b.name || "");
-
-                        // So sánh ID hoặc So sánh Tên tương đối
-                        const isSameStadium = (bId && bId === stadiumIdStr) ||
-                            (bName && stadiumNameNorm && (bName.includes(stadiumNameNorm) || stadiumNameNorm.includes(bName)));
-
-                        // So sánh Ngày
-                        const bDate = b.bookingDate || b.date;
-
-                        const isSameDate = !date || !bDate || bDate === date;
-
-                        // Trạng thái đơn không phải đơn đã hủy
-                        const status = normalizeText(b.status || "");
-
-                        const isNotCancelled = !status.includes("cancel") && !status.includes("huy");
-
-
-                        if (isSameStadium && isSameDate && isNotCancelled) {
-
-                            let bStart = b.startTime;
-
-                            let bEnd = b.endTime;
-
-
-                            if (!bStart && b.timeSlot) {
-
-                                const parts = String(b.timeSlot).split('-');
-
-                                bStart = parts[0];
-
-                                bEnd = parts[1];
-
-                            }
-
-
-                            return isTimeOverlap(startTime, endTime, bStart, bEnd);
-
-                        }
-
-                        return false;
-
+                const availabilityByStadium = await Promise.all(filtered.map(async stadium => {
+                    const queryParams = new URLSearchParams({
+                        bookingDate: date,
+                        stadiumId: String(stadium.id)
                     });
+                    const response = await fetch(`${BOOKINGS_API}?${queryParams.toString()}`, {
+                        cache: "no-store"
+                    });
+                    if (!response.ok) {
+                        throw new Error(`Booking Service trả về HTTP ${response.status}`);
+                    }
+                    const bookings = await response.json();
+                    if (!Array.isArray(bookings)) {
+                        throw new Error("Dữ liệu lịch đặt sân không hợp lệ");
+                    }
+                    return { stadium, bookings };
+                }));
 
-
-                    // BỎ SÂN BỊ TRÙNG, GIỮ LẠI SÂN TRỐNG
-                    return !hasConflict;
-
-                });
-
+                filtered = availabilityByStadium
+                    .filter(({ stadium, bookings }) => hasAvailableCourt(stadium, bookings, startTime, endTime))
+                    .map(({ stadium }) => stadium);
+            } catch (error) {
+                if (requestId !== filterRequestId) return;
+                console.error("Không thể kiểm tra lịch trống:", error);
+                document.getElementById("resultTitle").textContent = "Không thể kiểm tra sân trống";
+                document.getElementById("stadiumResults").innerHTML = `
+                    <div class="col-span-full bg-red-50 border border-red-200 text-red-700 p-5 rounded-xl">
+                        Không tải được lịch đặt sân. Vui lòng kiểm tra Booking Service rồi thử lại.
+                    </div>`;
+                showLoading(false);
+                return;
             }
-
         }
 
+        if (requestId !== filterRequestId) return;
 
         renderResults(filtered);
 
@@ -1179,7 +1113,6 @@
 
         }
 
-
         if (s2 === null || e2 === null) {
 
             return false;
@@ -1190,6 +1123,61 @@
         // Trùng khi khoảng giao nhau hợp lệ: Max(Bắt đầu) < Min(Kết thúc)
         return Math.max(s1, s2) < Math.min(e1, e2);
 
+    }
+
+    function getBookingTimeRanges(booking) {
+        const summary = booking.courtSummary || booking.courtDetail || "";
+        const timePattern = /(\d{1,2})[h:](\d{2})\s*-\s*(\d{1,2})[h:](\d{2})/gi;
+        const ranges = [];
+        summary.split(/[|,;\n]+/).forEach(part => {
+            const match = timePattern.exec(part);
+            timePattern.lastIndex = 0;
+            if (!match) return;
+
+            const courtMatch = part.slice(0, match.index).match(/(\d+)\s*:\s*$/);
+            ranges.push({
+                courtNumber: courtMatch ? Number(courtMatch[1]) : 1,
+                start: `${match[1].padStart(2, "0")}:${match[2]}`,
+                end: `${match[3].padStart(2, "0")}:${match[4]}`
+            });
+        });
+
+        if (ranges.length === 0 && booking.startTime && booking.endTime) {
+            ranges.push({ courtNumber: 1, start: booking.startTime, end: booking.endTime });
+        }
+
+        return ranges;
+    }
+
+    function getCourtCount(type) {
+        const sport = sportDisplayName(type);
+        return {
+            "Bóng đá": 5,
+            "Cầu lông": 4,
+            "Bóng chuyền": 4,
+            "Pickleball": 3,
+            "Tennis": 3
+        }[sport] || 1;
+    }
+
+    function hasAvailableCourt(stadium, bookings, startTime, endTime) {
+        const courtCount = getCourtCount(stadium.type);
+        const busyCourts = new Set();
+
+        bookings.forEach(booking => {
+            if (!bookingMatchesSport(booking, stadium.type, stadium.id, stadium.name)) return;
+            const status = normalizeText(booking.status || "");
+            if (status.includes("cancel") || status.includes("huy")) return;
+
+            getBookingTimeRanges(booking).forEach(range => {
+                if (range.courtNumber >= 1 && range.courtNumber <= courtCount &&
+                    isTimeOverlap(startTime, endTime, range.start, range.end)) {
+                    busyCourts.add(range.courtNumber);
+                }
+            });
+        });
+
+        return busyCourts.size < courtCount;
     }
 
 
@@ -1237,9 +1225,14 @@
         const noResult = document.getElementById("noResult");
 
 
+        const hasTimeFilter = document.getElementById("searchDate").value &&
+            document.getElementById("startTime").value &&
+            document.getElementById("endTime").value;
+        const resultDescription = onlyAvailable && hasTimeFilter
+            ? "cụm sân còn sân con trống"
+            : "cụm sân phù hợp";
         document.getElementById("resultTitle").textContent =
-
-            `Tìm thấy ${stadiums.length} cụm sân trống phù hợp`;
+            `Tìm thấy ${stadiums.length} ${resultDescription}`;
 
 
         if (stadiums.length === 0) {
@@ -1409,26 +1402,40 @@
     // =====================================================
 
     function goToGrid(fieldId) {
-
+        const stadium = allStadiums.find(item => String(item.id) === String(fieldId));
+        if (!stadium) {
+            console.error("Không tìm thấy sân để mở lịch đặt:", fieldId);
+            return;
+        }
         const date = document.getElementById("searchDate").value;
-
         const startTime = document.getElementById("startTime").value;
-
         const endTime = document.getElementById("endTime").value;
 
-
         const params = new URLSearchParams();
+        const sportType = sportDisplayName(stadium.type);
+        const gridBySport = {
+            "Bóng đá": "grid-football.html",
+            "Cầu lông": "grid-badminton.html",
+            "Bóng chuyền": "grid-volleyball.html",
+            "Pickleball": "grid-pickleball.html",
+            "Tennis": "grid-tennis.html"
+        };
+        const gridPage = gridBySport[sportType];
+        if (!gridPage) {
+            alert("Chưa có trang đặt lịch cho môn thể thao này.");
+            return;
+        }
 
-        if (fieldId) params.append("fieldId", fieldId);
-
+        params.append("stadiumId", fieldId);
+        params.append("type", stadium.type || sportType);
         if (date) params.append("date", date);
-
         if (startTime) params.append("startTime", startTime);
-
         if (endTime) params.append("endTime", endTime);
+        if (stadium.name) params.append("name", stadium.name);
+        if (stadium.address || stadium.location) params.append("address", stadium.address || stadium.location);
+        params.append("returnUrl", window.location.href);
 
-
-        window.location.href = `/grid.html?${params.toString()}`;
+        window.location.href = new URL(`${gridPage}?${params.toString()}`, window.location.href).href;
 
     }
 
@@ -1723,9 +1730,15 @@
 
         const params = new URLSearchParams(window.location.search);
 
+        const sport = params.get("sport");
+        if (sport && document.querySelector(`[data-sport="${CSS.escape(sport)}"]`)) {
+            selectedSport = sport;
+            document.querySelectorAll(".sport-btn").forEach(button => {
+                button.classList.toggle("active", button.dataset.sport === sport);
+            });
+        }
 
         const keyword = params.get("q");
-
 
         if (keyword) {
 
@@ -1733,6 +1746,42 @@
 
         }
 
+        const date = params.get("date");
+        const startTime = params.get("startTime");
+        const endTime = params.get("endTime");
+        const location = params.get("location");
+        if (date) document.getElementById("searchDate").value = date;
+        if (startTime) document.getElementById("startTime").value = startTime;
+        if (endTime) document.getElementById("endTime").value = endTime;
+        if (location) document.getElementById("cityFilter").value = location;
+
+    }
+
+    function updateSearchUrl() {
+        const params = new URLSearchParams(window.location.search);
+        const values = {
+            sport: selectedSport,
+            q: document.getElementById("keywordInput").value.trim(),
+            date: document.getElementById("searchDate").value,
+            startTime: document.getElementById("startTime").value,
+            endTime: document.getElementById("endTime").value,
+            location: document.getElementById("cityFilter").value
+        };
+
+        Object.entries(values).forEach(([key, value]) => {
+            if (value && (key !== "sport" || value !== "all")) {
+                params.set(key, value);
+            } else {
+                params.delete(key);
+            }
+        });
+
+        const query = params.toString();
+        window.history.replaceState(
+            null,
+            "",
+            `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`
+        );
     }
 
 
@@ -1798,7 +1847,7 @@
     }
 
 </script>
-
+<script src="booking-api.js"></script>
 </body>
 
 </html>

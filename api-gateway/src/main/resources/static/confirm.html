@@ -14,7 +14,7 @@
 <div>
     <!-- ================= HEADER ================= -->
     <header class="bg-[#005a32] px-4 py-3.5 flex items-center justify-between border-b border-emerald-800">
-        <button onclick="window.history.back()" class="text-white hover:text-gray-200 text-lg px-1">
+        <button onclick="returnToBookingOrigin()" class="text-white hover:text-gray-200 text-lg px-1">
             <i class="fa-solid fa-chevron-left"></i>
         </button>
         <h1 class="text-base md:text-lg font-bold uppercase tracking-wider text-center flex-1">
@@ -151,7 +151,7 @@
         document.getElementById("stadium-phone").textContent = stadiumPhone;
 
         // Điền thông tin lịch đặt
-        document.getElementById("booking-date").textContent = data.bookingDate || new Date().toLocaleDateString('vi-VN');
+        document.getElementById("booking-date").textContent = formatBookingDate(data.rawBookingDate || data.bookingDate) || new Date().toLocaleDateString('vi-VN');
         document.getElementById("total-hours").textContent = data.totalHours || "3h00";
         document.getElementById("total-price").textContent = data.totalPrice || "360.000 đ";
         document.getElementById("final-price").textContent = data.totalPrice || "360.000 đ";
@@ -179,6 +179,26 @@
     function clearInput(id) {
         document.getElementById(id).value = "";
         document.getElementById(id).focus();
+    }
+
+    function formatBookingDate(value) {
+        if (!value) return "";
+        const isoDate = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (isoDate) return `${isoDate[3]}/${isoDate[2]}/${isoDate[1]}`;
+        const localDate = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        return localDate ? value : "";
+    }
+
+    function returnToBookingOrigin() {
+        const data = JSON.parse(localStorage.getItem("bookingData") || "{}");
+        if (data.returnUrl) {
+            const returnUrl = new URL(data.returnUrl, window.location.href);
+            if (returnUrl.origin === window.location.origin) {
+                window.location.href = returnUrl.href;
+                return;
+            }
+        }
+        window.history.back();
     }
 
     function confirmAndGoToPayment() {
@@ -212,7 +232,11 @@
         data.userName = name;
         data.userPhone = phone;
         data.userNote = note;
-        data.bookingId = data.bookingId || Math.floor(1000 + Math.random() * 9000);
+        data.bookingId = data.id || data.bookingId;
+        if (!Number.isSafeInteger(Number(data.bookingId)) || Number(data.bookingId) <= 0) {
+            alert("Đơn đặt sân chưa được lưu vào CSDL. Vui lòng quay lại lưới sân và thử lại.");
+            return;
+        }
 
         localStorage.setItem("bookingData", JSON.stringify(data));
 
