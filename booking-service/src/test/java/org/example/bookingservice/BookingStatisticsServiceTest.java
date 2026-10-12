@@ -5,6 +5,7 @@ import org.example.bookingservice.dto.DailyBookingStatisticsDTO;
 import org.example.bookingservice.dto.FieldBookingStatisticsDTO;
 import org.example.bookingservice.repository.BookingRepository;
 import org.example.bookingservice.repository.FieldRepository;
+import org.example.bookingservice.repository.StadiumRecordRepository;
 import org.example.bookingservice.service.BookingService;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageRequest;
@@ -24,10 +25,11 @@ class BookingStatisticsServiceTest {
     void statisticsAreLoadedAsAggregatedDatabaseResults() {
         BookingRepository bookingRepository = mock(BookingRepository.class);
         FieldRepository fieldRepository = mock(FieldRepository.class);
+        StadiumRecordRepository stadiumRepository = mock(StadiumRecordRepository.class);
         BookingService bookingService = new BookingService(
                 bookingRepository,
                 fieldRepository,
-                new RestTemplate()
+                stadiumRepository
         );
         LocalDate from = LocalDate.of(2026, 10, 1);
         LocalDate to = LocalDate.of(2026, 10, 8);

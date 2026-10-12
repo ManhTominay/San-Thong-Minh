@@ -67,7 +67,10 @@
                 const userEmail = data.email || emailInput;
 
                 // 1. Lưu Token và Email trước
-                if (userToken) localStorage.setItem("token", userToken);
+                if (userToken) {
+                    localStorage.setItem("token", userToken);
+                    localStorage.removeItem("userToken");
+                }
                 localStorage.setItem("userEmail", userEmail);
 
                 // 2. Tìm kiếm và trích xuất UserId từ các trường có thể xảy ra

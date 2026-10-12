@@ -105,6 +105,7 @@
     const courtsList = ['Tennis 1', 'Tennis 2', 'Tennis 3'];
     const selectedSlots = new Set();
     let bookedSlots = new Set();
+    let bookingsLoaded = false;
     let currentStadiumId = '2';
     let currentStadiumName = 'Sân Tennis';
     let currentStadiumAddress = '';
@@ -169,6 +170,7 @@
 
     async function fetchBookedSlotsFromBackend() {
         bookedSlots.clear();
+        bookingsLoaded = false;
         const dateVal = document.getElementById('booking-date').value;
         const res = await fetch(`${BASE_BOOKING_API}?stadiumId=${encodeURIComponent(currentStadiumId)}&bookingDate=${dateVal}`);
         if (!res.ok) throw new Error(`Không tải được lịch Tennis (${res.status})`);
@@ -190,15 +192,11 @@
                 markBookedRange('1', booking.startTime, booking.endTime);
             }
         });
+        bookingsLoaded = true;
     }
 
     function markBookedRange(courtId, startTime, endTime) {
-        let inRange = false;
-        timeSlots.forEach(slot => {
-            if (slot === startTime.substring(0, 5)) inRange = true;
-            if (slot === endTime.substring(0, 5)) inRange = false;
-            if (inRange) bookedSlots.add(`${courtId}_${slot}`);
-        });
+        markGridBookingRange(bookedSlots, timeSlots, courtId, startTime, endTime);
     }
 
     function renderHeader() {
@@ -215,6 +213,14 @@
     function renderGrid() {
         const tbody = document.getElementById('grid-body');
         tbody.innerHTML = '';
+        if (!bookingsLoaded) {
+            const row = tbody.insertRow();
+            const cell = row.insertCell();
+            cell.colSpan = timeSlots.length + 1;
+            cell.className = "p-6 text-center text-red-600";
+            cell.textContent = "Không thể xác định lịch đặt từ CSDL. Vui lòng thử tải lại trang.";
+            return;
+        }
         courtsList.forEach((cName, idx) => {
             const cId = idx + 1;
             const tr = document.createElement('tr');
@@ -305,7 +311,6 @@
 
         startTimes.sort(); endTimes.sort();
         const payload = {
-            userId: parseInt(localStorage.getItem("userId") || "7", 10),
             fieldId: parseInt(currentStadiumId, 10),
             stadiumId: parseInt(currentStadiumId, 10),
             stadiumName: currentStadiumName,

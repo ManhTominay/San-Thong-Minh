@@ -139,9 +139,31 @@
         <span>XEM LỊCH SỬ ĐẶT SÂN</span>
     </button>
 
-    <button onclick="cancelBooking()" class="w-full bg-[#f24e1e] hover:bg-[#d93d10] text-white font-bold py-3 rounded-lg uppercase tracking-wider shadow-lg transition transform active:scale-[0.99] cursor-pointer text-sm">
+    <button id="cancel-booking-button" onclick="openCancellationModal()" class="w-full bg-[#f24e1e] hover:bg-[#d93d10] text-white font-bold py-3 rounded-lg uppercase tracking-wider shadow-lg transition transform active:scale-[0.99] cursor-pointer text-sm">
         HỦY ĐẶT LỊCH
     </button>
+    <p id="cancellation-request-status" class="hidden text-center text-sm font-semibold"></p>
+</div>
+
+<div id="cancellation-modal" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center p-4 backdrop-blur-sm"
+     role="dialog" aria-modal="true" aria-labelledby="cancellation-modal-title">
+    <div class="bg-white text-gray-800 rounded-xl p-5 max-w-md w-full space-y-4 shadow-2xl">
+        <div class="border-b pb-3">
+            <h3 id="cancellation-modal-title" class="font-bold text-emerald-900 text-lg">Yêu cầu hủy đặt sân</h3>
+            <p class="text-sm text-gray-600 mt-1">Yêu cầu sẽ được gửi đến Admin để xét duyệt. Đơn và lịch sân vẫn được giữ nguyên cho đến khi Admin xử lý.</p>
+        </div>
+        <label for="cancellation-reason" class="block text-sm font-semibold text-gray-700">Lý do hủy (không bắt buộc)</label>
+        <textarea id="cancellation-reason" maxlength="1000" rows="3"
+                  class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder="Nhập lý do hủy nếu có"></textarea>
+        <p id="cancellation-modal-error" class="hidden text-sm text-red-600" role="alert"></p>
+        <div class="flex gap-3">
+            <button type="button" onclick="closeCancellationModal()"
+                    class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2.5 rounded-lg">Quay lại</button>
+            <button id="submit-cancellation-button" type="button" onclick="submitCancellationRequest()"
+                    class="flex-1 bg-[#00a65a] hover:bg-[#008e48] text-white font-semibold py-2.5 rounded-lg">Xác nhận yêu cầu</button>
+        </div>
+    </div>
 </div>
 
 <!-- ===================================================== -->
@@ -174,6 +196,9 @@
 <!-- ===================================================== -->
 <script>
     let currentBookingData = null;
+    let cancellationRequests = [];
+    let bookingVerified = false;
+    const BOOKING_API = "/api/bookings";
 
     document.addEventListener("DOMContentLoaded", async function () {
         await processAndDisplayBooking();
@@ -211,13 +236,43 @@
             }
         }
 
+        const bookingId = Number(data.bookingId || data.id);
+        if (Number.isSafeInteger(bookingId) && bookingId > 0) {
+            try {
+                const response = await fetch(`${BOOKING_API}/${bookingId}`, {
+                    cache: "no-store",
+                    headers: { "Authorization": `******"token") || ""}` }
+                });
+                if (!response.ok) {
+                    if (response.status === 401) throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+                    if (response.status === 403) throw new Error("Bạn không có quyền xem đơn đặt sân này.");
+                    if (response.status === 404) throw new Error("Không tìm thấy đơn đặt sân trong CSDL.");
+                    throw new Error(`Không xác minh được đơn đặt sân (HTTP ${response.status}).`);
+                }
+                const savedBooking = await response.json();
+                if (Number(savedBooking.id) !== bookingId) {
+                    throw new Error("Booking Service trả về mã đơn không khớp.");
+                }
+                data = { ...data, ...savedBooking, id: bookingId, bookingId, savedToDb: true };
+                currentBookingData = data;
+                bookingVerified = true;
+                localStorage.setItem("bookingData", JSON.stringify(data));
+            } catch (error) {
+                console.error("Không xác minh được đơn từ CSDL:", error);
+                showCancellationStatus(`${error.message} Không thể xác nhận trạng thái hủy khi chưa đọc được đơn từ CSDL.`, "error");
+            }
+        } else {
+            showCancellationStatus("Đơn chưa có mã CSDL hợp lệ; không thể gửi yêu cầu hủy.", "error");
+        }
+        await loadCancellationRequests(data);
+
         // Đồng bộ dữ liệu Lịch sử User
-        updateLocalBookingHistory(data);
+        if (bookingVerified) updateLocalBookingHistory(data);
 
         // 1. Mã đơn hàng
-        const bookingId = data.bookingId || data.id || "1001";
-        document.getElementById("booking-id").textContent = `#${bookingId}`;
-        document.getElementById("modal-transfer-content").textContent = `DATSAN ${bookingId}`;
+        const displayBookingId = data.bookingId || data.id || "1001";
+        document.getElementById("booking-id").textContent = `#${displayBookingId}`;
+        document.getElementById("modal-transfer-content").textContent = `DATSAN ${displayBookingId}`;
 
         // 2. Hiển thị TÊN SÂN VÀ ĐỊA CHỈ THỰC TẾ
         document.getElementById("club-name").textContent = data.stadiumName || "Smart Stadium";
@@ -256,7 +311,10 @@
         const statusElem = document.getElementById("booking-status");
         const statusUpper = (data.status || '').toUpperCase();
 
-        if (statusUpper === "APPROVED" || statusUpper === "CONFIRMED" || statusUpper === "SUCCESS") {
+        if (!bookingVerified) {
+            statusElem.textContent = "Chưa xác minh từ CSDL";
+            statusElem.className = "font-bold text-rose-300 bg-rose-900/60 px-2 py-0.5 rounded text-xs border border-rose-400/50";
+        } else if (statusUpper === "APPROVED" || statusUpper === "CONFIRMED" || statusUpper === "SUCCESS") {
             statusElem.textContent = "Chờ Admin xác nhận";
             statusElem.className = "font-bold text-yellow-300 bg-yellow-900/60 px-2 py-0.5 rounded text-xs border border-yellow-400/50";
         } else if (statusUpper === "CANCELLED") {
@@ -266,6 +324,79 @@
             statusElem.textContent = "Chờ Admin xác nhận";
             statusElem.className = "font-bold text-yellow-300 bg-yellow-900/60 px-2 py-0.5 rounded text-xs border border-yellow-400/50";
         }
+        renderCancellationState(data);
+    }
+
+    async function loadCancellationRequests(bookingData) {
+        const bookingId = Number(bookingData.bookingId || bookingData.id);
+        if (!Number.isSafeInteger(bookingId) || bookingId <= 0) return;
+
+        try {
+            const response = await fetch(`${BOOKING_API}/${bookingId}/cancellation-requests`, {
+                headers: { "Authorization": `Bearer ${localStorage.getItem("token") || ""}` }
+            });
+            if (!response.ok) throw new Error(await response.text());
+            const requests = await response.json();
+            if (!Array.isArray(requests)) throw new Error("Lịch sử yêu cầu hủy trả về dữ liệu không hợp lệ.");
+            cancellationRequests = requests;
+            const latestRequest = cancellationRequests[0];
+            if (latestRequest) {
+                bookingData.cancellationRequestStatus = latestRequest.status;
+                bookingData.cancellationRequestNote = latestRequest.adminNote || "";
+                if (latestRequest.bookingStatus) bookingData.status = latestRequest.bookingStatus;
+                localStorage.setItem("bookingData", JSON.stringify(bookingData));
+                updateLocalBookingHistory(bookingData);
+            }
+            renderCancellationState(bookingData);
+        } catch (error) {
+            console.error("Không tải được lịch sử yêu cầu hủy:", error);
+            showCancellationStatus("Chưa tải được lịch sử yêu cầu hủy. Máy chủ sẽ kiểm tra khi bạn gửi yêu cầu.", "error");
+        }
+    }
+
+    function renderCancellationState(bookingData) {
+        const button = document.getElementById("cancel-booking-button");
+        const bookingStatus = String(bookingData.status || "").toUpperCase();
+        const latestRequest = cancellationRequests[0];
+
+        const bookingId = Number(bookingData.bookingId || bookingData.id);
+        if (!Number.isSafeInteger(bookingId) || bookingId <= 0) {
+            button.disabled = true;
+            button.textContent = "KHÔNG TÌM THẤY MÃ ĐƠN";
+            button.classList.add("opacity-60", "cursor-not-allowed");
+        } else if (bookingStatus === "CANCELLED") {
+            button.disabled = true;
+            button.textContent = "ĐƠN ĐÃ ĐƯỢC HỦY";
+            button.classList.add("opacity-60", "cursor-not-allowed");
+            showCancellationStatus("Đơn đặt sân đã được hủy chính thức.", "muted");
+        } else if (latestRequest && latestRequest.status === "PENDING") {
+            button.disabled = true;
+            button.textContent = "YÊU CẦU ĐANG CHỜ ADMIN DUYỆT";
+            button.classList.add("opacity-60", "cursor-not-allowed");
+            showCancellationStatus("Yêu cầu hủy đang chờ Admin xét duyệt. Bạn không thể gửi yêu cầu trùng lặp.", "pending");
+        } else {
+            button.disabled = false;
+            button.textContent = "HỦY ĐẶT LỊCH";
+            button.classList.remove("opacity-60", "cursor-not-allowed");
+            if (latestRequest && latestRequest.status === "REJECTED") {
+                showCancellationStatus(
+                    `Yêu cầu hủy trước đã bị từ chối${latestRequest.adminNote ? `: ${latestRequest.adminNote}` : "."} Bạn có thể gửi yêu cầu mới.`,
+                    "error"
+                );
+            } else {
+                document.getElementById("cancellation-request-status").classList.add("hidden");
+            }
+        }
+    }
+
+    function showCancellationStatus(message, state) {
+        const status = document.getElementById("cancellation-request-status");
+        status.textContent = message;
+        status.className = "text-center text-sm font-semibold";
+        if (state === "error") status.classList.add("text-red-200");
+        else if (state === "pending") status.classList.add("text-amber-200");
+        else status.classList.add("text-emerald-200");
+        status.classList.remove("hidden");
     }
 
     async function saveBookingToDatabase(bookingData) {
@@ -303,7 +434,7 @@
         };
 
         try {
-            const response = await fetch('http://localhost:8085/api/bookings', {
+            const response = await fetch(BOOKING_API, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -339,7 +470,8 @@
             courtSummary: bookingItem.courtSummary || bookingItem.courtDetail,
             totalHours: bookingItem.totalHours || "1h00",
             totalPrice: bookingItem.totalPrice || "0 đ",
-            status: bookingItem.status || "PENDING"
+            status: bookingItem.status || "PENDING",
+            cancellationRequestStatus: bookingItem.cancellationRequestStatus || null
         };
 
         const existingIndex = historyList.findIndex(item => (item.id || item.bookingId) == bookingId);
@@ -371,15 +503,84 @@
         document.getElementById("payment-info-modal").classList.add("hidden");
     }
 
-    function cancelBooking() {
-        if (confirm("Bạn có chắc chắn muốn hủy đơn đặt lịch này không?")) {
-            if (currentBookingData) {
-                currentBookingData.status = "CANCELLED";
-                localStorage.setItem("bookingData", JSON.stringify(currentBookingData));
-                updateLocalBookingHistory(currentBookingData);
+    function openCancellationModal() {
+        const modal = document.getElementById("cancellation-modal");
+        document.getElementById("cancellation-modal-error").classList.add("hidden");
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+    }
+
+    function closeCancellationModal() {
+        const modal = document.getElementById("cancellation-modal");
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    }
+
+    async function submitCancellationRequest() {
+        const bookingId = Number(currentBookingData?.bookingId || currentBookingData?.id);
+        const error = document.getElementById("cancellation-modal-error");
+        const button = document.getElementById("submit-cancellation-button");
+        if (!Number.isSafeInteger(bookingId) || bookingId <= 0) {
+            error.textContent = "Không tìm thấy mã đơn hợp lệ trong cơ sở dữ liệu. Vui lòng liên hệ Admin.";
+            error.classList.remove("hidden");
+            return;
+        }
+
+        button.disabled = true;
+        button.textContent = "ĐANG GỬI...";
+        error.classList.add("hidden");
+        try {
+            const response = await fetch(`${BOOKING_API}/${bookingId}/cancellation-requests`, {
+                method: "POST",
+                cache: "no-store",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("token") || ""}`
+                },
+                body: JSON.stringify({ reason: document.getElementById("cancellation-reason").value.trim() })
+            });
+            if (!response.ok) {
+                const body = await response.text();
+                let message = body;
+                try {
+                    const parsed = JSON.parse(body);
+                    message = parsed.message || parsed.detail || body;
+                } catch (_) {
+                    // The API may return a plain-text error.
+                }
+                if (response.status === 401) message = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                if (response.status === 403) message = "Bạn không có quyền hủy đơn đặt sân này.";
+                if (response.status === 404) message = "Không tìm thấy đơn đặt sân trong cơ sở dữ liệu.";
+                if (response.status === 409) message = message || "Đơn đã hủy hoặc đang có yêu cầu chờ duyệt.";
+                throw new Error(message || `Không gửi được yêu cầu (HTTP ${response.status}).`);
             }
-            alert("Đã gửi yêu cầu hủy lịch. Quản trị viên sẽ kiểm tra và xử lý.");
-            window.location.href = "userBooking.html";
+
+            const createdRequest = await response.json();
+            if (Number(createdRequest.bookingId) !== bookingId
+                    || !Number.isSafeInteger(Number(createdRequest.id))
+                    || createdRequest.status !== "PENDING") {
+                throw new Error("Máy chủ trả về xác nhận yêu cầu hủy không hợp lệ; chưa thể báo đã lưu.");
+            }
+
+            cancellationRequests = [
+                createdRequest,
+                ...cancellationRequests.filter(request => Number(request.id) !== Number(createdRequest.id))
+            ];
+            currentBookingData.cancellationRequestStatus = createdRequest.status;
+            localStorage.setItem("bookingData", JSON.stringify(currentBookingData));
+            renderCancellationState(currentBookingData);
+            updateLocalBookingHistory({
+                ...currentBookingData,
+                cancellationRequestStatus: createdRequest.status
+            });
+            closeCancellationModal();
+            alert("Đã gửi và lưu yêu cầu hủy. Admin sẽ xét duyệt yêu cầu.");
+        } catch (requestError) {
+            error.textContent = requestError.message || "Lỗi kết nối. Vui lòng thử lại.";
+            error.classList.remove("hidden");
+        } finally {
+            button.disabled = false;
+            button.textContent = "Xác nhận yêu cầu";
         }
     }
 </script>

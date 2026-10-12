@@ -2,10 +2,14 @@ package org.example.userservice.controller;
 
 import org.example.userservice.dto.AuthRequest;
 import org.example.userservice.dto.AdminUserDTO;
+import org.example.userservice.dto.AuthenticatedUserDTO;
 import org.example.userservice.entity.User;
 import org.example.userservice.repository.UserRepository;
+import org.example.userservice.security.JwtUtil;
 import org.example.userservice.service.UserService;
 
+import io.jsonwebtoken.JwtException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -24,23 +29,50 @@ public class UserController {
     private final UserService userService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
 
     public UserController(
             UserService userService,
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            JwtUtil jwtUtil
     ) {
 
         this.userService = userService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
 
     // =========================================================
     // ĐĂNG KÝ
     // =========================================================
+
+    @GetMapping("/auth/identity")
+    public ResponseEntity<?> getAuthenticatedIdentity(
+            @RequestHeader(value = "Authorization", required = false) String authorization
+    ) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Vui lòng đăng nhập"));
+        }
+
+        try {
+            String email = jwtUtil.extractEmail(authorization.substring(7).trim());
+            User user = userRepository.findByEmail(email).orElse(null);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "Tài khoản không tồn tại"));
+            }
+            return ResponseEntity.ok(new AuthenticatedUserDTO(
+                    user.getId(), user.getEmail(), user.getRole(), user.getName()));
+        } catch (JwtException | IllegalArgumentException exception) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Phiên đăng nhập không hợp lệ hoặc đã hết hạn"));
+        }
+    }
 
     @PostMapping("/auth/register")
     public ResponseEntity<?> register(
@@ -490,8 +522,13 @@ public class UserController {
     // =========================================================
 
     @GetMapping("/admin/users")
-    public ResponseEntity<List<AdminUserDTO>>
-    getAllUsers() {
+    public ResponseEntity<?> getAllUsers(
+            @RequestHeader(value = "Authorization", required = false) String authorization
+    ) {
+        ResponseEntity<?> authorizationError = verifyAdminAuthorization(authorization);
+        if (authorizationError != null) {
+            return authorizationError;
+        }
 
         return ResponseEntity.ok(
                 userRepository.findAll().stream()
@@ -507,7 +544,15 @@ public class UserController {
     }
 
     @GetMapping("/admin/users/{id}")
-    public ResponseEntity<AdminUserDTO> getUserById(@PathVariable Long id) {
+    public ResponseEntity<?> getUserById(
+            @PathVariable Long id,
+            @RequestHeader(value = "Authorization", required = false) String authorization
+    ) {
+        ResponseEntity<?> authorizationError = verifyAdminAuthorization(authorization);
+        if (authorizationError != null) {
+            return authorizationError;
+        }
+
         return userRepository.findById(id)
                 .map(user -> ResponseEntity.ok(new AdminUserDTO(
                         user.getId(),
@@ -526,21 +571,20 @@ public class UserController {
 
     @PostMapping("/admin/users")
     public ResponseEntity<?> createUserByAdmin(
-            @RequestBody AuthRequest request
+            @RequestBody AuthRequest request,
+            @RequestHeader(value = "Authorization", required = false) String authorization
     ) {
+        ResponseEntity<?> authorizationError = verifyAdminAuthorization(authorization);
+        if (authorizationError != null) {
+            return authorizationError;
+        }
 
         try {
-
-            String message =
-                    userService.register(request);
-
-
-            return ResponseEntity.ok(
-                    Collections.singletonMap(
-                            "message",
-                            message
-                    )
-            );
+            User createdUser = userService.register(request, request.getRole());
+            return ResponseEntity.ok(Map.of(
+                    "message", "Tạo tài khoản thành công",
+                    "role", createdUser.getRole()
+            ));
 
         } catch (Exception e) {
 
@@ -563,8 +607,13 @@ public class UserController {
     @PutMapping("/admin/users/{id}/role")
     public ResponseEntity<?> updateUserRole(
             @PathVariable Long id,
-            @RequestBody Map<String, String> request
+            @RequestBody Map<String, String> request,
+            @RequestHeader(value = "Authorization", required = false) String authorization
     ) {
+        ResponseEntity<?> authorizationError = verifyAdminAuthorization(authorization);
+        if (authorizationError != null) {
+            return authorizationError;
+        }
 
         try {
 
@@ -581,41 +630,17 @@ public class UserController {
                             );
 
 
-            String newRole =
-                    request.get("role");
-
-
-            if (
-                    newRole != null
-            ) {
-
-                user.setRole(
-                        newRole.toUpperCase()
-                );
-
-
-                userRepository.save(
-                        user
-                );
-
-
-                return ResponseEntity.ok(
-                        Collections.singletonMap(
-                                "message",
-                                "Cập nhật quyền thành công!"
-                        )
-                );
+            String newRole = request.get("role");
+            if (newRole == null || newRole.isBlank()) {
+                return ResponseEntity.badRequest()
+                        .body(Collections.singletonMap("error", "Thiếu thông tin role!"));
             }
 
-
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-                            Collections.singletonMap(
-                                    "error",
-                                    "Thiếu thông tin role!"
-                            )
-                    );
+            user.setRole(normalizeRole(newRole));
+            userRepository.save(user);
+            return ResponseEntity.ok(Collections.singletonMap(
+                    "message", "Cập nhật quyền thành công!"
+            ));
 
         } catch (Exception e) {
 
@@ -637,8 +662,13 @@ public class UserController {
 
     @DeleteMapping("/admin/users/{id}")
     public ResponseEntity<?> deleteUser(
-            @PathVariable Long id
+            @PathVariable Long id,
+            @RequestHeader(value = "Authorization", required = false) String authorization
     ) {
+        ResponseEntity<?> authorizationError = verifyAdminAuthorization(authorization);
+        if (authorizationError != null) {
+            return authorizationError;
+        }
 
         try {
 
@@ -680,5 +710,46 @@ public class UserController {
                             )
                     );
         }
+    }
+
+    private ResponseEntity<?> verifyAdminAuthorization(String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(Map.of("message", "Vui lòng đăng nhập bằng tài khoản Admin"));
+        }
+
+        try {
+                    String email = jwtUtil.extractEmail(authorization.substring(7).trim());
+                    User user = userRepository.findByEmail(email).orElse(null);
+                    if (user == null) {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                .body(Map.of("message", "Tài khoản không tồn tại"));
+                    }
+                    if (!isAdminRole(user.getRole())) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                .body(Map.of("message", "Tài khoản không có quyền Admin"));
+                    }
+                    return null;
+        } catch (JwtException | IllegalArgumentException exception) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(Map.of("message", "Phiên đăng nhập không hợp lệ hoặc đã hết hạn"));
+        }
+    }
+
+    private String normalizeRole(String role) {
+        String normalizedRole = role.trim().toUpperCase(Locale.ROOT);
+        if (normalizedRole.startsWith("ROLE_")) {
+                    normalizedRole = normalizedRole.substring("ROLE_".length());
+        }
+        if (!normalizedRole.equals("USER") && !normalizedRole.equals("ADMIN")) {
+                    throw new IllegalArgumentException("Vai trò chỉ được là USER hoặc ADMIN");
+        }
+        return "ROLE_" + normalizedRole;
+    }
+
+    private boolean isAdminRole(String role) {
+        return role != null && "ADMIN".equals(
+                        role.trim().toUpperCase(Locale.ROOT).replaceFirst("^ROLE_", "")
+        );
     }
 }

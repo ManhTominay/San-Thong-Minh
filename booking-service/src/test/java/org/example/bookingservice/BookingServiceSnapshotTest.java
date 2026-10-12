@@ -4,6 +4,7 @@ import org.example.bookingservice.dto.BookingResponseDTO;
 import org.example.bookingservice.entity.Booking;
 import org.example.bookingservice.repository.BookingRepository;
 import org.example.bookingservice.repository.FieldRepository;
+import org.example.bookingservice.repository.StadiumRecordRepository;
 import org.example.bookingservice.service.BookingService;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.RestTemplate;
@@ -23,13 +24,14 @@ class BookingServiceSnapshotTest {
     void getAllBookingsReturnsStoredSnapshotsWithoutCallingOtherServices() {
         BookingRepository bookingRepository = mock(BookingRepository.class);
         FieldRepository fieldRepository = mock(FieldRepository.class);
+        StadiumRecordRepository stadiumRepository = mock(StadiumRecordRepository.class);
         RestTemplate restTemplate = new RestTemplate() {
             @Override
             public <T> T getForObject(String url, Class<T> responseType, Object... uriVariables) {
                 throw new AssertionError("Reading bookings must not call dependent services");
             }
         };
-        BookingService bookingService = new BookingService(bookingRepository, fieldRepository, restTemplate);
+        BookingService bookingService = new BookingService(bookingRepository, fieldRepository, stadiumRepository);
 
         Booking booking = new Booking();
         booking.setId(12L);
@@ -63,5 +65,6 @@ class BookingServiceSnapshotTest {
         assertEquals(150_000.0, response.totalPrice());
         assertEquals("CONFIRMED", response.status());
         verifyNoInteractions(fieldRepository);
+        verifyNoInteractions(stadiumRepository);
     }
 }

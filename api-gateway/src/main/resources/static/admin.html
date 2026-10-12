@@ -102,6 +102,12 @@
 
                 </a>
 
+                <a href="admin-cancellation.html"
+                   class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-emerald-200 hover:bg-emerald-800 hover:text-white transition">
+                    <i class="fa-solid fa-calendar-xmark w-5"></i>
+                    <span>Quản lý Hủy đơn</span>
+                </a>
+
                 <a href="javascript:void(0)"
                    onclick="switchTab('reports')"
                    id="nav-reports"
@@ -719,7 +725,7 @@
                                 <th class="p-3">Ngày đặt</th>
                                 <th class="p-3">Khung giờ</th>
                                 <th class="p-3">Tổng tiền</th>
-                                <th class="p-3">Trạng thái</th>
+                                <th class="p-3">Trạng thái / Chứng từ</th>
                                 <th class="p-3 text-center">Cập nhật</th>
                             </tr>
                             </thead>
@@ -1185,6 +1191,27 @@
 
 </div>
 
+<div id="payment-proof-modal"
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="payment-proof-title"
+     onclick="if (event.target === this) closePaymentProofModal()">
+    <div class="w-full max-w-2xl rounded-xl bg-white p-5 shadow-2xl">
+        <div class="mb-4 flex items-center justify-between border-b pb-3">
+            <div>
+                <h2 id="payment-proof-title" class="font-bold text-gray-800">Chứng từ thanh toán</h2>
+                <p id="payment-proof-booking" class="mt-1 text-sm text-gray-500"></p>
+            </div>
+            <button type="button"
+                    onclick="closePaymentProofModal()"
+                    class="rounded px-3 py-1 text-gray-500 hover:bg-gray-100"
+                    aria-label="Đóng ảnh chứng từ">&times;</button>
+        </div>
+        <p id="payment-proof-message" class="py-8 text-center text-sm text-gray-500" role="status"></p>
+        <img id="payment-proof-image" class="mx-auto hidden max-h-[70vh] max-w-full rounded object-contain" alt="Ảnh chứng từ thanh toán">
+    </div>
+</div>
 
 <script>
 
@@ -1197,6 +1224,23 @@
     const USER_API = "/api/admin/users";
 
     const BOOKING_API = "/api/bookings";
+
+    const PAYMENT_API = "/api/payments";
+
+    function adminUserAuthHeaders(json = false) {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            throw new Error("Phiên đăng nhập không có token. Vui lòng đăng nhập lại.");
+        }
+
+        const headers = {
+            "Authorization": `Bearer ${token}`
+        };
+        if (json) {
+            headers["Content-Type"] = "application/json";
+        }
+        return headers;
+    }
 
 
     // =========================================================
@@ -1231,7 +1275,12 @@
                 userEmail;
 
 
-            loadAdminStadiums();
+            const requestedTab = window.location.hash.slice(1);
+            if (["users", "bookings", "reports"].includes(requestedTab)) {
+                switchTab(requestedTab);
+            } else {
+                loadAdminStadiums();
+            }
 
         }
     );
@@ -1766,9 +1815,18 @@
                     <td class="p-3 whitespace-nowrap">${startTime} - ${endTime}</td>
                     <td class="p-3 whitespace-nowrap">${formattedPrice}</td>
                     <td class="p-3">
+                        <div class="flex flex-wrap items-center gap-2">
                         <span class="px-2 py-1 rounded-full font-semibold ${statusClasses[status] || "bg-blue-100 text-blue-700"}">
                             ${escapeHtml(statusLabels[status] || status)}
                         </span>
+                        <button type="button"
+                                onclick="viewPaymentProof(${Number(booking.id)})"
+                                class="inline-flex items-center gap-1 rounded bg-indigo-50 px-2 py-1 text-indigo-700 hover:bg-indigo-100"
+                                aria-label="Xem mã QR/chứng từ thanh toán đơn ${escapeHtml(booking.id)}">
+                            <i class="fa-solid fa-qrcode"></i>
+                            Xem mã QR
+                        </button>
+                        </div>
                     </td>
                     <td class="p-3 text-center">
                         <select aria-label="Trạng thái đơn ${escapeHtml(booking.id)}"
@@ -1777,13 +1835,70 @@
                                 ${status === "CANCELLED" ? "disabled" : ""}>
                             <option value="PENDING" ${selectedStatus === "PENDING" ? "selected" : ""}>Chờ xác nhận</option>
                             <option value="CONFIRMED" ${selectedStatus === "CONFIRMED" ? "selected" : ""}>Đã xác nhận</option>
-                            <option value="CANCELLED" ${status === "CANCELLED" ? "selected" : ""}>Đã hủy</option>
+                            <option value="CANCELLED" ${status === "CANCELLED" ? "selected" : ""} disabled>Đã hủy</option>
                         </select>
                     </td>
                 </tr>
             `;
         }).join("");
 
+    }
+
+    async function viewPaymentProof(bookingId) {
+        const modal = document.getElementById("payment-proof-modal");
+        const image = document.getElementById("payment-proof-image");
+        const message = document.getElementById("payment-proof-message");
+
+        document.getElementById("payment-proof-booking").textContent = `Đơn #${bookingId}`;
+        image.removeAttribute("src");
+        image.classList.add("hidden");
+        message.textContent = "Đang tải ảnh từ dữ liệu thanh toán...";
+        message.classList.remove("hidden");
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+
+        try {
+            const token = localStorage.getItem("token") || localStorage.getItem("userToken") || "";
+            const response = await fetch(`${PAYMENT_API}/booking/${encodeURIComponent(bookingId)}`, {
+                cache: "no-store",
+                headers: token ? { "Authorization": `Bearer ${token}` } : {}
+            });
+            if (response.status === 404) {
+                throw new Error("Đơn này chưa có dữ liệu thanh toán trong CSDL.");
+            }
+            if (!response.ok) {
+                throw new Error(await readError(response));
+            }
+
+            const payment = await response.json();
+            const proof = payment.paymentProof;
+            if (typeof proof !== "string" || !proof.startsWith("data:image/")) {
+                throw new Error("Giao dịch chưa có ảnh chứng từ hợp lệ trong payment_proof.");
+            }
+
+            image.onload = () => {
+                message.classList.add("hidden");
+                image.classList.remove("hidden");
+            };
+            image.onerror = () => {
+                image.classList.add("hidden");
+                message.textContent = "Không thể hiển thị ảnh chứng từ đã lưu.";
+                message.classList.remove("hidden");
+            };
+            image.src = proof;
+        } catch (error) {
+            console.error(`Không tải được chứng từ thanh toán đơn #${bookingId}:`, error);
+            message.textContent = error.message || "Không tải được ảnh chứng từ thanh toán.";
+            message.classList.remove("hidden");
+        }
+    }
+
+    function closePaymentProofModal() {
+        const modal = document.getElementById("payment-proof-modal");
+        const image = document.getElementById("payment-proof-image");
+        image.removeAttribute("src");
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
     }
 
 
@@ -1798,7 +1913,10 @@
 
             const response = await fetch(`${BOOKING_API}/${bookingId}/status`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("token") || ""}`
+                },
                 body: JSON.stringify({ status })
             });
 
@@ -2711,15 +2829,15 @@
         try {
 
             const response =
-                await fetch(USER_API);
+                await fetch(USER_API, {
+                    headers: adminUserAuthHeaders()
+                });
 
 
             if (!response.ok) {
 
                 throw new Error(
-                    "HTTP "
-                    +
-                    response.status
+                    await readError(response)
                 );
 
             }
@@ -2879,7 +2997,8 @@
                     <td colspan="4"
                         class="p-4 text-center text-red-500">
 
-                        Không thể tải dữ liệu tài khoản.
+                        Không thể tải dữ liệu tài khoản:
+                        ${escapeHtml(error.message)}
 
                     </td>
 
@@ -2930,10 +3049,7 @@
 
                         method: "PUT",
 
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
+                        headers: adminUserAuthHeaders(true),
 
                         body:
                             JSON.stringify({
@@ -2997,7 +3113,8 @@
                 await fetch(
                     `${USER_API}/${userId}`,
                     {
-                        method: "DELETE"
+                        method: "DELETE",
+                        headers: adminUserAuthHeaders()
                     }
                 );
 
@@ -3126,10 +3243,7 @@
 
                         method: "POST",
 
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
+                        headers: adminUserAuthHeaders(true),
 
                         body:
                             JSON.stringify({
@@ -3156,6 +3270,13 @@
 
             }
 
+            const createdUser = await response.json();
+            const expectedRole = role === "ADMIN" ? "ROLE_ADMIN" : "ROLE_USER";
+            if (createdUser.role !== expectedRole) {
+                throw new Error(
+                    `Backend đã lưu role ${createdUser.role || "không xác định"}, mong đợi ${expectedRole}.`
+                );
+            }
 
             alert(
                 "Thêm tài khoản thành công!"

@@ -7,10 +7,6 @@ function bookingMatchesSport(booking, sport, stadiumId, stadiumName) {
         Number(booking.stadiumId) !== Number(stadiumId)) {
         return false;
     }
-    const bookingName = normalize(booking.stadiumName).replace(/[^a-z0-9]/g, "");
-    const expectedName = normalize(stadiumName).replace(/[^a-z0-9]/g, "");
-    if (bookingName && expectedName && bookingName !== expectedName) return false;
-
     const summary = normalize(booking.courtSummary || booking.courtDetail);
     const expectedSport = normalize(sport);
     const sportPatterns = {
@@ -26,11 +22,72 @@ function bookingMatchesSport(booking, sport, stadiumId, stadiumName) {
     return !detectedKey || !expectedKey || detectedKey === expectedKey;
 }
 
+function markGridBookingRange(bookedSlots, timeSlots, courtId, startTime, endTime) {
+    const toMinutes = value => {
+        const match = String(value || "").match(/^(\d{1,2}):(\d{2})/);
+        return match ? Number(match[1]) * 60 + Number(match[2]) : null;
+    };
+    const bookingStart = toMinutes(startTime);
+    const bookingEnd = toMinutes(endTime);
+    if (bookingStart === null || bookingEnd === null || bookingEnd <= bookingStart) return;
+
+    timeSlots.forEach((slot, index) => {
+        const slotStart = toMinutes(slot);
+        if (slotStart === null) return;
+        const nextSlotStart = index + 1 < timeSlots.length
+            ? toMinutes(timeSlots[index + 1])
+            : null;
+        const slotEnd = nextSlotStart !== null && nextSlotStart > slotStart
+            ? nextSlotStart
+            : slotStart + 30;
+
+        if (slotStart < bookingEnd && slotEnd > bookingStart) {
+            bookedSlots.add(`${courtId}_${slot}`);
+        }
+    });
+}
+
 async function saveBookingRecord(bookingPayload) {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        throw new Error("Vui lòng đăng nhập lại trước khi đặt sân.");
+    }
+
+    const stadiumId = Number(bookingPayload.stadiumId);
+    const requestedFieldId = Number(bookingPayload.fieldId);
+    if (!Number.isSafeInteger(stadiumId) || stadiumId <= 0 ||
+        !Number.isSafeInteger(requestedFieldId) || requestedFieldId <= 0) {
+        throw new Error("Thông tin sân đặt không hợp lệ.");
+    }
+
+    const gridUrl = new URL("/api/bookings/grid", window.location.origin);
+    gridUrl.searchParams.set("stadiumId", String(stadiumId));
+    gridUrl.searchParams.set("date", bookingPayload.bookingDate);
+    const gridResponse = await fetch(gridUrl);
+    if (!gridResponse.ok) {
+        throw new Error(`Không xác định được sân con để đặt (HTTP ${gridResponse.status}).`);
+    }
+    const courts = await gridResponse.json();
+    if (!Array.isArray(courts)) {
+        throw new Error("Dữ liệu sân con từ Booking Service không hợp lệ.");
+    }
+    const requestedCourt = courts.find(court => Number(court.courtId) === requestedFieldId);
+    const resolvedFieldId = requestedCourt
+        ? Number(requestedCourt.courtId)
+        : courts.length > 0
+            ? Number(courts[0].courtId)
+            : requestedFieldId;
+    if (!Number.isSafeInteger(resolvedFieldId) || resolvedFieldId <= 0) {
+        throw new Error("Booking Service không trả về mã sân con hợp lệ.");
+    }
+
     const response = await fetch("/api/bookings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bookingPayload)
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ ...bookingPayload, fieldId: resolvedFieldId })
     });
 
     const responseText = await response.text();

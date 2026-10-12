@@ -95,12 +95,13 @@
 
 <script>
     const BASE_BOOKING_API = "/api/bookings";
-    const BASE_FIELD_API = "http://localhost:8085/api/fields";
+    const BASE_FIELD_API = "/api/fields";
 
     let timeSlots = [];
     const courtsList = ['Sân 1', 'Sân 2', 'Sân 3', 'Sân 4', 'Sân 5'];
     const selectedSlots = new Set();
     let bookedSlots = new Set();
+    let bookingsLoaded = false;
     let currentStadiumId = '1';
 
     let currentStadiumInfo = {
@@ -115,11 +116,18 @@
         const selectedDate = urlParams.get('date') || getLocalDateIso();
         document.getElementById('booking-date').value = selectedDate;
         updateDisplayDate(selectedDate);
+        currentStadiumInfo.name = urlParams.get('name') || currentStadiumInfo.name;
+        currentStadiumInfo.address = urlParams.get('address') || currentStadiumInfo.address;
 
         await fetchStadiumDetails();
         initSportConfig();
         renderHeader();
-        await fetchBookedSlotsFromBackend();
+        try {
+            await fetchBookedSlotsFromBackend();
+        } catch (error) {
+            console.error("Không thể tải lịch Bóng đá:", error);
+            alert("Không thể tải lịch đặt sân từ CSDL. Vui lòng thử tải lại trang.");
+        }
         renderGrid();
     });
 
@@ -163,66 +171,47 @@
     // 🔴 HÀM TẢI ĐƠN ĐÃ ĐẶT VÀ ĐÁNH DẤU Ô ĐỎ CHUẨN XÁC
     async function fetchBookedSlotsFromBackend() {
         bookedSlots.clear();
+        bookingsLoaded = false;
         const dateVal = document.getElementById('booking-date').value;
-        try {
-            const res = await fetch(`${BASE_BOOKING_API}?bookingDate=${dateVal}&stadiumId=${encodeURIComponent(currentStadiumId)}`);
-            if (res.ok) {
-                const data = await res.json();
-                console.log("👉 Dữ liệu lịch đặt CSDL 8085:", data);
+        const res = await fetch(`${BASE_BOOKING_API}?bookingDate=${dateVal}&stadiumId=${encodeURIComponent(currentStadiumId)}`);
+        if (!res.ok) throw new Error(`Không tải được lịch Bóng đá (${res.status})`);
+        const data = await res.json();
+        if (!Array.isArray(data)) throw new Error("Dữ liệu lịch Bóng đá không hợp lệ");
+        console.log("👉 Dữ liệu lịch đặt CSDL:", data);
 
-                if (Array.isArray(data)) {
-                    data.forEach(b => {
-                        const statusUpper = (b.status || '').toUpperCase();
-                        // Bỏ qua các đơn đã bị hủy
-                        if (statusUpper !== 'CANCELLED' && statusUpper !== 'ĐÃ HỦY' &&
-                            bookingMatchesSport(b, "football", currentStadiumId, currentStadiumInfo.name)) {
+        data.forEach(b => {
+            const statusUpper = (b.status || '').toUpperCase();
+            if (statusUpper !== 'CANCELLED' && statusUpper !== 'ĐÃ HỦY' &&
+                bookingMatchesSport(b, "football", currentStadiumId, currentStadiumInfo.name)) {
 
-                            const summary = b.courtSummary || "";
-                            const courtParts = summary.split('|');
+                const summary = b.courtSummary || "";
+                const courtParts = summary.split('|');
 
-                            if (courtParts.length > 0 && summary.includes('Sân')) {
-                                courtParts.forEach(courtInfo => {
-                                    // Bóc tách Sân con (1, 2, 3, 4, 5)
-                                    const matchCourt = courtInfo.match(/Sân\s*(\d+)/i);
-                                    const courtNumber = matchCourt ? matchCourt[1] : '1';
+                if (courtParts.length > 0 && summary.includes('Sân')) {
+                    courtParts.forEach(courtInfo => {
+                        const matchCourt = courtInfo.match(/Sân\s*(\d+)/i);
+                        const courtNumber = matchCourt ? matchCourt[1] : '1';
 
-                                    // Lấy khung giờ từ chuỗi (Ví dụ "09h00 - 10h45")
-                                    const timeMatch = courtInfo.match(/(\d{2})h(\d{2})\s*-\s*(\d{2})h(\d{2})/);
-                                    if (timeMatch) {
-                                        const sTime = `${timeMatch[1]}:${timeMatch[2]}`;
-                                        const eTime = `${timeMatch[3]}:${timeMatch[4]}`;
-                                        markRange(courtNumber, sTime, eTime);
-                                    } else {
-                                        markRange(courtNumber, b.startTime, b.endTime);
-                                    }
-                                });
-                            } else {
-                                markRange('1', b.startTime, b.endTime);
-                            }
+                        const timeMatch = courtInfo.match(/(\d{2})h(\d{2})\s*-\s*(\d{2})h(\d{2})/);
+                        if (timeMatch) {
+                            const sTime = `${timeMatch[1]}:${timeMatch[2]}`;
+                            const eTime = `${timeMatch[3]}:${timeMatch[4]}`;
+                            markRange(courtNumber, sTime, eTime);
+                        } else {
+                            markRange(courtNumber, b.startTime, b.endTime);
                         }
                     });
+                } else {
+                    markRange('1', b.startTime, b.endTime);
                 }
             }
-        } catch (e) { console.error("Lỗi lấy dữ liệu CSDL 8085:", e); }
+        });
+        bookingsLoaded = true;
     }
 
     // 🔴 HÀM CHUYỂN CÁC Ô TRONG KHUNG GIỜ SANG MÀU ĐỎ
     function markRange(courtId, startStr, endStr) {
-        if (!startStr || !endStr) return;
-
-        const s = startStr.substring(0, 5).replace('h', ':');
-        const e = endStr.substring(0, 5).replace('h', ':');
-
-        let inRange = false;
-        timeSlots.forEach(slot => {
-            if (slot === s) inRange = true;
-            if (slot === e) inRange = false;
-
-            if (inRange) {
-                const key = `${courtId}_${slot}`;
-                bookedSlots.add(key);
-            }
-        });
+        markGridBookingRange(bookedSlots, timeSlots, courtId, startStr, endStr);
     }
 
     function renderHeader() {
@@ -239,6 +228,14 @@
     function renderGrid() {
         const tbody = document.getElementById('grid-body');
         tbody.innerHTML = '';
+        if (!bookingsLoaded) {
+            const row = tbody.insertRow();
+            const cell = row.insertCell();
+            cell.colSpan = timeSlots.length + 1;
+            cell.className = "p-6 text-center text-red-600";
+            cell.textContent = "Không thể xác định lịch đặt từ CSDL. Vui lòng thử tải lại trang.";
+            return;
+        }
         courtsList.forEach((cName, idx) => {
             const cId = idx + 1;
             const tr = document.createElement('tr');
@@ -345,7 +342,6 @@
             const dateVal = document.getElementById('booking-date').value;
 
             const payload = {
-                userId: parseInt(localStorage.getItem("userId") || "7", 10),
                 fieldId: parseInt(currentStadiumId, 10),
                 stadiumId: parseInt(currentStadiumId, 10),
                 stadiumName: currentStadiumInfo.name,
@@ -393,7 +389,12 @@
         if (!val) return;
         updateDisplayDate(val);
         selectedSlots.clear();
-        await fetchBookedSlotsFromBackend();
+        try {
+            await fetchBookedSlotsFromBackend();
+        } catch (error) {
+            console.error("Không thể tải lịch Bóng đá:", error);
+            alert("Không thể tải lịch đặt sân Bóng đá. Vui lòng thử lại.");
+        }
         renderGrid();
         updateTotal();
     }
@@ -496,7 +497,6 @@
     async function saveBookingToBackend(bookingData, startTime, endTime) {
         const rawPrice = bookingData.totalPrice ? bookingData.totalPrice.replace(/[^0-9]/g, '') : '0';
         const payload = {
-            userId: parseInt(localStorage.getItem("userId") || "7", 10),
             fieldId: parseInt(currentStadiumId, 10),
             stadiumId: parseInt(currentStadiumId, 10),
             stadiumName: currentStadiumInfo.name,

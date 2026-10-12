@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý yêu cầu hủy - Smart Stadium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="min-h-screen bg-gray-100 font-sans text-gray-800">
+<div class="flex min-h-screen">
+    <aside class="hidden w-64 shrink-0 flex-col justify-between bg-emerald-900 text-white md:flex">
+        <div>
+            <a href="admin.html" class="flex items-center gap-3 border-b border-emerald-800 p-5 text-xl font-bold">
+                <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+                <span>Smart Stadium Admin</span>
+            </a>
+            <nav class="space-y-2 p-4" aria-label="Menu quản trị">
+                <a href="admin.html#stadiums"
+                   class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-emerald-200 transition hover:bg-emerald-800 hover:text-white">
+                    <i class="fa-solid fa-futbol w-5"></i>
+                    <span>Quản lý Sân thể thao</span>
+                </a>
+                <a href="admin.html#users"
+                   class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-emerald-200 transition hover:bg-emerald-800 hover:text-white">
+                    <i class="fa-solid fa-users w-5"></i>
+                    <span>Quản lý Tài khoản</span>
+                </a>
+                <a href="admin.html#bookings"
+                   class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-emerald-200 transition hover:bg-emerald-800 hover:text-white">
+                    <i class="fa-solid fa-calendar-check w-5"></i>
+                    <span>Quản lý Đặt sân</span>
+                </a>
+                <a href="admin-cancellation.html" aria-current="page"
+                   class="flex items-center gap-3 rounded-lg bg-emerald-800 px-4 py-2.5 font-medium text-white transition">
+                    <i class="fa-solid fa-calendar-xmark w-5"></i>
+                    <span>Quản lý Hủy đơn</span>
+                </a>
+                <a href="admin.html#reports"
+                   class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-emerald-200 transition hover:bg-emerald-800 hover:text-white">
+                    <i class="fa-solid fa-chart-column w-5"></i>
+                    <span>Báo cáo thống kê</span>
+                </a>
+            </nav>
+        </div>
+        <div class="border-t border-emerald-800 p-4">
+            <button onclick="handleLogout()"
+                    class="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-600 py-2 text-sm font-medium text-white transition hover:bg-rose-700">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Đăng xuất</span>
+            </button>
+        </div>
+    </aside>
+
+    <div class="flex min-w-0 flex-1 flex-col">
+        <header class="bg-white shadow-sm">
+            <div class="flex min-h-16 items-center justify-between px-4 py-3 md:px-6">
+                <div>
+                    <h1 class="text-lg font-bold text-gray-800">
+                        <i class="fa-solid fa-calendar-xmark mr-2 text-emerald-700"></i>Quản lý Hủy đơn
+                    </h1>
+                    <p class="mt-1 text-xs text-gray-500">Xét duyệt và tra cứu yêu cầu hủy đặt sân</p>
+                </div>
+                <span id="admin-email" class="hidden text-sm font-medium text-gray-600 sm:block">Admin</span>
+            </div>
+            <nav class="flex gap-2 overflow-x-auto border-t border-gray-100 px-3 py-2 md:hidden" aria-label="Menu quản trị">
+                <a href="admin.html#stadiums" class="shrink-0 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-emerald-50">Sân</a>
+                <a href="admin.html#users" class="shrink-0 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-emerald-50">Tài khoản</a>
+                <a href="admin.html#bookings" class="shrink-0 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-emerald-50">Đặt sân</a>
+                <a href="admin-cancellation.html" aria-current="page" class="shrink-0 rounded-lg bg-emerald-100 px-3 py-2 text-sm font-semibold text-emerald-900">Hủy đơn</a>
+                <a href="admin.html#reports" class="shrink-0 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-emerald-50">Báo cáo</a>
+                <button onclick="handleLogout()" class="shrink-0 rounded-lg px-3 py-2 text-sm text-rose-700 hover:bg-rose-50">Đăng xuất</button>
+            </nav>
+        </header>
+
+<main class="mx-auto w-full max-w-7xl flex-1 space-y-5 p-4 md:p-6">
+    <section class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div class="flex flex-col gap-3 md:flex-row md:items-end">
+            <label class="text-sm font-semibold text-gray-700">
+                Trạng thái yêu cầu
+                <select id="status-filter" class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 font-normal">
+                    <option value="PENDING" selected>Đang chờ xử lý</option>
+                    <option value="">Tất cả yêu cầu</option>
+                    <option value="APPROVED">Đã đồng ý</option>
+                    <option value="REJECTED">Đã từ chối</option>
+                </select>
+            </label>
+            <label class="flex-1 text-sm font-semibold text-gray-700">
+                Tìm mã đơn, tên hoặc email người đặt
+                <input id="search-input" type="search" placeholder="Nhập từ khóa..."
+                       class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 font-normal">
+            </label>
+            <button id="refresh-button" onclick="loadRequests()"
+                    class="rounded-lg bg-emerald-600 px-4 py-2.5 font-semibold text-white hover:bg-emerald-700">
+                <i class="fa-solid fa-rotate mr-1"></i>Tải lại
+            </button>
+        </div>
+        <p id="page-message" class="mt-3 hidden rounded-lg px-3 py-2 text-sm" role="status"></p>
+    </section>
+
+    <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div class="flex items-center justify-between border-b px-4 py-3">
+            <h2 class="font-bold text-emerald-950">Danh sách yêu cầu hủy</h2>
+            <span id="result-count" class="text-sm text-gray-500"></span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-[1500px] w-full text-left text-sm">
+                <thead class="bg-emerald-50 text-xs uppercase text-emerald-950">
+                <tr>
+                    <th class="p-3">Yêu cầu / Đơn</th>
+                    <th class="p-3">Người đặt</th>
+                    <th class="p-3">Sân / Lịch</th>
+                    <th class="p-3">Tổng tiền</th>
+                    <th class="p-3">Thanh toán</th>
+                    <th class="p-3">Lý do / Ghi chú Admin</th>
+                    <th class="p-3">Gửi lúc</th>
+                    <th class="p-3">Trạng thái</th>
+                    <th class="p-3">Thao tác</th>
+                </tr>
+                </thead>
+                <tbody id="request-table">
+                <tr><td colspan="9" class="p-8 text-center text-gray-500">Đang tải dữ liệu...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+</div>
+</div>
+
+<div id="detail-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true">
+    <div class="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl">
+        <div class="flex items-center justify-between border-b pb-3">
+            <h2 class="font-bold text-emerald-950">Chi tiết yêu cầu hủy</h2>
+            <button onclick="closeDetails()" class="rounded p-2 text-gray-500 hover:bg-gray-100" aria-label="Đóng">&times;</button>
+        </div>
+        <div id="detail-content" class="mt-4 space-y-2 text-sm"></div>
+        <button onclick="closeDetails()" class="mt-5 w-full rounded-lg bg-emerald-700 py-2 font-semibold text-white hover:bg-emerald-800">Đóng</button>
+    </div>
+</div>
+
+<script>
+    const API = "/api/bookings/admin/cancellation-requests";
+    let requests = [];
+    const paymentStatuses = new Map();
+    let verifiedIdentity = null;
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        document.getElementById("admin-email").textContent =
+            localStorage.getItem("userEmail") || "Admin";
+        document.getElementById("status-filter").addEventListener("change", loadRequests);
+        document.getElementById("search-input").addEventListener("input", renderRequests);
+        try {
+            verifiedIdentity = await verifyAdminIdentity();
+            showMessage(
+                `User Service xác minh: ${verifiedIdentity.email} — role ${verifiedIdentity.role}.`,
+                "success"
+            );
+            await loadRequests();
+        } catch (error) {
+            showMessage(error.message, "error");
+            document.getElementById("request-table").innerHTML =
+                `<tr><td colspan="9" class="p-8 text-center text-red-600">${escapeHtml(error.message)}</td></tr>`;
+        }
+    });
+
+    function authHeaders(json = false) {
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("Phiên đăng nhập không tồn tại. Vui lòng đăng nhập lại.");
+        return {
+            ...(json ? { "Content-Type": "application/json" } : {}),
+            "Authorization": `Bearer ${token}`
+        };
+    }
+
+    async function verifyAdminIdentity() {
+        const headers = authHeaders();
+        const response = await fetch("/api/auth/identity", {
+            cache: "no-store",
+            headers
+        });
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error("Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Đăng xuất rồi đăng nhập lại bằng tài khoản Admin.");
+            }
+            throw new Error(`Không xác minh được tài khoản Admin (HTTP ${response.status}).`);
+        }
+
+        const identity = await response.json();
+        const role = String(identity.role || "").trim().toUpperCase();
+        if (role !== "ADMIN" && role !== "ROLE_ADMIN") {
+            throw new Error(`Backend xác nhận ${identity.email || "tài khoản hiện tại"} có role "${identity.role || "trống"}", không phải Admin. Hãy đăng nhập đúng tài khoản hoặc cập nhật role tài khoản thành ROLE_ADMIN trong CSDL users.`);
+        }
+        return identity;
+    }
+
+    async function loadRequests() {
+        const tbody = document.getElementById("request-table");
+        const refresh = document.getElementById("refresh-button");
+        tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-gray-500">Đang tải dữ liệu...</td></tr>`;
+        refresh.disabled = true;
+        try {
+            const status = document.getElementById("status-filter").value;
+            const url = status ? `${API}?status=${encodeURIComponent(status)}` : API;
+            const response = await fetch(url, { cache: "no-store", headers: authHeaders() });
+            if (!response.ok) throw new Error(await readError(response));
+            const result = await response.json();
+            if (!Array.isArray(result)) throw new Error("Dữ liệu yêu cầu hủy không hợp lệ.");
+            requests = result;
+            await loadPaymentStatuses(result);
+            showMessage("", "");
+            renderRequests();
+        } catch (error) {
+            tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-red-600">${escapeHtml(error.message)}</td></tr>`;
+            showMessage(error.message, "error");
+        } finally {
+            refresh.disabled = false;
+        }
+    }
+
+    async function loadPaymentStatuses(items) {
+        const token = localStorage.getItem("token") || localStorage.getItem("userToken") || "";
+        await Promise.all(items.map(async item => {
+            const bookingId = Number(item.bookingId);
+            try {
+                const response = await fetch(`/api/payments/booking/${bookingId}`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const payment = await response.json();
+                    paymentStatuses.set(bookingId, payment.transactionStatus || "Chưa rõ");
+                } else if (response.status === 404) {
+                    paymentStatuses.set(bookingId, "Chưa có giao dịch");
+                } else {
+                    paymentStatuses.set(bookingId, "Không truy vấn được");
+                }
+            } catch (_) {
+                paymentStatuses.set(bookingId, "Không truy vấn được");
+            }
+        }));
+    }
+
+    function renderRequests() {
+        const tbody = document.getElementById("request-table");
+        const query = document.getElementById("search-input").value.trim().toLocaleLowerCase("vi");
+        const filtered = requests.filter(item => [
+            item.bookingId, item.userName, item.userEmail, item.requesterEmail
+        ].some(value => String(value || "").toLocaleLowerCase("vi").includes(query)));
+        document.getElementById("result-count").textContent = `${filtered.length} yêu cầu`;
+        if (!filtered.length) {
+            tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-gray-500">Không có yêu cầu phù hợp.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = filtered.map(item => {
+            const statusClass = item.status === "PENDING"
+                ? "bg-amber-100 text-amber-800"
+                : item.status === "APPROVED" ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800";
+            const pending = item.status === "PENDING";
+            const name = item.userName || item.userEmail || item.requesterEmail || `Khách #${item.requesterUserId}`;
+            const time = `${String(item.startTime || "").slice(0, 5)} - ${String(item.endTime || "").slice(0, 5)}`;
+            return `<tr class="border-t align-top hover:bg-gray-50">
+                <td class="p-3 whitespace-nowrap"><div class="font-bold">YC #${escapeHtml(item.id)}</div><div>Đơn #${escapeHtml(item.bookingId)}</div></td>
+                <td class="p-3"><div class="font-medium">${escapeHtml(name)}</div><div class="text-xs text-gray-500">${escapeHtml(item.userEmail || item.requesterEmail || "")}</div></td>
+                <td class="p-3"><div>${escapeHtml(item.fieldName || item.stadiumName || `Sân #${item.fieldId || "?"}`)}</div><div class="text-xs text-gray-500">${escapeHtml(item.bookingDate || "")} · ${escapeHtml(time)}</div></td>
+                <td class="p-3 whitespace-nowrap">${formatMoney(item.totalPrice)}</td>
+                <td class="p-3">${escapeHtml(paymentStatuses.get(Number(item.bookingId)) || "Đang tải")}</td>
+                <td class="max-w-xs p-3"><div>${escapeHtml(item.reason || "Không ghi lý do")}</div>${item.adminNote ? `<div class="mt-1 text-xs text-rose-700">Admin: ${escapeHtml(item.adminNote)}</div>` : ""}</td>
+                <td class="p-3 whitespace-nowrap">${escapeHtml(formatDate(item.createdAt))}</td>
+                <td class="p-3"><span class="rounded-full px-2 py-1 text-xs font-semibold ${statusClass}">${statusLabel(item.status)}</span></td>
+                <td class="p-3"><div class="flex flex-col gap-2">
+                    <button onclick="showDetails(${Number(item.id)})" class="rounded border border-emerald-700 px-2 py-1 text-xs font-semibold text-emerald-800">Chi tiết</button>
+                    ${pending ? `<button onclick="decide(${Number(item.id)}, 'approve')" class="rounded bg-emerald-600 px-2 py-1 text-xs font-semibold text-white">Đồng ý hủy</button>
+                    <button onclick="decide(${Number(item.id)}, 'reject')" class="rounded bg-rose-600 px-2 py-1 text-xs font-semibold text-white">Từ chối</button>` : ""}
+                </div></td>
+            </tr>`;
+        }).join("");
+    }
+
+    async function decide(id, action) {
+        const approve = action === "approve";
+        if (approve && !confirm("Đồng ý hủy đơn này? Thao tác sẽ cập nhật đơn thành Đã hủy và giải phóng khung giờ.")) return;
+        const note = approve ? "" : prompt("Nhập lý do từ chối yêu cầu (không bắt buộc):");
+        if (note === null) return;
+        try {
+            const response = await fetch(`${API}/${id}/${action}`, {
+                method: "PATCH",
+                headers: authHeaders(true),
+                body: JSON.stringify({ note: note.trim() })
+            });
+            if (!response.ok) throw new Error(await readError(response));
+            const updated = await response.json();
+            const expectedStatus = approve ? "APPROVED" : "REJECTED";
+            if (Number(updated.id) !== id || updated.status !== expectedStatus
+                    || (approve && updated.bookingStatus !== "CANCELLED")) {
+                throw new Error("Booking Service chưa xác nhận đã lưu kết quả xử lý vào CSDL.");
+            }
+            showMessage(approve ? "Đã duyệt yêu cầu hủy; đơn được cập nhật thành Đã hủy." : "Đã từ chối yêu cầu hủy.", "success");
+            await loadRequests();
+        } catch (error) {
+            showMessage(error.message, "error");
+        }
+    }
+
+    function showDetails(id) {
+        const item = requests.find(request => Number(request.id) === id);
+        if (!item) return;
+        const rows = [
+            ["Mã yêu cầu", `#${item.id}`], ["Mã đơn", `#${item.bookingId}`],
+            ["Người yêu cầu", item.userName || item.requesterEmail],
+            ["Email", item.userEmail || item.requesterEmail],
+            ["Sân", item.fieldName || item.stadiumName || `Sân #${item.fieldId}`],
+            ["Ngày / giờ", `${item.bookingDate} · ${String(item.startTime || "").slice(0, 5)} - ${String(item.endTime || "").slice(0, 5)}`],
+            ["Tổng tiền", formatMoney(item.totalPrice)],
+            ["Thanh toán", paymentStatuses.get(Number(item.bookingId)) || "Không rõ"],
+            ["Lý do", item.reason || "Không ghi lý do"],
+            ["Gửi lúc", formatDate(item.createdAt)],
+            ["Kết quả", statusLabel(item.status)],
+            ["Admin xử lý", item.processedByEmail || "Chưa xử lý"],
+            ["Ghi chú Admin", item.adminNote || "—"]
+        ];
+        document.getElementById("detail-content").innerHTML = rows.map(([label, value]) =>
+            `<p><span class="font-semibold text-gray-700">${escapeHtml(label)}:</span> ${escapeHtml(value)}</p>`
+        ).join("");
+        const modal = document.getElementById("detail-modal");
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+    }
+
+    function closeDetails() {
+        const modal = document.getElementById("detail-modal");
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    }
+
+    async function readError(response) {
+        const text = await response.text();
+        let message = text;
+        try {
+            const data = JSON.parse(text);
+            message = data.message || data.detail || data.error || text;
+        } catch (_) {
+            // The API may return a plain-text error.
+        }
+        if (response.status === 401) return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+        if (response.status === 403) {
+            const identity = verifiedIdentity
+                ? ` User Service qua Gateway xác minh ${verifiedIdentity.email} với role "${verifiedIdentity.role}".`
+                : "";
+            return `Booking Service từ chối yêu cầu (HTTP 403): ${message || "không trả chi tiết lỗi."}${identity} Nếu role hiển thị là Admin nhưng vẫn bị từ chối, hãy khởi động lại Booking Service và kiểm tra USER_SERVICE_URL của Booking Service trỏ tới đúng User Service/CSDL.`;
+        }
+        if (response.status === 404) {
+            return "Booking Service đang chạy chưa có API quản lý yêu cầu hủy. Hãy khởi động lại Booking Service rồi tải lại trang.";
+        }
+        return message || `Lỗi máy chủ (HTTP ${response.status}).`;
+    }
+
+    function showMessage(message, type) {
+        const element = document.getElementById("page-message");
+        if (!message) {
+            element.classList.add("hidden");
+            return;
+        }
+
+        function handleLogout() {
+            localStorage.removeItem("token");
+            localStorage.removeItem("userToken");
+            localStorage.removeItem("userEmail");
+            localStorage.removeItem("userId");
+            localStorage.removeItem("userRole");
+            localStorage.removeItem("role");
+            window.location.href = "login.html";
+        }
+        element.textContent = message;
+        element.className = `mt-3 rounded-lg px-3 py-2 text-sm ${type === "success" ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`;
+        element.classList.remove("hidden");
+    }
+
+    function statusLabel(status) {
+        return ({ PENDING: "Chờ xử lý", APPROVED: "Đã đồng ý", REJECTED: "Đã từ chối" })[status] || status || "Không rõ";
+    }
+
+    function formatMoney(value) {
+        const amount = Number(value);
+        return Number.isFinite(amount) ? new Intl.NumberFormat("vi-VN").format(amount) + " ₫" : "—";
+    }
+
+    function formatDate(value) {
+        return value ? new Date(value).toLocaleString("vi-VN") : "—";
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? "").replace(/[&<>"']/g, character => ({
+            "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+        })[character]);
+    }
+</script>
+</body>
+</html>

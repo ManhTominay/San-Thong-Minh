@@ -5,24 +5,21 @@ import org.example.bookingservice.dto.BookingAvailabilityDTO;
 import org.example.bookingservice.dto.BookingResponseDTO;
 import org.example.bookingservice.dto.BookingStatisticsDTO;
 import org.example.bookingservice.dto.BookingStatisticsOverviewDTO;
+import org.example.bookingservice.dto.AuthenticatedUserDTO;
 import org.example.bookingservice.dto.CourtGridDTO;
 import org.example.bookingservice.dto.DailyBookingStatisticsDTO;
 import org.example.bookingservice.dto.FieldBookingStatisticsDTO;
-import org.example.bookingservice.dto.StadiumSnapshotDTO;
 import org.example.bookingservice.dto.TimeSlotDTO;
-import org.example.bookingservice.dto.UserSnapshotDTO;
 import org.example.bookingservice.entity.Booking;
 import org.example.bookingservice.entity.Field;
+import org.example.bookingservice.entity.StadiumRecord;
 import org.example.bookingservice.repository.BookingRepository;
 import org.example.bookingservice.repository.FieldRepository;
-import org.springframework.beans.factory.annotation.Value;
+import org.example.bookingservice.repository.StadiumRecordRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.text.Normalizer;
@@ -47,21 +44,15 @@ public class BookingService {
 
     private final BookingRepository bookingRepository;
     private final FieldRepository fieldRepository;
-    private final RestTemplate restTemplate;
-
-    @Value("${booking.integrations.user-service-url:http://localhost:8083}")
-    private String userServiceUrl;
-
-    @Value("${booking.integrations.stadium-service-url:http://localhost:8081}")
-    private String stadiumServiceUrl;
+    private final StadiumRecordRepository stadiumRepository;
 
     public BookingService(
             BookingRepository bookingRepository,
             FieldRepository fieldRepository,
-            RestTemplate restTemplate) {
+            StadiumRecordRepository stadiumRepository) {
         this.bookingRepository = bookingRepository;
         this.fieldRepository = fieldRepository;
-        this.restTemplate = restTemplate;
+        this.stadiumRepository = stadiumRepository;
     }
 
     public List<CourtGridDTO> getGridData(Long stadiumId, LocalDate bookingDate) {
@@ -128,6 +119,10 @@ public class BookingService {
                 .toList();
     }
 
+    public Optional<BookingResponseDTO> getBookingById(Long bookingId) {
+        return bookingRepository.findById(bookingId).map(BookingResponseDTO::from);
+    }
+
     public BookingStatisticsDTO getStatistics(LocalDate fromDate, LocalDate toDate) {
         LocalDate resolvedToDate = toDate != null ? toDate : LocalDate.now();
         LocalDate resolvedFromDate = fromDate != null
@@ -187,10 +182,15 @@ public class BookingService {
         });
     }
 
-    public BookingResponseDTO createBooking(BookingRequestDTO req) {
+    public BookingResponseDTO createBooking(BookingRequestDTO req, AuthenticatedUserDTO user) {
         validateBookingRequest(req);
 
-        UserSnapshotDTO user = fetchUser(req.getUserId());
+        if (user == null || user.id() == null || user.email() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_GATEWAY,
+                    "Không thể xác định tài khoản đã đăng nhập"
+            );
+        }
         Field field = fieldRepository.findById(req.getFieldId()).orElse(null);
         Long requestedStadiumId = req.getStadiumId();
 
@@ -200,13 +200,9 @@ public class BookingService {
             }
 
             List<Field> stadiumFields = fieldRepository.findByStadiumId(requestedStadiumId);
-            if (stadiumFields.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sân con thuộc sân đã chọn");
-            }
-
             if (field == null || !requestedStadiumId.equals(field.getStadiumId())) {
                 if (req.getFieldId().equals(requestedStadiumId)) {
-                    field = stadiumFields.get(0);
+                    field = stadiumFields.isEmpty() ? null : stadiumFields.get(0);
                 } else {
                     throw new ResponseStatusException(
                             HttpStatus.BAD_REQUEST,
@@ -220,85 +216,42 @@ public class BookingService {
         Long stadiumId = field != null && field.getStadiumId() != null
                 ? field.getStadiumId()
                 : requestedStadiumId != null ? requestedStadiumId : req.getFieldId();
-        StadiumSnapshotDTO stadium = fetchStadium(stadiumId);
-        if (stadium.id() == null || stadium.name() == null || stadium.name().isBlank()) {
+        StadiumRecord stadium = stadiumRepository.findById(stadiumId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sân"));
+        if (stadium.getName() == null || stadium.getName().isBlank()) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_GATEWAY,
-                    "Thông tin sân nhận được từ stadium-service không hợp lệ"
+                    "Thông tin sân trong CSDL không hợp lệ"
             );
         }
 
         Booking booking = new Booking();
         booking.setUserId(user.id());
-        booking.setUserName(firstNonBlank(user.name(), user.username(), user.email()));
+        booking.setUserName(firstNonBlank(user.name(), user.email()));
         booking.setUserEmail(user.email());
         booking.setFieldId(validFieldId);
         booking.setFieldName(field != null
-                ? firstNonBlank(field.getName(), stadium.name())
-                : stadium.name());
-        booking.setStadiumId(stadium.id());
-        booking.setStadiumName(stadium.name());
+                ? firstNonBlank(field.getName(), stadium.getName())
+                : stadium.getName());
+        booking.setStadiumId(stadium.getId());
+        booking.setStadiumName(stadium.getName());
+        booking.setStadiumAddress(stadium.getAddress());
 
         booking.setBookingDate(req.getBookingDate());
         booking.setStartTime(req.getStartTime());
         booking.setEndTime(req.getEndTime());
         booking.setCourtSummary(req.getCourtSummary());
-        booking.setStadiumAddress(req.getStadiumAddress());
         booking.setTotalPrice(req.getTotalPrice());
         booking.setStatus(req.getStatus() != null && !req.getStatus().isBlank()
                 ? req.getStatus().trim().toUpperCase()
                 : "PENDING");
-        validateNoCourtOverlap(req, validFieldId, stadium.id());
+        validateNoCourtOverlap(req, validFieldId, stadium.getId());
 
         return BookingResponseDTO.from(bookingRepository.save(booking));
     }
 
-    private UserSnapshotDTO fetchUser(Long userId) {
-        String url = userServiceUrl + "/api/admin/users/" + userId;
-        try {
-            UserSnapshotDTO user = restTemplate.getForObject(url, UserSnapshotDTO.class);
-            if (user == null || user.id() == null) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_GATEWAY,
-                        "user-service trả về dữ liệu người dùng không hợp lệ"
-                );
-            }
-            return user;
-        } catch (HttpClientErrorException.NotFound ex) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng");
-        } catch (RestClientException ex) {
-            throw new ResponseStatusException(
-                    HttpStatus.SERVICE_UNAVAILABLE,
-                    "Không thể xác thực người dùng vì user-service hiện không khả dụng"
-            );
-        }
-    }
-
-    private StadiumSnapshotDTO fetchStadium(Long fieldId) {
-        String url = stadiumServiceUrl + "/api/fields/" + fieldId;
-        try {
-            StadiumSnapshotDTO stadium = restTemplate.getForObject(url, StadiumSnapshotDTO.class);
-            if (stadium == null || stadium.id() == null) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_GATEWAY,
-                        "stadium-service trả về dữ liệu sân không hợp lệ"
-                );
-            }
-            return stadium;
-        } catch (HttpClientErrorException.NotFound ex) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sân");
-        } catch (RestClientException ex) {
-            throw new ResponseStatusException(
-                    HttpStatus.SERVICE_UNAVAILABLE,
-                    "Không thể xác thực sân vì stadium-service hiện không khả dụng"
-            );
-        }
-    }
-
     private void validateBookingRequest(BookingRequestDTO req) {
         if (req == null
-                || req.getUserId() == null
-                || req.getUserId() <= 0
                 || req.getFieldId() == null
                 || req.getFieldId() <= 0
                 || req.getBookingDate() == null
@@ -348,7 +301,8 @@ public class BookingService {
                     if (requested.courtNumber() == booked.courtNumber() &&
                             requested.start().isBefore(booked.end()) &&
                             booked.start().isBefore(requested.end())) {
-                        throw new IllegalArgumentException(
+                        throw new ResponseStatusException(
+                                HttpStatus.CONFLICT,
                                 "Sân " + requested.courtNumber() + " vừa được đặt trùng giờ. " +
                                         "Vui lòng tải lại lịch và chọn khung giờ khác.");
                     }
