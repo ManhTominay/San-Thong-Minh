@@ -75,18 +75,9 @@
 
 <main class="mx-auto w-full max-w-7xl flex-1 space-y-5 p-4 md:p-6">
     <section class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        <div class="flex flex-col gap-3 md:flex-row md:items-end">
-            <label class="text-sm font-semibold text-gray-700">
-                Trạng thái yêu cầu
-                <select id="status-filter" class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 font-normal">
-                    <option value="PENDING" selected>Đang chờ xử lý</option>
-                    <option value="">Tất cả yêu cầu</option>
-                    <option value="APPROVED">Đã đồng ý</option>
-                    <option value="REJECTED">Đã từ chối</option>
-                </select>
-            </label>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
             <label class="flex-1 text-sm font-semibold text-gray-700">
-                Tìm mã đơn, tên hoặc email người đặt
+                Tìm mã đơn, tên, email hoặc tên sân
                 <input id="search-input" type="search" placeholder="Nhập từ khóa..."
                        class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 font-normal">
             </label>
@@ -98,30 +89,29 @@
         <p id="page-message" class="mt-3 hidden rounded-lg px-3 py-2 text-sm" role="status"></p>
     </section>
 
-    <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <section class="rounded-xl border border-gray-200 bg-white shadow-sm">
         <div class="flex items-center justify-between border-b px-4 py-3">
-            <h2 class="font-bold text-emerald-950">Danh sách yêu cầu hủy</h2>
-            <span id="result-count" class="text-sm text-gray-500"></span>
+            <div>
+                <h2 class="font-bold text-emerald-950">Yêu cầu đang chờ xử lý</h2>
+                <p class="mt-1 text-xs text-gray-500">Các yêu cầu cần được quản trị viên xem xét</p>
+            </div>
+            <span id="pending-count" class="shrink-0 text-sm text-gray-500"></span>
         </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-[1500px] w-full text-left text-sm">
-                <thead class="bg-emerald-50 text-xs uppercase text-emerald-950">
-                <tr>
-                    <th class="p-3">Yêu cầu / Đơn</th>
-                    <th class="p-3">Người đặt</th>
-                    <th class="p-3">Sân / Lịch</th>
-                    <th class="p-3">Tổng tiền</th>
-                    <th class="p-3">Thanh toán</th>
-                    <th class="p-3">Lý do / Ghi chú Admin</th>
-                    <th class="p-3">Gửi lúc</th>
-                    <th class="p-3">Trạng thái</th>
-                    <th class="p-3">Thao tác</th>
-                </tr>
-                </thead>
-                <tbody id="request-table">
-                <tr><td colspan="9" class="p-8 text-center text-gray-500">Đang tải dữ liệu...</td></tr>
-                </tbody>
-            </table>
+        <div id="request-list" class="grid gap-4 p-4 lg:grid-cols-2">
+            <p class="p-4 text-center text-sm text-gray-500 lg:col-span-2">Đang tải dữ liệu...</p>
+        </div>
+    </section>
+
+    <section class="rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div class="flex items-center justify-between border-b px-4 py-3">
+            <div>
+                <h2 class="font-bold text-gray-800">Lịch sử đơn hủy</h2>
+                <p class="mt-1 text-xs text-gray-500">Các yêu cầu đã được đồng ý hoặc từ chối</p>
+            </div>
+            <span id="history-count" class="shrink-0 text-sm text-gray-500"></span>
+        </div>
+        <div id="history-list" class="grid gap-4 p-4 lg:grid-cols-2">
+            <p class="p-4 text-center text-sm text-gray-500 lg:col-span-2">Đang tải dữ liệu...</p>
         </div>
     </section>
 </main>
@@ -148,7 +138,6 @@
     document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("admin-email").textContent =
             localStorage.getItem("userEmail") || "Admin";
-        document.getElementById("status-filter").addEventListener("change", loadRequests);
         document.getElementById("search-input").addEventListener("input", renderRequests);
         try {
             verifiedIdentity = await verifyAdminIdentity();
@@ -159,8 +148,9 @@
             await loadRequests();
         } catch (error) {
             showMessage(error.message, "error");
-            document.getElementById("request-table").innerHTML =
-                `<tr><td colspan="9" class="p-8 text-center text-red-600">${escapeHtml(error.message)}</td></tr>`;
+            const errorMessage = `<p class="p-4 text-center text-sm text-red-600 lg:col-span-2">${escapeHtml(error.message)}</p>`;
+            document.getElementById("request-list").innerHTML = errorMessage;
+            document.getElementById("history-list").innerHTML = errorMessage;
         }
     });
 
@@ -195,23 +185,26 @@
     }
 
     async function loadRequests() {
-        const tbody = document.getElementById("request-table");
+        const requestList = document.getElementById("request-list");
+        const historyList = document.getElementById("history-list");
         const refresh = document.getElementById("refresh-button");
-        tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-gray-500">Đang tải dữ liệu...</td></tr>`;
+        requestList.innerHTML = `<p class="p-4 text-center text-sm text-gray-500 lg:col-span-2">Đang tải dữ liệu...</p>`;
+        historyList.innerHTML = `<p class="p-4 text-center text-sm text-gray-500 lg:col-span-2">Đang tải dữ liệu...</p>`;
         refresh.disabled = true;
         try {
-            const status = document.getElementById("status-filter").value;
-            const url = status ? `${API}?status=${encodeURIComponent(status)}` : API;
-            const response = await fetch(url, { cache: "no-store", headers: authHeaders() });
+            const response = await fetch(API, { cache: "no-store", headers: authHeaders() });
             if (!response.ok) throw new Error(await readError(response));
             const result = await response.json();
             if (!Array.isArray(result)) throw new Error("Dữ liệu yêu cầu hủy không hợp lệ.");
             requests = result;
+            paymentStatuses.clear();
             await loadPaymentStatuses(result);
             showMessage("", "");
             renderRequests();
         } catch (error) {
-            tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-red-600">${escapeHtml(error.message)}</td></tr>`;
+            const errorMessage = `<p class="p-4 text-center text-sm text-red-600 lg:col-span-2">${escapeHtml(error.message)}</p>`;
+            requestList.innerHTML = errorMessage;
+            historyList.innerHTML = errorMessage;
             showMessage(error.message, "error");
         } finally {
             refresh.disabled = false;
@@ -241,40 +234,56 @@
     }
 
     function renderRequests() {
-        const tbody = document.getElementById("request-table");
+        const requestList = document.getElementById("request-list");
+        const historyList = document.getElementById("history-list");
         const query = document.getElementById("search-input").value.trim().toLocaleLowerCase("vi");
         const filtered = requests.filter(item => [
-            item.bookingId, item.userName, item.userEmail, item.requesterEmail
+            item.id, item.bookingId, item.userName, item.userEmail, item.requesterEmail,
+            item.fieldName, item.stadiumName
         ].some(value => String(value || "").toLocaleLowerCase("vi").includes(query)));
-        document.getElementById("result-count").textContent = `${filtered.length} yêu cầu`;
-        if (!filtered.length) {
-            tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-gray-500">Không có yêu cầu phù hợp.</td></tr>`;
-            return;
-        }
+        const pending = filtered.filter(item => item.status === "PENDING");
+        const history = filtered.filter(item => item.status !== "PENDING");
+        document.getElementById("pending-count").textContent = `${pending.length} yêu cầu`;
+        document.getElementById("history-count").textContent = `${history.length} đơn`;
+        requestList.innerHTML = pending.length
+            ? pending.map(item => renderRequestCard(item, true)).join("")
+            : `<p class="p-4 text-center text-sm text-gray-500 lg:col-span-2">Không có yêu cầu đang chờ phù hợp.</p>`;
+        historyList.innerHTML = history.length
+            ? history.map(item => renderRequestCard(item, false)).join("")
+            : `<p class="p-4 text-center text-sm text-gray-500 lg:col-span-2">Chưa có lịch sử đơn hủy phù hợp.</p>`;
+    }
 
-        tbody.innerHTML = filtered.map(item => {
-            const statusClass = item.status === "PENDING"
-                ? "bg-amber-100 text-amber-800"
-                : item.status === "APPROVED" ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800";
-            const pending = item.status === "PENDING";
-            const name = item.userName || item.userEmail || item.requesterEmail || `Khách #${item.requesterUserId}`;
-            const time = `${String(item.startTime || "").slice(0, 5)} - ${String(item.endTime || "").slice(0, 5)}`;
-            return `<tr class="border-t align-top hover:bg-gray-50">
-                <td class="p-3 whitespace-nowrap"><div class="font-bold">YC #${escapeHtml(item.id)}</div><div>Đơn #${escapeHtml(item.bookingId)}</div></td>
-                <td class="p-3"><div class="font-medium">${escapeHtml(name)}</div><div class="text-xs text-gray-500">${escapeHtml(item.userEmail || item.requesterEmail || "")}</div></td>
-                <td class="p-3"><div>${escapeHtml(item.fieldName || item.stadiumName || `Sân #${item.fieldId || "?"}`)}</div><div class="text-xs text-gray-500">${escapeHtml(item.bookingDate || "")} · ${escapeHtml(time)}</div></td>
-                <td class="p-3 whitespace-nowrap">${formatMoney(item.totalPrice)}</td>
-                <td class="p-3">${escapeHtml(paymentStatuses.get(Number(item.bookingId)) || "Đang tải")}</td>
-                <td class="max-w-xs p-3"><div>${escapeHtml(item.reason || "Không ghi lý do")}</div>${item.adminNote ? `<div class="mt-1 text-xs text-rose-700">Admin: ${escapeHtml(item.adminNote)}</div>` : ""}</td>
-                <td class="p-3 whitespace-nowrap">${escapeHtml(formatDate(item.createdAt))}</td>
-                <td class="p-3"><span class="rounded-full px-2 py-1 text-xs font-semibold ${statusClass}">${statusLabel(item.status)}</span></td>
-                <td class="p-3"><div class="flex flex-col gap-2">
-                    <button onclick="showDetails(${Number(item.id)})" class="rounded border border-emerald-700 px-2 py-1 text-xs font-semibold text-emerald-800">Chi tiết</button>
-                    ${pending ? `<button onclick="decide(${Number(item.id)}, 'approve')" class="rounded bg-emerald-600 px-2 py-1 text-xs font-semibold text-white">Đồng ý hủy</button>
-                    <button onclick="decide(${Number(item.id)}, 'reject')" class="rounded bg-rose-600 px-2 py-1 text-xs font-semibold text-white">Từ chối</button>` : ""}
-                </div></td>
-            </tr>`;
-        }).join("");
+    function renderRequestCard(item, pending) {
+        const statusClass = item.status === "PENDING"
+            ? "bg-amber-100 text-amber-800"
+            : item.status === "APPROVED" ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800";
+        const name = item.userName || item.userEmail || item.requesterEmail || `Khách #${item.requesterUserId}`;
+        const time = `${String(item.startTime || "").slice(0, 5)} - ${String(item.endTime || "").slice(0, 5)}`;
+        const fieldName = item.fieldName || item.stadiumName || `Sân #${item.fieldId || "?"}`;
+        const paymentStatus = paymentStatuses.get(Number(item.bookingId)) || "Đang tải";
+        return `<article class="min-w-0 rounded-lg border border-gray-200 p-4 transition hover:border-emerald-300 hover:shadow-sm">
+            <div class="flex flex-wrap items-start justify-between gap-2 border-b border-gray-100 pb-3">
+                <div>
+                    <p class="font-bold text-gray-900">Yêu cầu #${escapeHtml(item.id)} <span class="font-normal text-gray-400">/</span> Đơn #${escapeHtml(item.bookingId)}</p>
+                    <p class="mt-1 break-words text-sm font-medium text-gray-700">${escapeHtml(name)}</p>
+                    <p class="break-all text-xs text-gray-500">${escapeHtml(item.userEmail || item.requesterEmail || "")}</p>
+                </div>
+                <span class="rounded-full px-2.5 py-1 text-xs font-semibold ${statusClass}">${escapeHtml(statusLabel(item.status))}</span>
+            </div>
+            <dl class="mt-3 grid grid-cols-1 gap-x-4 gap-y-3 text-sm sm:grid-cols-2">
+                <div class="min-w-0"><dt class="text-xs font-semibold uppercase text-gray-500">Sân / lịch</dt><dd class="mt-1 break-words font-medium">${escapeHtml(fieldName)}</dd><dd class="text-xs text-gray-500">${escapeHtml(item.bookingDate || "—")} · ${escapeHtml(time)}</dd></div>
+                <div><dt class="text-xs font-semibold uppercase text-gray-500">Tổng tiền</dt><dd class="mt-1 font-medium">${formatMoney(item.totalPrice)}</dd></div>
+                <div class="min-w-0"><dt class="text-xs font-semibold uppercase text-gray-500">Thanh toán</dt><dd class="mt-1 break-words">${escapeHtml(paymentStatus)}</dd></div>
+                <div class="min-w-0"><dt class="text-xs font-semibold uppercase text-gray-500">Gửi lúc</dt><dd class="mt-1 break-words">${escapeHtml(formatDate(item.createdAt))}</dd></div>
+                <div class="min-w-0 sm:col-span-2"><dt class="text-xs font-semibold uppercase text-gray-500">Lý do hủy</dt><dd class="mt-1 break-words">${escapeHtml(item.reason || "Không ghi lý do")}</dd></div>
+                ${item.adminNote ? `<div class="min-w-0 sm:col-span-2"><dt class="text-xs font-semibold uppercase text-gray-500">Ghi chú Admin</dt><dd class="mt-1 break-words text-rose-700">${escapeHtml(item.adminNote)}</dd></div>` : ""}
+            </dl>
+            <div class="mt-4 flex flex-wrap gap-2 border-t border-gray-100 pt-3">
+                <button onclick="showDetails(${Number(item.id)})" class="rounded-lg border border-emerald-700 px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-50">Chi tiết</button>
+                ${pending ? `<button onclick="decide(${Number(item.id)}, 'approve')" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700">Đồng ý hủy</button>
+                <button onclick="decide(${Number(item.id)}, 'reject')" class="rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700">Từ chối</button>` : ""}
+            </div>
+        </article>`;
     }
 
     async function decide(id, action) {
@@ -362,18 +371,19 @@
             return;
         }
 
-        function handleLogout() {
-            localStorage.removeItem("token");
-            localStorage.removeItem("userToken");
-            localStorage.removeItem("userEmail");
-            localStorage.removeItem("userId");
-            localStorage.removeItem("userRole");
-            localStorage.removeItem("role");
-            window.location.href = "login.html";
-        }
         element.textContent = message;
         element.className = `mt-3 rounded-lg px-3 py-2 text-sm ${type === "success" ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`;
         element.classList.remove("hidden");
+    }
+
+    function handleLogout() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userToken");
+        localStorage.removeItem("userEmail");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("userRole");
+        localStorage.removeItem("role");
+        window.location.href = "/login.html";
     }
 
     function statusLabel(status) {
