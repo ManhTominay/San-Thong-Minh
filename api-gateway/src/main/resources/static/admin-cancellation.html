@@ -129,11 +129,38 @@
     </div>
 </div>
 
+<div id="approval-proof-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4"
+     role="dialog" aria-modal="true" aria-labelledby="approval-proof-title"
+     onclick="if (event.target === this) closeApprovalProof()">
+    <div class="w-full max-w-2xl rounded-xl bg-white p-5 shadow-xl">
+        <div class="flex items-center justify-between border-b pb-3">
+            <div>
+                <h2 id="approval-proof-title" class="font-bold text-emerald-950">Kiểm tra chứng từ trước khi hủy</h2>
+                <p id="approval-proof-booking" class="mt-1 text-sm text-gray-500"></p>
+            </div>
+            <button type="button" onclick="closeApprovalProof()" class="rounded p-2 text-gray-500 hover:bg-gray-100" aria-label="Đóng">&times;</button>
+        </div>
+        <p id="approval-proof-message" class="py-8 text-center text-sm text-gray-500" role="status">Đang tải ảnh chứng từ...</p>
+        <img id="approval-proof-image" class="mx-auto hidden max-h-[60vh] max-w-full rounded object-contain" alt="Ảnh chứng từ thanh toán của đơn">
+        <p class="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+            
+        </p>
+        <div class="mt-4 flex justify-end gap-2">
+            <button type="button" onclick="closeApprovalProof()" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Quay lại</button>
+            <button id="confirm-approval-button" type="button" onclick="confirmCancellationApproval()" disabled
+                    class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">
+                Xác nhận đồng ý hủy
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     const API = "/api/bookings/admin/cancellation-requests";
     let requests = [];
     const paymentStatuses = new Map();
     let verifiedIdentity = null;
+    let pendingApprovalRequestId = null;
 
     document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("admin-email").textContent =
@@ -280,15 +307,86 @@
             </dl>
             <div class="mt-4 flex flex-wrap gap-2 border-t border-gray-100 pt-3">
                 <button onclick="showDetails(${Number(item.id)})" class="rounded-lg border border-emerald-700 px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-50">Chi tiết</button>
-                ${pending ? `<button onclick="decide(${Number(item.id)}, 'approve')" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700">Đồng ý hủy</button>
+                ${pending ? `<button onclick="reviewCancellationApproval(${Number(item.id)}, ${Number(item.bookingId)})" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700">Đồng ý hủy</button>
                 <button onclick="decide(${Number(item.id)}, 'reject')" class="rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700">Từ chối</button>` : ""}
             </div>
         </article>`;
     }
 
-    async function decide(id, action) {
+    async function reviewCancellationApproval(requestId, bookingId) {
+        pendingApprovalRequestId = requestId;
+        const modal = document.getElementById("approval-proof-modal");
+        const image = document.getElementById("approval-proof-image");
+        const message = document.getElementById("approval-proof-message");
+        const confirmButton = document.getElementById("confirm-approval-button");
+        document.getElementById("approval-proof-booking").textContent = `Đơn #${bookingId}`;
+        image.removeAttribute("src");
+        image.classList.add("hidden");
+        message.textContent = "Đang tải ảnh chứng từ từ dữ liệu thanh toán...";
+        message.classList.remove("hidden");
+        confirmButton.disabled = true;
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+
+        try {
+            const response = await fetch(`/api/payments/booking/${encodeURIComponent(bookingId)}`, {
+                cache: "no-store",
+                headers: authHeaders()
+            });
+            if (response.status === 404) {
+                message.textContent = "Đơn này chưa có dữ liệu thanh toán. Bạn vẫn có thể tiếp tục duyệt hủy.";
+            } else if (!response.ok) {
+                throw new Error(`Không tải được chứng từ thanh toán (HTTP ${response.status}).`);
+            } else {
+                const payment = await response.json();
+                const proof = payment.paymentProof;
+                if (typeof proof !== "string" || !proof.startsWith("data:image/")) {
+                    message.textContent = "Giao dịch chưa có ảnh chứng từ hợp lệ trong payment_proof. Bạn vẫn có thể tiếp tục duyệt hủy.";
+                } else {
+                    image.onload = () => {
+                        if (pendingApprovalRequestId !== requestId) return;
+                        message.classList.add("hidden");
+                        image.classList.remove("hidden");
+                    };
+                    image.onerror = () => {
+                        if (pendingApprovalRequestId !== requestId) return;
+                        image.classList.add("hidden");
+                        message.textContent = "Không thể hiển thị ảnh chứng từ đã lưu. Bạn vẫn có thể tiếp tục duyệt hủy.";
+                        message.classList.remove("hidden");
+                    };
+                    image.src = proof;
+                }
+            }
+        } catch (error) {
+            message.textContent = `${error.message} Bạn vẫn có thể tiếp tục duyệt hủy.`;
+        } finally {
+            if (pendingApprovalRequestId === requestId) {
+                confirmButton.disabled = false;
+            }
+        }
+    }
+
+    function closeApprovalProof() {
+        pendingApprovalRequestId = null;
+        const modal = document.getElementById("approval-proof-modal");
+        const image = document.getElementById("approval-proof-image");
+        image.removeAttribute("src");
+        image.classList.add("hidden");
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    }
+
+    async function confirmCancellationApproval() {
+        const requestId = pendingApprovalRequestId;
+        if (requestId === null) return;
+        closeApprovalProof();
+        await decide(requestId, "approve", true);
+    }
+
+    async function decide(id, action, approvalConfirmed = false) {
         const approve = action === "approve";
-        if (approve && !confirm("Đồng ý hủy đơn này? Thao tác sẽ cập nhật đơn thành Đã hủy và giải phóng khung giờ.")) return;
+        if (approve && !approvalConfirmed
+                && !confirm("Đồng ý hủy đơn này? Thao tác sẽ cập nhật đơn thành Đã hủy và giải phóng khung giờ.")) return;
         const note = approve ? "" : prompt("Nhập lý do từ chối yêu cầu (không bắt buộc):");
         if (note === null) return;
         try {

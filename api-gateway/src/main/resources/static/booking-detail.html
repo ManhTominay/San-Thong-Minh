@@ -312,7 +312,7 @@
         const statusUpper = (data.status || '').toUpperCase();
 
         if (!bookingVerified) {
-            statusElem.textContent = "Chưa xác minh từ CSDL";
+            statusElem.textContent = "Chưa được Admin xác nhận";
             statusElem.className = "font-bold text-rose-300 bg-rose-900/60 px-2 py-0.5 rounded text-xs border border-rose-400/50";
         } else if (statusUpper === "APPROVED" || statusUpper === "CONFIRMED" || statusUpper === "SUCCESS") {
             statusElem.textContent = "Chờ Admin xác nhận";
